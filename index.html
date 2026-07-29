@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>morning — ניהול פרסום</title>
+<style>
+:root{
+  --nav:#004650;
+  --panel:#2d6068;
+  --mint:#10b88b;
+  --bg:#f3f5f8;
+  --ink:#073f47;
+  --line:#dce6e7;
+  --muted:#5c757b;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Assistant","Heebo",-apple-system,"Segoe UI",Arial,sans-serif;
+  line-height:1.6;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:32px 20px;
+}
+.wrap{width:100%;max-width:760px}
+.brand{
+  display:flex;
+  flex-direction:row-reverse;
+  align-items:center;
+  justify-content:flex-end;
+  gap:11px;
+  margin-bottom:34px;
+}
+.brand svg{width:34px;height:34px;flex:0 0 auto}
+.brand span{
+  direction:ltr;
+  font-family:"Arial Rounded MT Bold","Trebuchet MS",Arial,sans-serif;
+  font-weight:900;
+  font-size:23px;
+  letter-spacing:-1px;
+  color:var(--nav);
+}
+h1{font-size:34px;line-height:1.2;margin:0 0 8px;text-wrap:balance}
+.sub{margin:0 0 34px;color:var(--muted);font-size:17px;max-width:56ch}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{
+  display:block;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:26px;
+  text-decoration:none;
+  color:inherit;
+  transition:border-color .18s, transform .18s, box-shadow .18s;
+}
+.card:hover,.card:focus-visible{
+  border-color:var(--mint);
+  transform:translateY(-3px);
+  box-shadow:0 14px 30px rgba(4,55,64,.09);
+}
+.card:focus-visible{outline:3px solid rgba(16,184,139,.35);outline-offset:2px}
+.tag{
+  display:inline-block;
+  background:#e4f6ef;
+  color:#08745d;
+  border-radius:7px;
+  padding:3px 9px;
+  font-size:12px;
+  font-weight:700;
+  margin-bottom:12px;
+}
+.card h2{margin:0 0 6px;font-size:21px}
+.card p{margin:0;color:var(--muted);font-size:15px}
+.note{
+  margin-top:30px;
+  padding-top:20px;
+  border-top:1px solid var(--line);
+  color:var(--muted);
+  font-size:13px;
+}
+@media (max-width:620px){
+  .cards{grid-template-columns:1fr}
+  h1{font-size:27px}
+}
+@media (prefers-reduced-motion:reduce){
+  .card{transition:none}
+  .card:hover{transform:none}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="brand">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><g fill="#004650"><path d="M8 18C8 9 18 5 25 10l19 18c9 9 3 25-10 25H20C13 53 8 48 8 41V18Z"/><path d="M92 18C92 9 82 5 75 10L56 28c-9 9-3 25 10 25h14c7 0 12-5 12-12V18Z"/><rect x="8" y="58" width="39" height="36" rx="11"/><rect x="53" y="58" width="39" height="36" rx="11"/></g></svg>
+    <span>morning</span>
+  </div>
+
+  <h1>ניהול פרסום בתוך morning</h1>
+  <p class="sub">שני העמודים נפתחים ישירות בדפדפן. אין צורך בהתחברות, בהתקנה או בהרשאה.</p>
+
+  <div class="cards">
+    <a class="card" href="demo.html">
+      <span class="tag">דמו אינטראקטיבי</span>
+      <h2>הדמו</h2>
+      <p>יצירת סרטון ומודעה, נכסי מותג, הפצה, Google ו־SEO וביצועים — בתוך מעטפת morning</p>
+    </a>
+    <a class="card" href="guide.html">
+      <span class="tag">מדריך מוצר</span>
+      <h2>מדריך המוצר</h2>
+      <p>היכולות, אופן העבודה, החיבור ל־Google, מסך הביצועים והצעת התעריפים</p>
+    </a>
+  </div>
+
+  <p class="note">מסמך קונספט פנימי. התכונות, המסלולים והתעריפים המוצגים הם הצעה להמחשה בלבד ואינם התחייבות מסחרית. כל הפעולות בדמו הן הדמיה — לא מתבצע פרסום ולא מחויב כסף.</p>
+</main>
+</body>
+</html>
