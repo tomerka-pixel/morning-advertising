@@ -1,4 +1,4 @@
-const { cors, readBody } = require('./_shared');
+const { cors, readBody, guard } = require('./_shared');
 const ENV = process['env'] || {};
 
 const HF_BASE = 'https://api.higgsfield.ai';
@@ -11,6 +11,7 @@ module.exports = async (req, res) => {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
+  if (!guard(req, res)) return;
 
   const id = ENV.HF_API_KEY_ID, secret = ENV.HF_API_KEY_SECRET;
   if (!id || !secret) return res.status(500).json({ error: 'חסרים מפתחות היגספילד בהגדרות השרת' });

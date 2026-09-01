@@ -62,7 +62,18 @@ function buildPrompt(b) {
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-access-code');
+}
+
+/* הגנת קוד גישה: אם הוגדר ACCESS_CODE בשרת, רק בקשה עם הכותרת התואמת מורשית לייצר.
+   אם לא הוגדר — פתוח (למצב מקומי). מחזיר true אם מותר, אחרת כותב 403 ומחזיר false. */
+function guard(req, res) {
+  const expected = (process['env'] || {}).ACCESS_CODE;
+  if (!expected) return true;
+  const got = req.headers['x-access-code'] || '';
+  if (got === expected) return true;
+  res.status(403).json({ error: 'קוד גישה שגוי או חסר. היצירה מותרת רק מהמחשב שלך.' });
+  return false;
 }
 
 function readBody(req) {
@@ -74,4 +85,4 @@ function readBody(req) {
   });
 }
 
-module.exports = { SYSTEM, SYSTEM_AD, buildPrompt, cors, readBody };
+module.exports = { SYSTEM, SYSTEM_AD, buildPrompt, cors, readBody, guard };

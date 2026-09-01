@@ -1,4 +1,4 @@
-const { SYSTEM, SYSTEM_AD, buildPrompt, cors, readBody } = require('./_shared');
+const { SYSTEM, SYSTEM_AD, buildPrompt, cors, readBody, guard } = require('./_shared');
 const ENV = process['env'] || {};
 
 /* יצירת טקסט (פוסט או מודעה) עם Claude דרך Anthropic API. */
@@ -6,6 +6,7 @@ module.exports = async (req, res) => {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
+  if (!guard(req, res)) return;
 
   const key = ENV.ANTHROPIC_API_KEY;
   if (!key) return res.status(500).json({ error: 'חסר ANTHROPIC_API_KEY בהגדרות השרת' });
