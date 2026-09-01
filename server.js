@@ -135,12 +135,13 @@ const SYSTEM_VIDEO = `אתה במאי ותסריטאי בכיר של פרסומ�
 - פסקה אחת צפופה וקולנועית: מה רואים, נושא/מוצר, תנועת מצלמה, תאורה, מצב רוח, קצב, והמותג במרכז.
 - שמור על המשכיות, סיים בקריאה חזותית לפעולה. התאם את הצפיפות למשך שנבחר. טקסט רץ, בלי מרקדאון ובלי כותרות.
 
-אם בחרת omni: כתוב ב-SPEECH_HE משפט קצר, טבעי ומדויק בעברית שהדמות אומרת, שמתאים למשך (בערך 2-4 שניות דיבור לכל 8 שניות). אם seedance: כתוב מקף יחיד.
+אם בחרת omni: כתוב ב-SPEECH_HE משפט קצר, טבעי ומדויק בעברית שהדמות אומרת, שמתאים למשך (בערך 2-4 שניות דיבור לכל 8 שניות). כתוב גם ב-PHONETIC תעתיק פונטי מדויק באותיות אנגלית של אותו משפט, איך הוא נשמע במבטא ישראלי מודרני (למשל "herayon" ל"הריון", "shalom" ל"שלום"), עם רווחים בין מילים. אם seedance: כתוב מקף יחיד בשני השדות.
 
 החזר בדיוק בפורמט הזה, בלי שום טקסט נוסף לפני או אחרי:
 MODEL: omni
 DURATION: 8
 SPEECH_HE: המשפט בעברית או -
+PHONETIC: the latin phonetic transliteration or -
 PROMPT:
 <the english cinematic prompt here>`;
 
@@ -194,18 +195,25 @@ async function generateVideo(b) {
   const isOmni = /MODEL:\s*omni/i.test(planText);
   const durM = planText.match(/DURATION:\s*(\d+)/i);
   const spM = planText.match(/SPEECH_HE:\s*(.+)/);
+  const phM = planText.match(/PHONETIC:\s*(.+)/);
   const pM = planText.match(/PROMPT:\s*([\s\S]*)$/i);
   let dur = Math.min(durM ? parseInt(durM[1]) : 8, isOmni ? 10 : 15, parseInt(b.seconds) || 15);
   if (!(dur >= 3)) dur = isOmni ? 8 : 5;
   let prompt = (pM ? pM[1] : planText).trim();
   const speechRaw = spM ? spM[1].trim() : '';
   const speechHe = (speechRaw && speechRaw !== '-') ? speechRaw : '';
+  const phoneticRaw = phM ? phM[1].trim() : '';
+  const phonetic = (phoneticRaw && phoneticRaw !== '-') ? phoneticRaw : '';
   const model = isOmni ? HF_VIDEO_OMNI : HF_VIDEO_SEEDANCE;
   let vocalized = '';
-  if (isOmni && speechHe) { vocalized = await nikud(speechHe); prompt += `\nThe on-screen character speaks these exact Hebrew words in natural modern Israeli Hebrew, pronounced clearly and lip-synced, carefully following the vowel marks (niqqud) for correct pronunciation: "${vocalized}"`; }
+  if (isOmni && speechHe) {
+    vocalized = await nikud(speechHe);
+    prompt += `\nThe on-screen character speaks these exact Hebrew words in natural modern Israeli Hebrew, clearly and lip-synced: "${vocalized}"`;
+    if (phonetic) prompt += `\nUse this Latin phonetic transcription ONLY as a pronunciation guide for the Hebrew line above (do NOT read the Latin letters aloud, they are not part of the speech): ${phonetic}`;
+  }
   const ar = b.format === '16:9' ? '16:9' : '9:16';
   const g = await runHiggsfieldVideo(model, prompt, dur, ar);
-  return { kind: 'video', url: g.url, took: g.took, model, seconds: dur, prompt, speech: speechHe, vocalized };
+  return { kind: 'video', url: g.url, took: g.took, model, seconds: dur, prompt, speech: speechHe, vocalized, phonetic };
 }
 
 /* אחסון קריאייטיבים בצד השרת: קובץ JSON + הורדת התמונות לדיסק כך שיישמרו לתמיד. */
