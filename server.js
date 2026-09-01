@@ -156,7 +156,7 @@ function videoUserPrompt(b) {
 - קהל יעד: ${b.audience || 'קהל רחב'}
 - מה לקדם / הצעה: ${b.offer || 'אין'}
 - סגנון מבוקש: ${b.style || 'לא צוין'} (סגנון "UGC אותנטי" = דמות שמדברת למצלמה, בחר omni)
-- אורך מבוקש: עד ${dur} שניות
+- אורך הסרטון: ${dur} שניות בדיוק (התאם את אורך הדיבור והתסריט בדיוק לאורך הזה)
 - פורמט: ${b.format || '9:16'}
 - הנחיות נוספות: ${b.extra || 'אין'}`;
 }
@@ -199,7 +199,7 @@ async function generateVideo(b) {
   const spM = planText.match(/SPEECH_HE:\s*(.+)/);
   const phM = planText.match(/PHONETIC:\s*(.+)/);
   const pM = planText.match(/PROMPT:\s*([\s\S]*)$/i);
-  let dur = Math.min(durM ? parseInt(durM[1]) : 8, isOmni ? 10 : 15, parseInt(b.seconds) || 15);
+  let dur = Math.min(parseInt(b.seconds) || (durM ? parseInt(durM[1]) : 8), isOmni ? 10 : 15);
   if (!(dur >= 3)) dur = isOmni ? 8 : 5;
   let prompt = (pM ? pM[1] : planText).trim();
   const speechRaw = spM ? spM[1].trim() : '';
