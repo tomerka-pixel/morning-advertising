@@ -136,13 +136,14 @@ const SYSTEM_VIDEO = `אתה במאי ותסריטאי בכיר של פרסומ�
 - פסקה אחת צפופה וקולנועית: מה רואים, נושא/מוצר, תנועת מצלמה, תאורה, מצב רוח, קצב, והמותג במרכז.
 - שמור על המשכיות, סיים בקריאה חזותית לפעולה. התאם את הצפיפות למשך שנבחר. טקסט רץ, בלי מרקדאון ובלי כותרות.
 
-אם בחרת omni: כתוב ב-SPEECH_HE משפט קצר, טבעי ומדויק בעברית שהדמות אומרת, שמתאים למשך (בערך 2-4 שניות דיבור לכל 8 שניות). כתוב גם ב-PHONETIC תעתיק פונטי מדויק באותיות אנגלית של אותו משפט, איך הוא נשמע במבטא ישראלי מודרני (למשל "herayon" ל"הריון", "shalom" ל"שלום"), עם רווחים בין מילים. אם seedance: כתוב מקף יחיד בשני השדות.
+בשני הסוגים כתוב ב-SPEECH_HE את הטקסט המדובר בעברית: ב-UGC (omni) מה שהדמות אומרת אל המצלמה; בקולנועי (seedance) קריינות voiceover קצרה שמלווה את הסרטון. שמור על אורך שמתאים למשך (בערך 2 מילים לשנייה, שלא יחרוג מהאורך). כתוב ב-PHONETIC תעתיק פונטי מדויק באותיות אנגלית (למשל "herayon" ל"הריון", "shalom" ל"שלום"). כתוב ב-VOICE את מין הדובר/הקריין — female או male — שיתאים למין הדמות המרכזית שמופיעה בסצנה (ואם אין דמות ברורה, לפי קהל היעד).
 
 החזר בדיוק בפורמט הזה, בלי שום טקסט נוסף לפני או אחרי:
 MODEL: omni
 DURATION: 8
-SPEECH_HE: המשפט בעברית או -
-PHONETIC: the latin phonetic transliteration or -
+SPEECH_HE: הטקסט בעברית
+PHONETIC: the latin phonetic transliteration
+VOICE: female
 PROMPT:
 <the english cinematic prompt here>`;
 
@@ -161,8 +162,8 @@ function videoUserPrompt(b) {
 - הנחיות נוספות: ${b.extra || 'אין'}
 
 ${b.style === 'UGC אותנטי'
-  ? 'סוג הסרטון (חובה): UGC — דמות אמיתית שמדברת בעברית אל המצלמה, כמו המלצת לקוח. החזר MODEL: omni, וכתוב SPEECH_HE ו-PHONETIC.'
-  : 'סוג הסרטון (חובה): קולנועי/ויזואלי שמציג את המקום, המוצר והאווירה בתנועת מצלמה יפה, ללא דמות שמדברת וללא דיבור כלל. החזר MODEL: seedance, ו-SPEECH_HE=- ו-PHONETIC=-.'}`;
+  ? 'סוג הסרטון (חובה): UGC — דמות אמיתית שמדברת בעברית אל המצלמה, כמו המלצת לקוח. החזר MODEL: omni, וכתוב SPEECH_HE (מה שהדמות אומרת), PHONETIC, ו-VOICE (מין הדמות).'
+  : 'סוג הסרטון (חובה): קולנועי/ויזואלי שמציג את המקום, המוצר והאווירה בתנועת מצלמה יפה, ללא דמות שמדברת אל המצלמה. אבל כן כתוב קריינות voiceover קצרה בעברית ב-SPEECH_HE שתלווה את הסרטון ותתאים בדיוק לאורך, וכן PHONETIC ו-VOICE (female/male לפי מין הדמות המרכזית בסצנה). החזר MODEL: seedance.'}`;
 }
 
 async function nikud(text) {
@@ -196,12 +197,74 @@ function runHiggsfieldVideo(model, prompt, duration, aspect) {
   });
 }
 
+const HF_TTS_MODEL = ENV.HF_TTS_MODEL || 'inworld_text_to_speech';
+const VIDEO_OUT = path.join(ROOT, 'video-out');
+
+/* קריינות עברית: יוצר קובץ אודיו ב-Higgsfield (inworld, קול Yael/Oren). */
+function runHiggsfieldTTS(text, voice) {
+  return new Promise((resolve, reject) => {
+    const args = ['generate', 'create', HF_TTS_MODEL, '--prompt', text, '--voice', voice, '--wait', '--wait-timeout', '4m', '--json'];
+    let child;
+    try { child = spawn(HF_BIN, args, { cwd: ROOT }); }
+    catch (e) { return reject(e); }
+    let out = '', err = '';
+    child.stdout.on('data', d => out += d);
+    child.stderr.on('data', d => err += d);
+    child.on('error', e => reject(e));
+    child.on('close', code => {
+      const urls = out.match(/https?:\/\/[^\s"'\\)]+/g) || [];
+      const url = urls.reverse().find(u => /\.(mp3|wav|m4a|aac|ogg|flac)(\?|$)/i.test(u)) || urls[0];
+      if (code === 0 && url) resolve(url);
+      else reject(new Error((err || out || 'tts failed').slice(0, 300)));
+    });
+  });
+}
+
+async function fetchToFile(url, filePath) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('download failed ' + r.status);
+  fs.writeFileSync(filePath, Buffer.from(await r.arrayBuffer()));
+  return filePath;
+}
+
+function ffmpegRun(args) {
+  return new Promise((resolve, reject) => {
+    const p = spawn('ffmpeg', args);
+    let err = '';
+    p.stderr.on('data', d => err += d);
+    p.on('error', reject);
+    p.on('close', code => code === 0 ? resolve() : reject(new Error('ffmpeg ' + code + ': ' + err.slice(-200))));
+  });
+}
+
+/* מחבר קריינות עברית לסרטון Seedance: מוזיקת הסרטון נמוכה + קריינות ברורה. מחזיר נתיב מקומי מוגש. */
+async function addNarration(videoUrl, narration, voice, id) {
+  if (!fs.existsSync(VIDEO_OUT)) fs.mkdirSync(VIDEO_OUT, { recursive: true });
+  const vPath = path.join(VIDEO_OUT, id + '-v.mp4');
+  const aPath = path.join(VIDEO_OUT, id + '-a.mp3');
+  const outPath = path.join(VIDEO_OUT, id + '.mp4');
+  await fetchToFile(videoUrl, vPath);
+  const audioUrl = await runHiggsfieldTTS(narration, voice);
+  await fetchToFile(audioUrl, aPath);
+  try {
+    await ffmpegRun(['-y', '-i', vPath, '-i', aPath,
+      '-filter_complex', '[0:a]volume=0.22[bg];[1:a]volume=1.4[vo];[bg][vo]amix=inputs=2:duration=first:dropout_transition=0[a]',
+      '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-shortest', outPath]);
+  } catch (e) {
+    // אם לסרטון אין פס אודיו — מפה ישירות את הקריינות
+    await ffmpegRun(['-y', '-i', vPath, '-i', aPath, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-shortest', outPath]);
+  }
+  try { fs.unlinkSync(vPath); fs.unlinkSync(aPath); } catch (e) {}
+  return '/video-out/' + id + '.mp4';
+}
+
 async function generateVideo(b) {
   const planText = await runClaude(videoUserPrompt(b), SYSTEM_VIDEO);
   const isOmni = b.style === 'UGC אותנטי'; // הסגנון קובע את המודל (מחייב), לא בחירת Claude
   const durM = planText.match(/DURATION:\s*(\d+)/i);
   const spM = planText.match(/SPEECH_HE:\s*(.+)/);
   const phM = planText.match(/PHONETIC:\s*(.+)/);
+  const voM = planText.match(/VOICE:\s*([^\n]+)/i);
   const pM = planText.match(/PROMPT:\s*([\s\S]*)$/i);
   let dur = Math.min(parseInt(b.seconds) || (durM ? parseInt(durM[1]) : 8), isOmni ? 10 : 15);
   if (!(dur >= 3)) dur = isOmni ? 8 : 5;
@@ -210,18 +273,36 @@ async function generateVideo(b) {
   const speechHe = (speechRaw && speechRaw !== '-') ? speechRaw : '';
   const phoneticRaw = phM ? phM[1].trim() : '';
   const phonetic = (phoneticRaw && phoneticRaw !== '-') ? phoneticRaw : '';
+  const voiceRaw = voM ? voM[1] : '';
+  const isFemale = /female|אישה|נקבה/i.test(voiceRaw);
+  const isMale = !isFemale && /male|גבר|זכר/i.test(voiceRaw);
+  const voice = isMale ? 'Oren (he)' : 'Yael (he)'; // ברירת מחדל: קול אישה
   const model = isOmni ? HF_VIDEO_OMNI : HF_VIDEO_SEEDANCE;
-  let vocalized = '';
-  if (isOmni && speechHe) {
-    vocalized = await nikud(speechHe);
-    vocalized = vocalized.replace(/מוּבּ/g, 'מוּב'); // מוּבּ → מוּב : שם המותג Move = moov (ב' רפה), לא moob
-    prompt += `\nThe on-screen character speaks these exact Hebrew words in natural modern Israeli Hebrew, clearly and lip-synced: "${vocalized}"`;
-    if (phonetic) prompt += `\nUse this Latin phonetic transcription ONLY as a pronunciation guide for the Hebrew line above (do NOT read the Latin letters aloud, they are not part of the speech): ${phonetic}`;
-    prompt += `\nBrand pronunciation: pronounce the brand name "${BIZ.name}" in English. The word "Move" sounds like "moov" (long oo, soft V), never "moob" and never "mov".`;
-  }
   const ar = b.format === '16:9' ? '16:9' : '9:16';
+
+  let vocalized = '';
+  if (speechHe) { vocalized = (await nikud(speechHe)).replace(/מוּבּ/g, 'מוּב'); } // תיקון "מוב" (moov)
+
+  if (isOmni) {
+    // UGC: Omni מייצר וידאו עם הדמות מדברת ישירות
+    if (speechHe) {
+      prompt += `\nThe on-screen character speaks these exact Hebrew words in natural modern Israeli Hebrew, clearly and lip-synced: "${vocalized}"`;
+      if (phonetic) prompt += `\nUse this Latin phonetic transcription ONLY as a pronunciation guide for the Hebrew line above (do NOT read the Latin letters aloud, they are not part of the speech): ${phonetic}`;
+      prompt += `\nBrand pronunciation: pronounce the brand name "${BIZ.name}" in English. The word "Move" sounds like "moov" (long oo, soft V), never "moob" and never "mov".`;
+    }
+    const g = await runHiggsfieldVideo(model, prompt, dur, ar);
+    return { kind: 'video', url: g.url, took: g.took, model, seconds: dur, prompt, speech: speechHe, vocalized, phonetic };
+  }
+
+  // קולנועי (Seedance): מייצר וידאו, ואז מוסיף קריינות עברית (TTS) ומחבר עם ffmpeg
+  const t0 = Date.now();
   const g = await runHiggsfieldVideo(model, prompt, dur, ar);
-  return { kind: 'video', url: g.url, took: g.took, model, seconds: dur, prompt, speech: speechHe, vocalized, phonetic };
+  let url = g.url, narrated = false;
+  if (speechHe) {
+    try { url = await addNarration(g.url, vocalized, voice, 'vid' + Date.now()); narrated = true; }
+    catch (e) { /* אם הקריינות/החיבור נכשל — מחזירים את הסרטון בלי קריינות */ }
+  }
+  return { kind: 'video', url, took: Math.round((Date.now() - t0) / 1000), model, seconds: dur, prompt, speech: speechHe, vocalized, phonetic, voice: isMale ? 'Oren' : 'Yael', narrated };
 }
 
 /* אחסון קריאייטיבים בצד השרת: קובץ JSON + הורדת התמונות לדיסק כך שיישמרו לתמיד. */
