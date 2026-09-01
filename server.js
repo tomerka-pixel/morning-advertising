@@ -9,6 +9,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
+let sharp = null; try { sharp = require('sharp'); } catch (e) { /* כתוביות ידרשו sharp */ }
 
 const ENV = process['env'] || {};
 const ROOT = __dirname;
@@ -237,24 +238,87 @@ function ffmpegRun(args) {
   });
 }
 
-/* מחבר קריינות עברית לסרטון Seedance: מוזיקת הסרטון נמוכה + קריינות ברורה. מחזיר נתיב מקומי מוגש. */
-async function addNarration(videoUrl, narration, voice, id) {
+/* מחלק טקסט לכתוביות מתוזמנות לאורך משך הסרטון. */
+function captionSegments(text, dur) {
+  const clean = (text || '').replace(/\s+/g, ' ').trim();
+  if (!clean) return [];
+  let parts = clean.split(/(?<=[.!?])\s+/).flatMap(s => {
+    if (s.length <= 38) return [s];
+    const words = s.split(' '); const chunks = []; let cur = '';
+    for (const w of words) { if ((cur + ' ' + w).trim().length > 38) { if (cur) chunks.push(cur.trim()); cur = w; } else cur = (cur + ' ' + w).trim(); }
+    if (cur) chunks.push(cur.trim());
+    return chunks;
+  }).filter(Boolean);
+  if (!parts.length) parts = [clean];
+  const total = parts.reduce((a, p) => a + p.length, 0) || 1;
+  let t = 0; const segs = [];
+  for (const p of parts) { const d = Math.max(0.8, dur * p.length / total); segs.push({ start: +t.toFixed(2), end: +Math.min(dur, t + d).toFixed(2), text: p }); t += d; }
+  segs[segs.length - 1].end = dur;
+  return segs;
+}
+
+/* מרנדר שורת כתובית עברית ל-PNG שקוף (טקסט לבן עם קו מתאר שחור, RTL). */
+async function renderCaptionPng(text, width, outPath) {
+  const fsz = Math.max(16, Math.round(width * 0.055));
+  const pad = Math.round(fsz * 0.5);
+  const h = fsz + pad * 2;
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const svg = `<svg width="${width}" height="${h}" xmlns="http://www.w3.org/2000/svg"><text x="${width / 2}" y="${Math.round(h - pad * 0.8)}" text-anchor="middle" direction="rtl" font-family="Arial Hebrew, Arial, sans-serif" font-weight="bold" font-size="${fsz}" fill="#ffffff" stroke="#000000" stroke-width="${Math.max(2, Math.round(fsz * 0.11))}" style="paint-order:stroke">${esc(text)}</text></svg>`;
+  await sharp(Buffer.from(svg)).png().toFile(outPath);
+}
+
+function ffprobeSize(file) {
+  return new Promise((resolve) => {
+    const p = spawn('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0:s=x', file]);
+    let out = ''; p.stdout.on('data', d => out += d);
+    p.on('close', () => { const m = out.trim().match(/(\d+)x(\d+)/); resolve(m ? { w: +m[1], h: +m[2] } : { w: 720, h: 1280 }); });
+    p.on('error', () => resolve({ w: 720, h: 1280 }));
+  });
+}
+
+/* מוריד סרטון, אופציונלית ממקסס קריינות ואופציונלית צורב כתוביות עברית. מחזיר נתיב מקומי מוגש. */
+async function finalizeVideo(videoUrl, opts, id) {
   if (!fs.existsSync(VIDEO_OUT)) fs.mkdirSync(VIDEO_OUT, { recursive: true });
-  const vPath = path.join(VIDEO_OUT, id + '-v.mp4');
-  const aPath = path.join(VIDEO_OUT, id + '-a.mp3');
+  const vPath = path.join(VIDEO_OUT, id + '-src.mp4');
   const outPath = path.join(VIDEO_OUT, id + '.mp4');
   await fetchToFile(videoUrl, vPath);
-  const audioUrl = await runHiggsfieldTTS(narration, voice);
-  await fetchToFile(audioUrl, aPath);
-  try {
-    await ffmpegRun(['-y', '-i', vPath, '-i', aPath,
-      '-filter_complex', '[0:a]volume=0.22[bg];[1:a]volume=1.4[vo];[bg][vo]amix=inputs=2:duration=first:dropout_transition=0[a]',
-      '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-shortest', outPath]);
-  } catch (e) {
-    // אם לסרטון אין פס אודיו — מפה ישירות את הקריינות
-    await ffmpegRun(['-y', '-i', vPath, '-i', aPath, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-shortest', outPath]);
+  let aPath = null;
+  if (opts.audioUrl) { aPath = path.join(VIDEO_OUT, id + '-a.mp3'); await fetchToFile(opts.audioUrl, aPath); }
+  const segs = (opts.captionText && sharp) ? captionSegments(opts.captionText, opts.dur) : [];
+  const capPaths = [];
+  if (segs.length) { const size = await ffprobeSize(vPath); for (let i = 0; i < segs.length; i++) { const p = path.join(VIDEO_OUT, id + '-c' + i + '.png'); await renderCaptionPng(segs[i].text, size.w, p); capPaths.push(p); } }
+
+  const inputs = ['-y', '-i', vPath];
+  if (aPath) inputs.push('-i', aPath);
+  capPaths.forEach(p => inputs.push('-i', p));
+  const capStart = aPath ? 2 : 1;
+  const fc = [];
+  let amap;
+  if (aPath) { fc.push(`[0:a]volume=0.22[bg];[1:a]volume=1.5[vo];[bg][vo]amix=inputs=2:duration=first:dropout_transition=0[aout]`); amap = '[aout]'; }
+  else amap = '0:a?';
+  let vlab = '[0:v]';
+  for (let i = 0; i < segs.length; i++) {
+    const out = (i === segs.length - 1) ? '[vout]' : `[v${i}]`;
+    fc.push(`${vlab}[${capStart + i}:v]overlay=x=(W-w)/2:y=H-h-(H*0.05):enable='between(t,${segs[i].start},${segs[i].end})'${out}`);
+    vlab = out;
   }
-  try { fs.unlinkSync(vPath); fs.unlinkSync(aPath); } catch (e) {}
+  const args = [...inputs];
+  if (fc.length) args.push('-filter_complex', fc.join(';'));
+  args.push('-map', segs.length ? '[vout]' : '0:v', '-map', amap);
+  args.push(...(segs.length ? ['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'veryfast'] : ['-c:v', 'copy']));
+  args.push('-shortest', outPath);
+  try { await ffmpegRun(args); }
+  catch (e) {
+    // fallback: אם המיקס נכשל (אולי אין אודיו במקור), בלי mix
+    const a2 = [...inputs];
+    const fc2 = fc.filter(x => !x.includes('amix'));
+    if (fc2.length) a2.push('-filter_complex', fc2.join(';'));
+    a2.push('-map', segs.length ? '[vout]' : '0:v');
+    if (aPath) a2.push('-map', '1:a'); else a2.push('-map', '0:a?');
+    a2.push(...(segs.length ? ['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'veryfast'] : ['-c:v', 'copy']), '-shortest', outPath);
+    await ffmpegRun(a2);
+  }
+  try { fs.unlinkSync(vPath); if (aPath) fs.unlinkSync(aPath); capPaths.forEach(p => fs.unlinkSync(p)); } catch (e) {}
   return '/video-out/' + id + '.mp4';
 }
 
@@ -291,18 +355,27 @@ async function generateVideo(b) {
       prompt += `\nBrand pronunciation: pronounce the brand name "${BIZ.name}" in English. The word "Move" sounds like "moov" (long oo, soft V), never "moob" and never "mov".`;
     }
     const g = await runHiggsfieldVideo(model, prompt, dur, ar);
-    return { kind: 'video', url: g.url, took: g.took, model, seconds: dur, prompt, speech: speechHe, vocalized, phonetic };
+    let url = g.url, captioned = false;
+    if (b.captions !== false && speechHe) {
+      try { url = await finalizeVideo(g.url, { audioUrl: null, captionText: speechHe, dur }, 'vid' + Date.now()); captioned = true; }
+      catch (e) { url = g.url; }
+    }
+    return { kind: 'video', url, took: g.took, model, seconds: dur, prompt, speech: speechHe, vocalized, phonetic, captioned };
   }
 
-  // קולנועי (Seedance): מייצר וידאו, ואז מוסיף קריינות עברית (TTS) ומחבר עם ffmpeg
+  // קולנועי (Seedance): וידאו + קריינות עברית (TTS) + כתוביות צרובות, הכל ב-ffmpeg
   const t0 = Date.now();
   const g = await runHiggsfieldVideo(model, prompt, dur, ar);
-  let url = g.url, narrated = false;
+  let url = g.url, narrated = false, captioned = false;
+  const wantCaptions = b.captions !== false && !!speechHe;
   if (speechHe) {
-    try { url = await addNarration(g.url, vocalized, voice, 'vid' + Date.now()); narrated = true; }
-    catch (e) { /* אם הקריינות/החיבור נכשל — מחזירים את הסרטון בלי קריינות */ }
+    try {
+      const audioUrl = await runHiggsfieldTTS(vocalized, voice);
+      url = await finalizeVideo(g.url, { audioUrl, captionText: wantCaptions ? speechHe : '', dur }, 'vid' + Date.now());
+      narrated = true; captioned = wantCaptions;
+    } catch (e) { /* fallback: סרטון בלי קריינות/כתוביות */ }
   }
-  return { kind: 'video', url, took: Math.round((Date.now() - t0) / 1000), model, seconds: dur, prompt, speech: speechHe, vocalized, phonetic, voice: isMale ? 'Oren' : 'Yael', narrated };
+  return { kind: 'video', url, took: Math.round((Date.now() - t0) / 1000), model, seconds: dur, prompt, speech: speechHe, vocalized, phonetic, voice: isMale ? 'Oren' : 'Yael', narrated, captioned };
 }
 
 /* אחסון קריאייטיבים בצד השרת: קובץ JSON + הורדת התמונות לדיסק כך שיישמרו לתמיד. */
