@@ -153,6 +153,7 @@ function videoUserPrompt(b) {
 - טון: ${b.tone || 'לא צוין'}
 - קהל יעד: ${b.audience || 'קהל רחב'}
 - מה לקדם / הצעה: ${b.offer || 'אין'}
+- סגנון מבוקש: ${b.style || 'לא צוין'} (סגנון "UGC אותנטי" = דמות שמדברת למצלמה, בחר omni)
 - אורך מבוקש: עד ${dur} שניות
 - פורמט: ${b.format || '9:16'}
 - הנחיות נוספות: ${b.extra || 'אין'}`;
@@ -201,7 +202,7 @@ async function generateVideo(b) {
   const speechHe = (speechRaw && speechRaw !== '-') ? speechRaw : '';
   const model = isOmni ? HF_VIDEO_OMNI : HF_VIDEO_SEEDANCE;
   let vocalized = '';
-  if (isOmni && speechHe) { vocalized = await nikud(speechHe); prompt += `\nThe on-screen character speaks these exact Hebrew words, clearly and lip-synced: "${vocalized}"`; }
+  if (isOmni && speechHe) { vocalized = await nikud(speechHe); prompt += `\nThe on-screen character speaks these exact Hebrew words in natural modern Israeli Hebrew, pronounced clearly and lip-synced, carefully following the vowel marks (niqqud) for correct pronunciation: "${vocalized}"`; }
   const ar = b.format === '16:9' ? '16:9' : '9:16';
   const g = await runHiggsfieldVideo(model, prompt, dur, ar);
   return { kind: 'video', url: g.url, took: g.took, model, seconds: dur, prompt, speech: speechHe, vocalized };
