@@ -43,12 +43,30 @@ const SYSTEM = `את/ה קופירייטר/ית בכיר/ה בעברית, מומ
 - אין להמציא נתונים, אחוזים, המלצות לקוח או עובדות שלא נמסרו.
 - החזר אך ורק את טקסט הפוסט (כולל האשטאגים אם התבקשו). בלי כותרות, בלי הסברים, בלי מרכאות עוטפות.`;
 
+/* הנחיית מערכת ייעודית לטקסט של מודעה ממומנת (קצר, חד, מוכר) — נפרד מפוסט אורגני. */
+const SYSTEM_AD = `את/ה קופירייטר/ית בכיר/ה בעברית, מומחה/ית לכתיבת טקסטים למודעות ממומנות (פייסבוק, אינסטגרם, גוגל).
+המשימה: לכתוב טקסט קצר וחד למודעה, שמלווה קריאייטיב חזותי ומניע להמרה מיידית.
+
+מבנה נדרש (בדיוק כך, שורות נפרדות):
+- שורה 1: כותרת (Headline) קצרה ומגנטית, עד 6 מילים. זו האמירה שעוצרת את הגלילה.
+- 1 עד 2 שורות גוף קצרות: תועלת מרכזית וההצעה, בגובה העיניים.
+- שורה אחרונה: קריאה לפעולה חדה וברורה.
+
+כללים:
+- קצר ותכליתי. מודעה, לא מאמר. סה"כ עד ~40 מילים.
+- התאם לקהל היעד ולמה שרוצים לקדם.
+- אימוג'י לפי הבקשה: "בלי" = אף אחד; "מדוד" = 1–2; "הרבה" = מעט יותר, בטעם.
+- בלי האשטאגים (זו מודעה, לא פוסט).
+- עברית תקנית, יצירתית, בלי קלישאות שחוקות ובלי ניסוחים גנריים של בינה מלאכותית.
+- אין מקף ארוך (—). אין אנגלית מלבד שם המותג. אין להמציא נתונים או המלצות.
+- החזר אך ורק את טקסט המודעה (כותרת + גוף + קריאה לפעולה), בלי כותרות מטא, הסברים או מרכאות עוטפות.`;
+
 function buildPrompt(b) {
   const biz = b.business || {};
   const yn = v => v ? 'כן' : 'לא';
-  return `כתוב פוסט לפי המאפיינים הבאים:
+  return `כתוב ${b.type === 'ad' ? 'טקסט למודעה' : 'פוסט'} לפי המאפיינים הבאים:
 - עסק: ${biz.name || ''} — ${biz.field || ''}, ${biz.city || ''}. אופי: ${biz.vibe || ''}. אתר: ${biz.website || ''}
-- מטרת הפוסט: ${b.goal || 'לא צוין'}
+- מטרה: ${b.goal || 'לא צוין'}
 - טון: ${b.tone || 'לא צוין'}
 - מסגרת כתיבה: ${b.framework || 'AIDA'}
 - פלטפורמת יעד: ${b.platform || 'אינסטגרם'}
@@ -56,14 +74,13 @@ function buildPrompt(b) {
 - הצעה / הטבה: ${b.offer || 'אין הצעה ספציפית'}
 - קריאה לפעולה: ${b.cta || 'קביעת שיעור היכרות'}
 - אורך: ${b.length || 'בינוני'}
-- כמות אימוג'י: ${b.emoji || 'מדוד'}
-- האשטאגים: ${yn(b.hashtags)}
+- כמות אימוג'י: ${b.emoji || 'מדוד'}${b.type === 'ad' ? '' : '\n- האשטאגים: ' + yn(b.hashtags)}
 - הנחיות נוספות: ${b.extra || 'אין'}`;
 }
 
-function runClaude(userPrompt) {
+function runClaude(userPrompt, system) {
   return new Promise((resolve, reject) => {
-    const args = ['-p', '--output-format', 'text', '--append-system-prompt', SYSTEM];
+    const args = ['-p', '--output-format', 'text', '--append-system-prompt', system || SYSTEM];
     if (CLAUDE_MODEL) args.push('--model', CLAUDE_MODEL);
     args.push(userPrompt);
     let child;
@@ -124,7 +141,7 @@ http.createServer((req, res) => {
     req.on('end', async () => {
       try {
         const brief = JSON.parse(body || '{}');
-        const text = await runClaude(buildPrompt(brief));
+        const text = await runClaude(buildPrompt(brief), brief.type === 'ad' ? SYSTEM_AD : SYSTEM);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ text }));
       } catch (e) {
