@@ -15,6 +15,8 @@ const ROOT = __dirname;
 const PORT = ENV.PORT || 8787;
 const CLAUDE_BIN = ENV.CLAUDE_BIN || 'claude';
 const CLAUDE_MODEL = ENV.CLAUDE_MODEL || '';
+const HF_BIN = ENV.HF_BIN || 'higgsfield';
+const HF_IMAGE_MODEL = ENV.HF_IMAGE_MODEL || 'gpt_image_2';
 const MIME = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.svg':'image/svg+xml', '.json':'application/json; charset=utf-8', '.ico':'image/x-icon' };
 
 /* ה"סקיל": הנחיית המערכת של הקופירייטר. מבוסס מסגרות מוכחות (AIDA, בעיה-פתרון, סטוריטלינג). */
@@ -77,6 +79,28 @@ function runClaude(userPrompt) {
   });
 }
 
+/* יצירת מודעת תמונה אמיתית עם היגספילד (GPT Image 2) דרך ה-CLI (חשבון+קרדיטים, בלי מפתח API). */
+function runHiggsfield(model, prompt, aspect) {
+  return new Promise((resolve, reject) => {
+    const args = ['generate', 'create', model, '--prompt', prompt, '--wait', '--wait-timeout', '5m', '--json'];
+    if (aspect) args.push('--aspect_ratio', aspect);
+    const t0 = Date.now();
+    let child;
+    try { child = spawn(HF_BIN, args, { cwd: ROOT }); }
+    catch (e) { return reject(e); }
+    let out = '', err = '';
+    child.stdout.on('data', d => out += d);
+    child.stderr.on('data', d => err += d);
+    child.on('error', e => reject(e));
+    child.on('close', code => {
+      const urls = out.match(/https?:\/\/[^\s"'\\)]+/g) || [];
+      const url = urls.reverse().find(u => /\.(png|jpg|jpeg|webp|avif)(\?|$)/i.test(u)) || urls[0];
+      if (code === 0 && url) resolve({ url, took: Math.round((Date.now() - t0) / 1000) });
+      else reject(new Error((err || out || ('higgsfield exited ' + code)).slice(0, 300)));
+    });
+  });
+}
+
 function serveStatic(req, res) {
   let p = decodeURIComponent(req.url.split('?')[0]);
   if (p === '/') p = '/demo.html';
@@ -103,6 +127,23 @@ http.createServer((req, res) => {
         const text = await runClaude(buildPrompt(brief));
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ text }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: String(e.message || e) }));
+      }
+    });
+    return;
+  }
+  if (req.url === '/api/generate' && req.method === 'POST') {
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 1e6) req.destroy(); });
+    req.on('end', async () => {
+      try {
+        const b = JSON.parse(body || '{}');
+        if (b.kind && b.kind !== 'image') throw new Error('כרגע נתמכת יצירת מודעת תמונה בלבד במצב חי');
+        const g = await runHiggsfield(HF_IMAGE_MODEL, b.prompt || '', b.format || '');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ kind: 'image', url: g.url, took: g.took, model: HF_IMAGE_MODEL }));
       } catch (e) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: String(e.message || e) }));
