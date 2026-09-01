@@ -17,6 +17,8 @@ const CLAUDE_BIN = ENV.CLAUDE_BIN || 'claude';
 const CLAUDE_MODEL = ENV.CLAUDE_MODEL || '';
 const HF_BIN = ENV.HF_BIN || 'higgsfield';
 const HF_IMAGE_MODEL = ENV.HF_IMAGE_MODEL || 'gpt_image_2';
+const HF_RESOLUTION = ENV.HF_RESOLUTION || '1k'; // 1k=4.5 קרדיטים, 2k=8.5
+const HF_QUALITY = ENV.HF_QUALITY || 'high';
 const MIME = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.svg':'image/svg+xml', '.json':'application/json; charset=utf-8', '.ico':'image/x-icon' };
 
 /* ה"סקיל": הנחיית המערכת של הקופירייטר. מבוסס מסגרות מוכחות (AIDA, בעיה-פתרון, סטוריטלינג). */
@@ -99,7 +101,7 @@ function runClaude(userPrompt, system) {
 /* יצירת מודעת תמונה אמיתית עם היגספילד (GPT Image 2) דרך ה-CLI (חשבון+קרדיטים, בלי מפתח API). */
 function runHiggsfield(model, prompt, aspect) {
   return new Promise((resolve, reject) => {
-    const args = ['generate', 'create', model, '--prompt', prompt, '--wait', '--wait-timeout', '5m', '--json'];
+    const args = ['generate', 'create', model, '--prompt', prompt, '--resolution', HF_RESOLUTION, '--quality', HF_QUALITY, '--wait', '--wait-timeout', '5m', '--json'];
     if (aspect) args.push('--aspect_ratio', aspect);
     const t0 = Date.now();
     let child;
