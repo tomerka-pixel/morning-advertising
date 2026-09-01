@@ -210,8 +210,10 @@ async function generateVideo(b) {
   let vocalized = '';
   if (isOmni && speechHe) {
     vocalized = await nikud(speechHe);
+    vocalized = vocalized.replace(/מוּבּ/g, 'מוּב'); // מוּבּ → מוּב : שם המותג Move = moov (ב' רפה), לא moob
     prompt += `\nThe on-screen character speaks these exact Hebrew words in natural modern Israeli Hebrew, clearly and lip-synced: "${vocalized}"`;
     if (phonetic) prompt += `\nUse this Latin phonetic transcription ONLY as a pronunciation guide for the Hebrew line above (do NOT read the Latin letters aloud, they are not part of the speech): ${phonetic}`;
+    prompt += `\nBrand pronunciation: pronounce the brand name "${BIZ.name}" in English. The word "Move" sounds like "moov" (long oo, soft V), never "moob" and never "mov".`;
   }
   const ar = b.format === '16:9' ? '16:9' : '9:16';
   const g = await runHiggsfieldVideo(model, prompt, dur, ar);
