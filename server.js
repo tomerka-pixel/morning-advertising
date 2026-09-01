@@ -439,7 +439,7 @@ http.createServer(async (req, res) => {
   }
   if (req.url === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ live: true, engine: 'claude' }));
+    return res.end(JSON.stringify({ live: true, engine: 'claude', version: 'v6-cinematic-nopeople' }));
   }
   if (req.url === '/api/post' && req.method === 'POST') {
     let body = '';
