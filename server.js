@@ -21,7 +21,8 @@ const HF_RESOLUTION = ENV.HF_RESOLUTION || '1k'; // 1k=זול יותר, 2k=יק�
 const HF_QUALITY = ENV.HF_QUALITY || 'high'; // 1k high=4.5 קרדיטים, 1k medium=1.5, 2k high=8.5
 const HF_VIDEO_OMNI = ENV.HF_VIDEO_OMNI || 'gemini_omni_flash_1_1'; // דיבור עברי, עד 10ש׳
 const HF_VIDEO_SEEDANCE = ENV.HF_VIDEO_SEEDANCE || 'seedance_2_0'; // קולנועי, עד 15ש׳
-const HF_VIDEO_RES = ENV.HF_VIDEO_RES || '720p';
+const HF_VIDEO_RES_OMNI = ENV.HF_VIDEO_RES_OMNI || '360p';      // הנמוך ביותר ב-Omni (חסכוני לבדיקות)
+const HF_VIDEO_RES_SEEDANCE = ENV.HF_VIDEO_RES_SEEDANCE || '480p'; // הנמוך ביותר ב-Seedance
 const MIME = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.svg':'image/svg+xml', '.json':'application/json; charset=utf-8', '.ico':'image/x-icon' };
 
 /* ה"סקיל": הנחיית המערכת של הקופירייטר. מבוסס מסגרות מוכחות (AIDA, בעיה-פתרון, סטוריטלינג). */
@@ -171,7 +172,8 @@ async function nikud(text) {
 
 function runHiggsfieldVideo(model, prompt, duration, aspect) {
   return new Promise((resolve, reject) => {
-    const args = ['generate', 'create', model, '--prompt', prompt, '--duration', String(duration), '--aspect_ratio', aspect, '--resolution', HF_VIDEO_RES, '--wait', '--wait-timeout', '8m', '--json'];
+    const res = model === HF_VIDEO_OMNI ? HF_VIDEO_RES_OMNI : HF_VIDEO_RES_SEEDANCE;
+    const args = ['generate', 'create', model, '--prompt', prompt, '--duration', String(duration), '--aspect_ratio', aspect, '--resolution', res, '--wait', '--wait-timeout', '8m', '--json'];
     if (model === HF_VIDEO_OMNI) args.push('--mode', 'text-to-video');
     const t0 = Date.now();
     let child;
