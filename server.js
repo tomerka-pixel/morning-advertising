@@ -133,10 +133,10 @@ const SYSTEM_VIDEO = `אתה במאי ותסריטאי בכיר של פרסומ�
 - "seedance" — אם הפרסומת ויזואלית/קולנועית: מוצר, תנועה, אווירה, אסתטיקה, בלי דיבור בעברית. עד 15 שניות, כולל מוזיקה ואפקטים.
 ברירת מחדל כשלא ברור: seedance.
 
-הפרומפט (PROMPT) באנגלית בלבד (המודלים מאומנים על אנגלית):
-- פסקה אחת צפופה וקולנועית: מה רואים, נושא/מוצר, תנועת מצלמה, תאורה, מצב רוח, קצב, והמותג במרכז.
-- שמור על המשכיות, סיים בקריאה חזותית לפעולה. התאם את הצפיפות למשך שנבחר. טקסט רץ, בלי מרקדאון ובלי כותרות.
-- בטיחות תוכן (חשוב מאוד): כתוב פרומפט מכובד ומקצועי בלבד. הימנע לחלוטין מתיאורי גוף, מבגדים חושפניים או צמודים, מקלוז-אפ לגוף, ומכל תיאור שעלול להיתפס כלא-הולם ע"י מסנני התוכן. התמקד במרחב, בציוד, בתנועה, באור ובאווירה. אם מופיעים אנשים — לבושים בצניעות (חולצה/טופ מלא ומכנסיים), בצילום מכבד ומרחוק (wide/medium), בלי דגש על הגוף.
+הפרומפט (PROMPT) באנגלית בלבד, מובנה לפי שיטת commercial-pipeline (סצנה אחת קצרה), עם הסעיפים האלה כטקסט רץ:
+- SCENE: הקונספט במשפט. LOCATION: המרחב, אזורים ורקע חי. CAMERA: תנועת מצלמה אחת רציפה (every shot moves, dolly/crane/push-in). ACTION: מה קורה לאורך השניות, מתחיל ישר בפעולה בלי הקדמה. LIGHT: מצב תאורה דומיננטי. AUDIO: פס קול קצר (מוזיקה/אמביינט). POSITIVE LOCKS: חוקים קשיחים. סיום: vertical 9:16, cinematic, warm color grade, NON-IP, no on-screen text.
+- התאם את הצפיפות למשך שנבחר. בלי מרקדאון ובלי כותרות מטא.
+- בטיחות תוכן (חובה): כלול ב-POSITIVE LOCKS את המשפט הבא מילה במילה, כי מסנני התוכן רגישים לתוכן כושר: "Everyone is fully and modestly dressed in loose, relaxed clothing (long-sleeve or full tops and long pants; no sports bras, no tight or revealing activewear). The camera focuses on faces, hands, gentle movement, equipment and the studio atmosphere, never on bodies. Wide and medium shots only, no body close-ups. Calm editorial wellness tone, no suggestive posing."
 
 בשני הסוגים כתוב ב-SPEECH_HE את הטקסט המדובר בעברית: ב-UGC (omni) מה שהדמות אומרת אל המצלמה; בקולנועי (seedance) קריינות voiceover קצרה שמלווה את הסרטון. שמור על אורך שמתאים למשך (בערך 2 מילים לשנייה, שלא יחרוג מהאורך). כתוב ב-PHONETIC תעתיק פונטי מדויק באותיות אנגלית (למשל "herayon" ל"הריון", "shalom" ל"שלום"). כתוב ב-VOICE את מין הדובר/הקריין — female או male — שיתאים למין הדמות המרכזית שמופיעה בסצנה (ואם אין דמות ברורה, לפי קהל היעד).
 
@@ -165,7 +165,7 @@ function videoUserPrompt(b) {
 
 ${b.style === 'UGC אותנטי'
   ? 'סוג הסרטון (חובה): UGC — דמות אמיתית שמדברת בעברית אל המצלמה, כמו המלצת לקוח. החזר MODEL: omni, וכתוב SPEECH_HE (מה שהדמות אומרת), PHONETIC, ו-VOICE (מין הדמות).'
-  : 'סוג הסרטון (חובה): קולנועי/ויזואלי שמציג את המרחב, הציוד, האור והאווירה של העסק (בפילאטיס: הסטודיו, מכשירי הרפורמר, אור בוקר רך, צמחייה, מרקמים, תנועה עדינה של הציוד). העדף סצנה ללא אנשים כלל; ואם בכל זאת מופיע אדם — במרחק, לבוש בצניעות ובגדים רפויים, בצילום רחב בלבד, בלי שום דגש או קלוז-אפ על הגוף. זה גם עוזר לעבור את מסנני התוכן. כתוב קריינות voiceover קצרה בעברית ב-SPEECH_HE שתלווה את הסרטון ותתאים בדיוק לאורך, וכן PHONETIC ו-VOICE (female/male לפי קהל היעד). החזר MODEL: seedance.'}`;
+  : 'סוג הסרטון (חובה): קולנועי/ויזואלי שמציג את המרחב, הציוד, האור והאווירה של העסק, לפי מבנה commercial-pipeline (SCENE/LOCATION/CAMERA/ACTION/LIGHT/AUDIO/POSITIVE LOCKS). מותר לכלול אנשים המתאמנים, כל עוד הם מצייתים לחלוטין לנעילות בטיחות התוכן (בגדים רפויים וצנועים, צילום רחב/בינוני, מיקוד בפנים/תנועה/ציוד ולא בגוף). כתוב קריינות voiceover קצרה בעברית ב-SPEECH_HE שתלווה את הסרטון ותתאים בדיוק לאורך, וכן PHONETIC ו-VOICE (female/male לפי קהל היעד). החזר MODEL: seedance.'}`;
 }
 
 async function nikud(text) {
@@ -439,7 +439,7 @@ http.createServer(async (req, res) => {
   }
   if (req.url === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ live: true, engine: 'claude', version: 'v6-cinematic-nopeople' }));
+    return res.end(JSON.stringify({ live: true, engine: 'claude', version: 'v7-skill-locks' }));
   }
   if (req.url === '/api/post' && req.method === 'POST') {
     let body = '';
