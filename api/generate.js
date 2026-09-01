@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
     const sub = await fetch(HF_BASE + HF_MODEL_PATH, {
       method: 'POST',
       headers: { Authorization: auth, 'content-type': 'application/json' },
-      body: JSON.stringify({ prompt: b.prompt || '', resolution: ENV.HF_RESOLUTION || '1k', quality: ENV.HF_QUALITY || 'high' })
+      body: JSON.stringify({ prompt: b.prompt || '', resolution: ENV.HF_RESOLUTION || '1k', quality: ENV.HF_QUALITY || 'medium' })
     });
     const sj = await sub.json().catch(() => ({}));
     if (!sub.ok) throw new Error(sj.detail || sj.error || ('שגיאת היגספילד ' + sub.status));

@@ -17,8 +17,8 @@ const CLAUDE_BIN = ENV.CLAUDE_BIN || 'claude';
 const CLAUDE_MODEL = ENV.CLAUDE_MODEL || '';
 const HF_BIN = ENV.HF_BIN || 'higgsfield';
 const HF_IMAGE_MODEL = ENV.HF_IMAGE_MODEL || 'gpt_image_2';
-const HF_RESOLUTION = ENV.HF_RESOLUTION || '1k'; // 1k=4.5 קרדיטים, 2k=8.5
-const HF_QUALITY = ENV.HF_QUALITY || 'high';
+const HF_RESOLUTION = ENV.HF_RESOLUTION || '1k'; // 1k=זול יותר, 2k=יקר
+const HF_QUALITY = ENV.HF_QUALITY || 'medium'; // 1k medium=1.5 קרדיטים, 1k high=4.5, 2k high=8.5
 const MIME = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.svg':'image/svg+xml', '.json':'application/json; charset=utf-8', '.ico':'image/x-icon' };
 
 /* ה"סקיל": הנחיית המערכת של הקופירייטר. מבוסס מסגרות מוכחות (AIDA, בעיה-פתרון, סטוריטלינג). */
