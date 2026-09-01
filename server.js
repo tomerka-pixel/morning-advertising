@@ -155,10 +155,14 @@ function videoUserPrompt(b) {
 - טון: ${b.tone || 'לא צוין'}
 - קהל יעד: ${b.audience || 'קהל רחב'}
 - מה לקדם / הצעה: ${b.offer || 'אין'}
-- סגנון מבוקש: ${b.style || 'לא צוין'} (סגנון "UGC אותנטי" = דמות שמדברת למצלמה, בחר omni)
+- סגנון מבוקש: ${b.style || 'לא צוין'}
 - אורך הסרטון: ${dur} שניות בדיוק (התאם את אורך הדיבור והתסריט בדיוק לאורך הזה)
 - פורמט: ${b.format || '9:16'}
-- הנחיות נוספות: ${b.extra || 'אין'}`;
+- הנחיות נוספות: ${b.extra || 'אין'}
+
+${b.style === 'UGC אותנטי'
+  ? 'סוג הסרטון (חובה): UGC — דמות אמיתית שמדברת בעברית אל המצלמה, כמו המלצת לקוח. החזר MODEL: omni, וכתוב SPEECH_HE ו-PHONETIC.'
+  : 'סוג הסרטון (חובה): קולנועי/ויזואלי שמציג את המקום, המוצר והאווירה בתנועת מצלמה יפה, ללא דמות שמדברת וללא דיבור כלל. החזר MODEL: seedance, ו-SPEECH_HE=- ו-PHONETIC=-.'}`;
 }
 
 async function nikud(text) {
@@ -194,7 +198,7 @@ function runHiggsfieldVideo(model, prompt, duration, aspect) {
 
 async function generateVideo(b) {
   const planText = await runClaude(videoUserPrompt(b), SYSTEM_VIDEO);
-  const isOmni = /MODEL:\s*omni/i.test(planText);
+  const isOmni = b.style === 'UGC אותנטי'; // הסגנון קובע את המודל (מחייב), לא בחירת Claude
   const durM = planText.match(/DURATION:\s*(\d+)/i);
   const spM = planText.match(/SPEECH_HE:\s*(.+)/);
   const phM = planText.match(/PHONETIC:\s*(.+)/);
