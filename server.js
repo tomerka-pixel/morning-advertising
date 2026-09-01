@@ -18,7 +18,7 @@ const CLAUDE_MODEL = ENV.CLAUDE_MODEL || '';
 const HF_BIN = ENV.HF_BIN || 'higgsfield';
 const HF_IMAGE_MODEL = ENV.HF_IMAGE_MODEL || 'gpt_image_2';
 const HF_RESOLUTION = ENV.HF_RESOLUTION || '1k'; // 1k=זול יותר, 2k=יקר
-const HF_QUALITY = ENV.HF_QUALITY || 'medium'; // 1k medium=1.5 קרדיטים, 1k high=4.5, 2k high=8.5
+const HF_QUALITY = ENV.HF_QUALITY || 'high'; // 1k high=4.5 קרדיטים, 1k medium=1.5, 2k high=8.5
 const MIME = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.svg':'image/svg+xml', '.json':'application/json; charset=utf-8', '.ico':'image/x-icon' };
 
 /* ה"סקיל": הנחיית המערכת של הקופירייטר. מבוסס מסגרות מוכחות (AIDA, בעיה-פתרון, סטוריטלינג). */
@@ -120,6 +120,25 @@ function runHiggsfield(model, prompt, aspect) {
   });
 }
 
+/* אחסון קריאייטיבים בצד השרת: קובץ JSON + הורדת התמונות לדיסק כך שיישמרו לתמיד. */
+const DATA_FILE = path.join(ROOT, 'creatives.json');
+const MEDIA_DIR = path.join(ROOT, 'creatives-media');
+function loadCreatives() { try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); } catch (e) { return []; } }
+function persistCreatives(a) { try { fs.writeFileSync(DATA_FILE, JSON.stringify(a)); } catch (e) {} }
+function readJson(req) { return new Promise(res => { let d = ''; req.on('data', c => { d += c; if (d.length > 5e6) req.destroy(); }); req.on('end', () => { try { res(JSON.parse(d || '{}')); } catch { res({}); } }); }); }
+async function downloadMedia(url, id) {
+  try {
+    if (!/^https?:\/\//.test(url || '')) return null;
+    const clean = url.split('?')[0];
+    const ext = ((clean.match(/\.(png|jpg|jpeg|webp|avif|mp4)$/i) || [null, 'png'])[1] || 'png').toLowerCase();
+    const r = await fetch(url); if (!r.ok) return null;
+    const buf = Buffer.from(await r.arrayBuffer());
+    if (!fs.existsSync(MEDIA_DIR)) fs.mkdirSync(MEDIA_DIR, { recursive: true });
+    fs.writeFileSync(path.join(MEDIA_DIR, id + '.' + ext), buf);
+    return '/creatives-media/' + id + '.' + ext;
+  } catch (e) { return null; }
+}
+
 function serveStatic(req, res) {
   let p = decodeURIComponent(req.url.split('?')[0]);
   if (p === '/') p = '/demo.html';
@@ -132,7 +151,32 @@ function serveStatic(req, res) {
   });
 }
 
-http.createServer((req, res) => {
+http.createServer(async (req, res) => {
+  if (req.url === '/api/creatives' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(loadCreatives()));
+  }
+  if (req.url === '/api/creatives' && req.method === 'POST') {
+    const rec = await readJson(req);
+    const arr = loadCreatives();
+    if (!(arr[0] && arr[0].text === (rec.text || '') && arr[0].url === (rec.url || ''))) {
+      if (rec.url) { const local = await downloadMedia(rec.url, rec.id || ('c' + Date.now())); if (local) { rec.origUrl = rec.url; rec.url = local; } }
+      arr.unshift(rec); persistCreatives(arr.slice(0, 500));
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ ok: true }));
+  }
+  if (req.url === '/api/creatives/delete' && req.method === 'POST') {
+    const body = await readJson(req);
+    persistCreatives(loadCreatives().filter(x => x.id !== body.id));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ ok: true }));
+  }
+  if (req.url === '/api/creatives/clear' && req.method === 'POST') {
+    persistCreatives([]);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ ok: true }));
+  }
   if (req.url === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({ live: true, engine: 'claude' }));
