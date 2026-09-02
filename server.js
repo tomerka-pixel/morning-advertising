@@ -354,7 +354,7 @@ async function generateVideo(b) {
       prompt += `\nThe on-screen character speaks these exact Hebrew words in natural modern Israeli Hebrew, clearly and lip-synced: "${vocalized}"`;
     } else {
       const nv = isMale ? 'male' : 'female';
-      prompt += `\nThere is NO person speaking on camera and no talking head. A warm, professional off-screen Hebrew VOICEOVER narrator (${nv} voice) says these exact Hebrew words in natural modern Israeli Hebrew, clearly and calmly, over the cinematic visuals: "${vocalized}"`;
+      prompt += `\nA warm, professional Hebrew VOICEOVER narrator (${nv} voice) speaks these exact Hebrew words in natural modern Israeli Hebrew, clearly and calmly, as an off-screen voiceover over the cinematic visuals: "${vocalized}". This is a narrated commercial (voiceover), not a selfie testimonial — people in the scene are not talking to the camera.`;
     }
     if (phonetic) prompt += `\nUse this Latin phonetic transcription ONLY as a pronunciation guide for the Hebrew line above (do NOT read the Latin letters aloud, they are not part of the speech): ${phonetic}`;
     prompt += `\nBrand pronunciation: pronounce the brand name "${BIZ.name}" in English. The word "Move" sounds like "moov" (long oo, soft V), never "moob" and never "mov".`;
@@ -439,6 +439,7 @@ http.createServer(async (req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ text }));
       } catch (e) {
+        console.error('[generate] error:', e && (e.stack || e.message || e));
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: String(e.message || e) }));
       }
@@ -461,6 +462,7 @@ http.createServer(async (req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ kind: 'image', url: g.url, took: g.took, model: HF_IMAGE_MODEL }));
       } catch (e) {
+        console.error('[generate] error:', e && (e.stack || e.message || e));
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: String(e.message || e) }));
       }
