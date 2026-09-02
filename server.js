@@ -182,19 +182,21 @@ function runHiggsfieldVideo(model, prompt, duration, aspect) {
     const res = model === HF_VIDEO_OMNI ? HF_VIDEO_RES_OMNI : HF_VIDEO_RES_SEEDANCE;
     const args = ['generate', 'create', model, '--prompt', prompt, '--duration', String(duration), '--aspect_ratio', aspect, '--resolution', res, '--wait', '--wait-timeout', '8m', '--json'];
     if (model === HF_VIDEO_OMNI) args.push('--mode', 'text-to-video');
+    console.log(`[higgsfield video] → submitting: model=${model} res=${res} dur=${duration} aspect=${aspect} promptLen=${prompt.length}`);
     const t0 = Date.now();
     let child;
     try { child = spawn(HF_BIN, args, { cwd: ROOT }); }
-    catch (e) { return reject(e); }
+    catch (e) { console.error('[higgsfield video] spawn failed:', e && (e.message || e)); return reject(e); }
     let out = '', err = '';
     child.stdout.on('data', d => out += d);
     child.stderr.on('data', d => err += d);
-    child.on('error', e => reject(e));
+    child.on('error', e => { console.error('[higgsfield video] process error:', e && (e.message || e)); reject(e); });
     child.on('close', code => {
       const urls = out.match(/https?:\/\/[^\s"'\\)]+/g) || [];
       const url = urls.reverse().find(u => /\.(mp4|webm|mov)(\?|$)/i.test(u)) || urls[0];
-      if (code === 0 && url) resolve({ url, took: Math.round((Date.now() - t0) / 1000) });
-      else if (/nsfw/i.test(err + ' ' + out)) reject(new Error('הסרטון סומן כלא-הולם ע"י מסנן התוכן (קורה לעיתים בסצנות כושר). נסו שוב, או שנו מעט את הסגנון/הבקשה.'));
+      if (code === 0 && url) { console.log(`[higgsfield video] ✓ ok in ${Math.round((Date.now() - t0) / 1000)}s → ${url}`); return resolve({ url, took: Math.round((Date.now() - t0) / 1000) }); }
+      console.error(`[higgsfield video] ✗ exit=${code} (no video url). STDERR: ${err.slice(-600) || '(empty)'} | STDOUT: ${out.slice(-600) || '(empty)'}`);
+      if (/nsfw/i.test(err + ' ' + out)) reject(new Error('הסרטון סומן כלא-הולם ע"י מסנן התוכן (קורה לעיתים בסצנות כושר). נסו שוב, או שנו מעט את הסגנון/הבקשה.'));
       else reject(new Error((err || out || ('higgsfield video exited ' + code)).slice(0, 300)));
     });
   });
@@ -323,7 +325,9 @@ async function finalizeVideo(videoUrl, opts, id) {
 }
 
 async function generateVideo(b) {
+  console.log(`[video] ▶ start: style="${b.style}" seconds=${b.seconds} — planning with Claude CLI...`);
   const planText = await runClaude(videoUserPrompt(b), SYSTEM_VIDEO);
+  console.log(`[video] plan received from Claude (${planText.length} chars)`);
   const isUGC = b.style === 'UGC אותנטי'; // UGC = דמות שמדברת (lip-sync ב-Omni); קולנועי = ויזואלי + קריינות בפוסט
   const durM = planText.match(/DURATION:\s*(\d+)/i);
   const spM = planText.match(/SPEECH_HE:\s*(.+)/);
