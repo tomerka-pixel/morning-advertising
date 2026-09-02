@@ -361,7 +361,9 @@ async function generateVideo(b) {
       prompt += `\nA warm, professional Hebrew VOICEOVER narrator (${nv} voice) speaks these exact Hebrew words in natural modern Israeli Hebrew, clearly and calmly, as an off-screen voiceover over the cinematic visuals: "${vocalized}". This is a narrated commercial (voiceover), not a selfie testimonial — people in the scene are not talking to the camera.`;
     }
     if (phonetic) prompt += `\nUse this Latin phonetic transcription ONLY as a pronunciation guide for the Hebrew line above (do NOT read the Latin letters aloud, they are not part of the speech): ${phonetic}`;
-    prompt += `\nBrand pronunciation: pronounce the brand name "${BIZ.name}" in English. The word "Move" sounds like "moov" (long oo, soft V), never "moob" and never "mov".`;
+    const bizName = (b.business && b.business.name) || 'Move';
+    prompt += `\nBrand pronunciation: pronounce the brand name "${bizName}" in English.`;
+    if (/move/i.test(bizName)) prompt += ` The word "Move" sounds like "moov" (long oo, soft V), never "moob" and never "mov".`;
   }
   const g = await runHiggsfieldVideo(model, prompt, dur, ar);
   let url = g.url, captioned = false;
