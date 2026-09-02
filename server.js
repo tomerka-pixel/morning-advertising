@@ -246,10 +246,10 @@ function ffmpegRun(args) {
 function captionSegments(text, dur) {
   const clean = (text || '').replace(/\s+/g, ' ').trim();
   if (!clean) return [];
-  // מקסימום 3 מילים בשורה (חלוקה לפי מילים, לא לפי משפטים)
+  // מקסימום 4 מילים בשורה (חלוקה לפי מילים, לא לפי משפטים)
   const words = clean.split(' ').filter(Boolean);
   let parts = [];
-  for (let i = 0; i < words.length; i += 3) parts.push(words.slice(i, i + 3).join(' '));
+  for (let i = 0; i < words.length; i += 4) parts.push(words.slice(i, i + 4).join(' '));
   parts = parts.filter(Boolean);
   if (!parts.length) parts = [clean];
   const total = parts.reduce((a, p) => a + p.length, 0) || 1;
