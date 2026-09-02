@@ -244,13 +244,11 @@ function ffmpegRun(args) {
 function captionSegments(text, dur) {
   const clean = (text || '').replace(/\s+/g, ' ').trim();
   if (!clean) return [];
-  let parts = clean.split(/(?<=[.!?])\s+/).flatMap(s => {
-    if (s.length <= 38) return [s];
-    const words = s.split(' '); const chunks = []; let cur = '';
-    for (const w of words) { if ((cur + ' ' + w).trim().length > 38) { if (cur) chunks.push(cur.trim()); cur = w; } else cur = (cur + ' ' + w).trim(); }
-    if (cur) chunks.push(cur.trim());
-    return chunks;
-  }).filter(Boolean);
+  // מקסימום 3 מילים בשורה (חלוקה לפי מילים, לא לפי משפטים)
+  const words = clean.split(' ').filter(Boolean);
+  let parts = [];
+  for (let i = 0; i < words.length; i += 3) parts.push(words.slice(i, i + 3).join(' '));
+  parts = parts.filter(Boolean);
   if (!parts.length) parts = [clean];
   const total = parts.reduce((a, p) => a + p.length, 0) || 1;
   let t = 0; const segs = [];
@@ -301,7 +299,7 @@ async function finalizeVideo(videoUrl, opts, id) {
   let vlab = '[0:v]';
   for (let i = 0; i < segs.length; i++) {
     const out = (i === segs.length - 1) ? '[vout]' : `[v${i}]`;
-    fc.push(`${vlab}[${capStart + i}:v]overlay=x=(W-w)/2:y=H-h-(H*0.05):enable='between(t,${segs[i].start},${segs[i].end})'${out}`);
+    fc.push(`${vlab}[${capStart + i}:v]overlay=x=(W-w)/2:y=(H-h)/2:enable='between(t,${segs[i].start},${segs[i].end})'${out}`);
     vlab = out;
   }
   const args = [...inputs];
@@ -349,35 +347,25 @@ async function generateVideo(b) {
   let vocalized = '';
   if (speechHe) { vocalized = (await nikud(speechHe)).replace(/מוּבּ/g, 'מוּב'); } // תיקון "מוב" (moov)
 
-  if (isUGC) {
-    // UGC: Omni מייצר וידאו עם הדמות מדברת ישירות
-    if (speechHe) {
-      prompt += `\nThe on-screen character speaks these exact Hebrew words in natural modern Israeli Hebrew, clearly and lip-synced: "${vocalized}"`;
-      if (phonetic) prompt += `\nUse this Latin phonetic transcription ONLY as a pronunciation guide for the Hebrew line above (do NOT read the Latin letters aloud, they are not part of the speech): ${phonetic}`;
-      prompt += `\nBrand pronunciation: pronounce the brand name "${BIZ.name}" in English. The word "Move" sounds like "moov" (long oo, soft V), never "moob" and never "mov".`;
-    }
-    const g = await runHiggsfieldVideo(model, prompt, dur, ar);
-    let url = g.url, captioned = false;
-    if (b.captions !== false && speechHe) {
-      try { url = await finalizeVideo(g.url, { audioUrl: null, captionText: speechHe, dur }, 'vid' + Date.now()); captioned = true; }
-      catch (e) { url = g.url; }
-    }
-    return { kind: 'video', url, took: g.took, model, seconds: dur, prompt, speech: speechHe, vocalized, phonetic, captioned };
-  }
-
-  // קולנועי (Seedance): וידאו + קריינות עברית (TTS) + כתוביות צרובות, הכל ב-ffmpeg
-  const t0 = Date.now();
-  const g = await runHiggsfieldVideo(model, prompt, dur, ar);
-  let url = g.url, narrated = false, captioned = false;
-  const wantCaptions = b.captions !== false && !!speechHe;
+  // בשני הסגנונות הדיבור/הקריינות נצרבים ישירות ביצירת Omni (לא TTS בפוסט):
+  // UGC = דמות שמדברת אל המצלמה בלייב-סינק; קולנועי = קריינות voiceover בעברית על ויזואל קולנועי בלי דובר על המסך
   if (speechHe) {
-    try {
-      const audioUrl = await runHiggsfieldTTS(vocalized, voice);
-      url = await finalizeVideo(g.url, { audioUrl, captionText: wantCaptions ? speechHe : '', dur }, 'vid' + Date.now());
-      narrated = true; captioned = wantCaptions;
-    } catch (e) { /* fallback: סרטון בלי קריינות/כתוביות */ }
+    if (isUGC) {
+      prompt += `\nThe on-screen character speaks these exact Hebrew words in natural modern Israeli Hebrew, clearly and lip-synced: "${vocalized}"`;
+    } else {
+      const nv = isMale ? 'male' : 'female';
+      prompt += `\nThere is NO person speaking on camera and no talking head. A warm, professional off-screen Hebrew VOICEOVER narrator (${nv} voice) says these exact Hebrew words in natural modern Israeli Hebrew, clearly and calmly, over the cinematic visuals: "${vocalized}"`;
+    }
+    if (phonetic) prompt += `\nUse this Latin phonetic transcription ONLY as a pronunciation guide for the Hebrew line above (do NOT read the Latin letters aloud, they are not part of the speech): ${phonetic}`;
+    prompt += `\nBrand pronunciation: pronounce the brand name "${BIZ.name}" in English. The word "Move" sounds like "moov" (long oo, soft V), never "moob" and never "mov".`;
   }
-  return { kind: 'video', url, took: Math.round((Date.now() - t0) / 1000), model, seconds: dur, prompt, speech: speechHe, vocalized, phonetic, voice: isMale ? 'Oren' : 'Yael', narrated, captioned };
+  const g = await runHiggsfieldVideo(model, prompt, dur, ar);
+  let url = g.url, captioned = false;
+  if (b.captions !== false && speechHe) {
+    try { url = await finalizeVideo(g.url, { audioUrl: null, captionText: speechHe, dur }, 'vid' + Date.now()); captioned = true; }
+    catch (e) { url = g.url; }
+  }
+  return { kind: 'video', url, took: g.took, model, seconds: dur, prompt, speech: speechHe, vocalized, phonetic, voice: isMale ? 'Oren' : 'Yael', narrated: !!speechHe, captioned };
 }
 
 /* אחסון קריאייטיבים בצד השרת: קובץ JSON + הורדת התמונות לדיסק כך שיישמרו לתמיד. */
