@@ -130,8 +130,8 @@ const SYSTEM_VIDEO = `אתה במאי ותסריטאי בכיר של פרסומ�
 
 בחירת מודל (קריטי, החלט לפי הבקשה):
 - "omni" — אם הפרסומת מרוויחה מדמות שמדברת בעברית אל הצופה: דובר/ת, המלצת לקוח, פנייה ישירה, הסבר מדובר. מקסימום 10 שניות.
-- "seedance" — אם הפרסומת ויזואלית/קולנועית: מוצר, תנועה, אווירה, אסתטיקה, בלי דיבור בעברית. עד 15 שניות, כולל מוזיקה ואפקטים.
-ברירת מחדל כשלא ברור: seedance.
+- "seedance" — אם הפרסומת ויזואלית/קולנועית: מוצר, תנועה, אווירה, אסתטיקה, בלי דיבור בעברית. מקסימום 10 שניות, כולל מוזיקה ואפקטים.
+ברירת מחדל כשלא ברור: seedance. (הערה: בפועל שני הסוגים מיוצרים במודל אחד עד 10ש׳; בחירתך משמשת לניסוח בלבד.)
 
 הפרומפט (PROMPT) באנגלית בלבד, מובנה לפי שיטת commercial-pipeline (סצנה אחת קצרה), עם הסעיפים האלה כטקסט רץ:
 - SCENE: הקונספט במשפט. LOCATION: המרחב, אזורים ורקע חי. CAMERA: תנועת מצלמה אחת רציפה (every shot moves, dolly/crane/push-in). ACTION: מה קורה לאורך השניות, מתחיל ישר בפעולה בלי הקדמה. LIGHT: מצב תאורה דומיננטי. AUDIO: פס קול קצר (מוזיקה/אמביינט). POSITIVE LOCKS: חוקים קשיחים. סיום: vertical 9:16, cinematic, warm color grade, NON-IP, no on-screen text.
@@ -151,7 +151,7 @@ PROMPT:
 
 function videoUserPrompt(b) {
   const biz = b.business || {};
-  const dur = Math.min(parseInt(b.seconds) || 15, 15);
+  const dur = Math.min(parseInt(b.seconds) || 10, 10);
   return `תכנן סרטון פרסומת קצר לפי המאפיינים:
 - עסק: ${biz.name || ''} — ${biz.field || ''}, ${biz.city || ''}. אופי: ${biz.vibe || ''}
 - מטרה: ${b.goal || 'לא צוין'}
@@ -326,14 +326,14 @@ async function finalizeVideo(videoUrl, opts, id) {
 
 async function generateVideo(b) {
   const planText = await runClaude(videoUserPrompt(b), SYSTEM_VIDEO);
-  const isOmni = b.style === 'UGC אותנטי'; // הסגנון קובע את המודל (מחייב), לא בחירת Claude
+  const isUGC = b.style === 'UGC אותנטי'; // UGC = דמות שמדברת (lip-sync ב-Omni); קולנועי = ויזואלי + קריינות בפוסט
   const durM = planText.match(/DURATION:\s*(\d+)/i);
   const spM = planText.match(/SPEECH_HE:\s*(.+)/);
   const phM = planText.match(/PHONETIC:\s*(.+)/);
   const voM = planText.match(/VOICE:\s*([^\n]+)/i);
   const pM = planText.match(/PROMPT:\s*([\s\S]*)$/i);
-  let dur = Math.min(parseInt(b.seconds) || (durM ? parseInt(durM[1]) : 8), isOmni ? 10 : 15);
-  if (!(dur >= 3)) dur = isOmni ? 8 : 5;
+  let dur = Math.min(parseInt(b.seconds) || (durM ? parseInt(durM[1]) : 8), 10); // עד 10ש׳ בינתיים — שני הסגנונות רצים על Omni
+  if (!(dur >= 3)) dur = 8;
   let prompt = (pM ? pM[1] : planText).trim();
   const speechRaw = spM ? spM[1].trim() : '';
   const speechHe = (speechRaw && speechRaw !== '-') ? speechRaw : '';
@@ -343,13 +343,13 @@ async function generateVideo(b) {
   const isFemale = /female|אישה|נקבה/i.test(voiceRaw);
   const isMale = !isFemale && /male|גבר|זכר/i.test(voiceRaw);
   const voice = isMale ? 'Oren (he)' : 'Yael (he)'; // ברירת מחדל: קול אישה
-  const model = isOmni ? HF_VIDEO_OMNI : HF_VIDEO_SEEDANCE;
+  const model = HF_VIDEO_OMNI; // שני הסגנונות רצים על Omni Flash 1.1 (Seedance חוסם פרומפטים) — הקולנועי שומר על מבנה commercial-pipeline
   const ar = b.format === '16:9' ? '16:9' : '9:16';
 
   let vocalized = '';
   if (speechHe) { vocalized = (await nikud(speechHe)).replace(/מוּבּ/g, 'מוּב'); } // תיקון "מוב" (moov)
 
-  if (isOmni) {
+  if (isUGC) {
     // UGC: Omni מייצר וידאו עם הדמות מדברת ישירות
     if (speechHe) {
       prompt += `\nThe on-screen character speaks these exact Hebrew words in natural modern Israeli Hebrew, clearly and lip-synced: "${vocalized}"`;
