@@ -19,7 +19,7 @@ const CLAUDE_MODEL = ENV.CLAUDE_MODEL || '';
 const HF_BIN = ENV.HF_BIN || 'higgsfield';
 const HF_IMAGE_MODEL = ENV.HF_IMAGE_MODEL || 'gpt_image_2';
 const HF_RESOLUTION = ENV.HF_RESOLUTION || '1k'; // 1k=זול יותר, 2k=יקר
-const HF_QUALITY = ENV.HF_QUALITY || 'high'; // 1k high=4.5 קרדיטים, 1k medium=1.5, 2k high=8.5
+const HF_QUALITY = ENV.HF_QUALITY || 'medium'; // medium = מהיר וזול (1k medium=1.5 קרדיטים); high=4.5, 2k high=8.5
 const HF_VIDEO_OMNI = ENV.HF_VIDEO_OMNI || 'gemini_omni_flash_1_1'; // דיבור עברי, עד 10ש׳
 const HF_VIDEO_SEEDANCE = ENV.HF_VIDEO_SEEDANCE || 'seedance_2_0'; // קולנועי, עד 15ש׳
 const HF_VIDEO_RES_OMNI = ENV.HF_VIDEO_RES_OMNI || '360p';      // הנמוך ביותר ב-Omni (חסכוני לבדיקות)
