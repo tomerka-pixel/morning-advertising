@@ -425,28 +425,35 @@ const DB = {
 let ASSETS=[], ADS=[];
 
 /* =================== בדיקת חיבור =================== */
-fetch(API_BASE+'/api/health',{cache:'no-store'})
-  .then(r=>r.ok?r.json():null)
-  .then(j=>{
-    if(!j) return offline('לא הצלחנו להגיע לשרת היצירה');
-    LIVE.info=j; LIVE.text=j.text||null; LIVE.image=j.image||null;
-    LIVE.on=!!(LIVE.text||LIVE.image);
-    if(!LIVE.on) return offline('השרת עונה אבל אין מנוע יצירה מחובר');
-    $('#statusSlot').innerHTML='<span class="live-badge"><i></i>'+
-      (LIVE.image?'מחובר ליצירה אמיתית':'הקופי מחובר · '+esc(j.textLabel||'טקסט'))+'</span>';
-    if(!LIVE.image){
-      $('#notice').innerHTML='<div class="notice warn"><b>התמונות עדיין לא מחוברות.</b> '+
+/* נבדק בעלייה, ושוב בלחיצה על יצירה. כך שרת שעלה אחרי טעינת הדף נתפס לבד */
+function checkHealth(){
+  return fetch(API_BASE+'/api/health',{cache:'no-store'})
+    .then(r=>r.ok?r.json():null)
+    .then(j=>{
+      if(!j){ offline('לא הצלחנו להגיע לשרת היצירה'); return null }
+      LIVE.info=j; LIVE.text=j.text||null; LIVE.image=j.image||null;
+      LIVE.on=!!(LIVE.text||LIVE.image);
+      if(!LIVE.on){ offline('השרת עונה אבל אין מנוע יצירה מחובר'); return null }
+      $('#statusSlot').innerHTML='<span class="live-badge"><i></i>'+
+        (LIVE.image?'מחובר ליצירה אמיתית':'הקופי מחובר · '+esc(j.textLabel||'טקסט'))+'</span>';
+      $('#notice').innerHTML = LIVE.image ? '' :
+        '<div class="notice warn"><b>התמונות עדיין לא מחוברות.</b> '+
         'הקופי נכתב עכשיו דרך '+esc(j.textLabel||'מנוע הטקסט')+', בלי עלות נוספת. '+
         'יצירת התמונה עצמה דורשת מפתח OpenAI או את ה-CLI של היגספילד</div>';
-    }
-    renderCost();
-  })
-  .catch(()=>offline('לא הצלחנו להגיע לשרת היצירה'));
+      renderCost();
+      return j;
+    })
+    .catch(()=>{ offline('לא הצלחנו להגיע לשרת היצירה'); return null });
+}
+checkHealth();
 
 function offline(why){
-  LIVE.on=false;
+  LIVE.on=false; LIVE.text=null; LIVE.image=null;
+  $('#statusSlot').innerHTML='<span class="live-badge" style="background:var(--warn-bg);color:#8a5f00"><i style="background:#ffaf00;box-shadow:none"></i>לא מחובר</span>';
   $('#notice').innerHTML='<div class="notice warn"><b>מצב לא מחובר.</b> '+esc(why)+
-    '. אפשר לעבור על הכל ולנהל נכסים, אבל היצירה עצמה דורשת שרת עם מפתח OpenAI פעיל. הפרטים ב-DEPLOY.md שבמאגר</div>';
+    '. אפשר לעבור על הכל ולנהל נכסים, אבל היצירה עצמה דורשת שהשרת המקומי ירוץ. '+
+    'הפעלה: <code>node ~/morning-advertising/server.js</code></div>';
+  renderCost();
 }
 
 /* =================== האפשרויות =================== */
@@ -700,13 +707,35 @@ function copyBrief(){
 
 /* =================== היצירה =================== */
 let busy=false;
+
+/* מה חוסם את היצירה. מחזיר null כשהכל תקין */
+async function preflight(){
+  if(!LIVE.on){
+    /* אולי השרת עלה אחרי שהדף נטען. בודקים שוב לפני שמסרבים */
+    await checkHealth();
+    if(!LIVE.on) return {msg:'אין חיבור לשרת היצירה. ודאו שהשרת המקומי רץ, ואז רעננו את הדף',
+                         hint:'node ~/morning-advertising/server.js'};
+  }
+  if(!BIZ.name)  return {msg:'חסר שם העסק', focus:'#b_name', go:null};
+  if(!S.promote) return {msg:'לא נבחר מה מקדמים', go:'sec-promote'};
+  if(!S.style)   return {msg:'לא נבחר איך המודעה תיראה', go:'sec-style'};
+  return null;
+}
+
+/* הודעה גדולה במקום שבו מסתכלים, לא רק טוסט בפינה */
+function showBlocked(p){
+  $('#sec-result').classList.remove('hidden');
+  $('#result').innerHTML='<div class="notice err" style="margin:0"><b>לא ניתן ליצור עדיין.</b> '+esc(p.msg)+
+    (p.hint?'<br><code style="background:#fff;padding:2px 6px;border-radius:4px">'+esc(p.hint)+'</code>':'')+'</div>';
+  toast(p.msg);
+  if(p.go)slideTo(p.go);
+  else if(p.focus){ slideTo('sec-go'); const el=$(p.focus); if(el)el.focus() }
+}
+
 async function generate(){
   if(busy)return;
-  if(!LIVE.on){toast('אין חיבור לשרת היצירה');return}
-  if(!LIVE.image&&!LIVE.text){toast('אין מנוע יצירה מחובר');return}
-  if(!BIZ.name){toast('מלאו את שם העסק למעלה');$('#b_name').focus();return}
-  if(!S.promote){toast('בחרו מה מקדמים');slideTo('sec-promote');return}
-  if(!S.style){toast('בחרו איך המודעה תיראה');slideTo('sec-style');return}
+  const blocked=await preflight();
+  if(blocked){ showBlocked(blocked); return }
 
   busy=true; $('#go').disabled=true;
   $('#sec-result').classList.remove('hidden');

@@ -416,7 +416,11 @@ function serveStatic(req, res) {
   if (!file.startsWith(ROOT)) { res.writeHead(403); return res.end('forbidden'); }
   fs.readFile(file, (e, data) => {
     if (e) { res.writeHead(404); return res.end('not found'); }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream' });
+    const type = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
+    /* בלי קאש על HTML, אחרת הדפדפן מגיש גרסה ישנה אחרי עדכון ונראה כאילו כלום לא השתנה */
+    const head = { 'Content-Type': type };
+    if (/html/.test(type)) head['Cache-Control'] = 'no-store';
+    res.writeHead(200, head);
     res.end(data);
   });
 }
