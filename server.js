@@ -38,15 +38,25 @@ const CODEX_BIN = (() => {
   if (fs.existsSync(bundled)) return bundled;
   return 'codex';
 })();
-/* מי כותב את הקופי. TEXT_ENGINE גובר על הכל: codex / claude / openai.
-   בלעדיו: מפתח OpenAI אם קיים, אחרת Codex על מנוי ChatGPT, אחרת Claude. */
+/* מי כותב את הקופי. ברירת המחדל היא Claude, כמו בדמו המקורי עם הסרטונים,
+   ועל המנוי של תומר. TEXT_ENGINE גובר: claude / codex / openai. */
 function textEngine() {
   const want = (ENV.TEXT_ENGINE || '').toLowerCase();
   if (want === 'openai' && openai && openai.hasKey()) return 'openai';
   if (want === 'codex' && hasCodex()) return 'codex';
   if (want === 'claude') return 'claude';
-  if (openai && openai.hasKey()) return 'openai';
+  if (hasClaude()) return 'claude';
   return hasCodex() ? 'codex' : 'claude';
+}
+
+/* זמינות ה-CLI של קלוד */
+function hasClaude() {
+  try {
+    if (CLAUDE_BIN.includes('/')) return fs.existsSync(CLAUDE_BIN);
+    const home = ENV.HOME || '';
+    return ['/usr/local/bin/', '/opt/homebrew/bin/', home + '/.local/bin/', home + '/.claude/local/']
+      .some(d => fs.existsSync(d + CLAUDE_BIN));
+  } catch (e) { return false; }
 }
 
 function hasCodex() { try { return fs.existsSync(CODEX_BIN) || CODEX_BIN === 'codex'; } catch (e) { return false; } }
