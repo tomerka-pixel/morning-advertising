@@ -10,21 +10,19 @@
 :root{
   /* הטוקנים נלקחו מגיליון הסגנון של המערכת עצמה (app.css) */
   --ink:#033841;          /* צבע הטקסט וגם רקע הסרגל הכהה */
-  --teal:#1a7870;         /* teal-green של מערכת העיצוב */
-  --primary:#0dac81;      /* הירוק של כפתורי הפעולה */
+  --teal:#1a7870;
+  --primary:#0dac81;
   --primary-hover:#0b946f;
-  --primary-active:#0a8b68;
   --blue:#1d58e3;
-  --bg:#f5f6fa;           /* רקע ה-body במערכת */
+  --bg:#f5f6fa;
   --card:#fff;
-  --surface:#eff1f6;      /* משטח בהיר, ריחוף ומילוי */
-  --line:#d3dade;         /* גבול ברירת מחדל */
+  --surface:#eff1f6;
+  --line:#d3dade;
   --line-strong:#b2bec6;
-  --muted:#607684;        /* טקסט משני */
+  --muted:#607684;
   --placeholder:#91a1ac;
   --err:#f63865;
   --err-bg:#fff2f2;
-  --warn:#ffaf00;
   --warn-bg:#fff8e6;
   --ok-bg:#e6fbf4;
   --deep:#07674e;
@@ -61,13 +59,13 @@ a{color:inherit}
 .top-icon:hover{background:var(--surface)}
 .top-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .top-spacer{flex:1}
-.main{flex:1;overflow:auto;padding:34px 46px 80px}
-.wrap{max-width:1240px;margin:0 auto}
+.main{flex:1;overflow:auto;padding:34px 46px 140px}
+.wrap{max-width:860px;margin:0 auto}
 
 /* ===== ברכה ===== */
-.hello{display:flex;align-items:center;gap:22px;margin-bottom:26px}
-.hello-disc{width:96px;height:96px;flex:0 0 96px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 2px 14px rgba(3,56,65,.07)}
-.hello-disc img{width:60px}
+.hello{display:flex;align-items:center;gap:22px;margin-bottom:24px}
+.hello-disc{width:92px;height:92px;flex:0 0 92px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 2px 14px rgba(3,56,65,.07)}
+.hello-disc img{width:58px}
 .hello h1{font-size:27px;margin-bottom:6px}
 .hello p{margin:0;color:var(--muted);font-size:17px}
 
@@ -75,41 +73,41 @@ a{color:inherit}
 .btn{border-radius:100px;font-weight:500;padding:11px 26px;cursor:pointer;font-size:17px;border:1px solid transparent;background:transparent;transition:.15s}
 .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
 .btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary:disabled{background:var(--line);border-color:var(--line);cursor:not-allowed}
 .btn-outline{border-color:var(--ink);color:var(--ink)}
 .btn-outline:hover{background:var(--surface)}
 .btn-ghost{color:var(--primary);padding:7px 10px;font-size:15px}
 .btn-ghost:hover{text-decoration:underline}
 .btn-sm{padding:8px 18px;font-size:15px}
+.btn-lg{padding:14px 40px;font-size:18px}
 
 /* ===== לשוניות ===== */
 .tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:22px}
-.tab{border:0;background:transparent;padding:12px 20px;cursor:pointer;font-size:17px;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.tab{border:0;background:transparent;padding:12px 20px;cursor:pointer;font-size:17px;color:#557077;border-bottom:3px solid transparent;margin-bottom:-1px}
 .tab.on{color:var(--ink);font-weight:600;border-bottom-color:var(--primary)}
 .tab .count{background:var(--ok-bg);color:var(--deep);border-radius:4px;font-weight:500;padding:1px 8px;font-size:12px;margin-inline-start:6px}
 
-/* ===== מד שלבים ===== */
-.stepper{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:20px}
-.stepper button{border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:100px;color:var(--muted);font-size:14px}
-.stepper button i{width:22px;height:22px;border-radius:50%;background:var(--surface);color:var(--muted);display:grid;place-items:center;font-size:12px;font-style:normal;font-weight:700}
-.stepper button.done{color:var(--teal)}
-.stepper button.done i{background:var(--primary);color:#fff}
-.stepper button.now{background:var(--ok-bg);color:var(--teal);font-weight:600}
-.stepper button.now i{background:var(--teal);color:#fff}
-.stepper button:disabled{cursor:default;opacity:.7}
-.stepper .arrow{color:#c4ced3;font-size:12px}
+/* ===== פרטי העסק ===== */
+.biz{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;margin-bottom:18px}
+.biz-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.biz-head h3{font-size:17px}
+.biz-head .from{background:var(--surface);color:var(--muted);border-radius:4px;padding:2px 9px;font-size:12px;font-weight:500}
+.biz-sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.biz-fields{display:grid;grid-template-columns:1.3fr 1.3fr 1fr;gap:12px}
 
-/* ===== לוח היצירה ===== */
-.board{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:18px;align-items:start}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
-.panel>h2{font-size:21px;margin-bottom:4px}
-.panel .sub{color:var(--muted);font-size:15px;margin:0 0 18px}
-.step-title{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
-.step-title h2{font-size:21px}
-.step-title small{color:var(--muted);font-size:14px}
+/* ===== מקטע ===== */
+.sec{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:16px;scroll-margin-top:14px}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:3px}
+.sec-num{width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:var(--surface);color:var(--muted);display:grid;place-items:center;font-size:14px;font-weight:700}
+.sec.done .sec-num{background:var(--primary);color:#fff}
+.sec-head h2{font-size:20px}
+.sec-pick{margin-inline-start:auto;background:var(--ok-bg);color:var(--deep);border-radius:100px;padding:5px 14px;font-size:14px;font-weight:500;display:none}
+.sec.done .sec-pick{display:inline-block}
+.sec-sub{color:var(--muted);font-size:15px;margin:0 0 16px;padding-inline-start:40px}
+.sec-body{padding-inline-start:40px}
 
 /* ===== קלפי בחירה ===== */
-.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:16px}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .opts.wide{grid-template-columns:repeat(auto-fill,minmax(168px,1fr))}
 .opt{border:1px solid var(--line);background:#fff;border-radius:14px;padding:16px 14px;cursor:pointer;text-align:center;transition:.14s;display:flex;flex-direction:column;align-items:center;gap:8px}
 .opt:hover{border-color:var(--primary);background:var(--surface);transform:translateY(-2px);box-shadow:0 8px 18px rgba(3,56,65,.07)}
@@ -119,22 +117,22 @@ a{color:inherit}
 .opt .ic svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .opt b{font-size:15px;font-weight:600;line-height:1.3}
 .opt small{color:var(--muted);font-size:12.5px;line-height:1.4}
-.opt .swatch{width:100%;height:44px;border-radius:10px}
+.opt .swatch{width:100%;height:52px;border-radius:10px;display:grid;place-items:center;overflow:hidden}
+.opt .swatch svg{width:100%;height:100%}
 
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{border:1px solid var(--line);background:#fff;border-radius:100px;padding:8px 16px;cursor:pointer;font-size:15px;transition:.14s}
 .chip:hover{border-color:var(--primary);background:var(--surface)}
 .chip.on{border-color:var(--primary);background:var(--ok-bg);color:var(--teal);font-weight:600}
-.grouplabel{font-size:14px;color:var(--muted);font-weight:500;margin-top:20px}
+.grouplabel{font-size:14px;color:var(--muted);font-weight:500;margin:18px 0 8px}
+.grouplabel:first-child{margin-top:0}
 
 .field{display:block;margin-bottom:14px}
 .field span{display:block;font-size:14px;color:var(--muted);margin-bottom:6px;font-weight:500}
 .field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:var(--input-radius);padding:11px 14px;font-size:16px;background:#fff;outline:0}
 .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,172,129,.12)}
+.field input::placeholder,.field textarea::placeholder{color:var(--placeholder)}
 .field textarea{resize:vertical;line-height:1.6}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.step-foot{display:flex;gap:10px;align-items:center;margin-top:20px;flex-wrap:wrap}
-.step-foot .spacer{flex:1}
 
 /* ===== נכסי מותג ===== */
 .drop{border:2px dashed #c4ced3;border-radius:14px;padding:26px 18px;text-align:center;background:var(--bg);cursor:pointer;transition:.15s;display:block}
@@ -163,34 +161,25 @@ a{color:inherit}
 .tagrow{display:flex;gap:5px;flex-wrap:wrap;padding:0 9px 9px}
 .tagrow button{border:1px solid var(--line);background:#fff;border-radius:100px;padding:3px 10px;font-size:12px;cursor:pointer}
 .tagrow button.on{border-color:var(--primary);background:var(--ok-bg);color:var(--teal);font-weight:600}
-.empty-lib{color:var(--muted);text-align:center;padding:24px;border:1px dashed #c4ced3;border-radius:13px;margin-top:14px;line-height:1.7}
-
-/* ===== סיכום ===== */
-.sum{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 18px}
-.sum button{border:1px solid var(--line);background:#fff;border-radius:100px;padding:7px 14px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:7px}
-.sum button:hover{border-color:var(--primary);background:var(--surface)}
-.sum button em{font-style:normal;color:var(--muted);font-size:12.5px}
+.empty-lib{color:var(--muted);text-align:center;padding:24px;border:1px dashed #c4ced3;border-radius:13px;line-height:1.7}
 
 /* ===== תוצאה ===== */
-.result-empty{text-align:center;color:var(--muted);padding:60px 20px;line-height:1.8}
-.result-empty svg{width:52px;height:52px;stroke:var(--line-strong);fill:none;stroke-width:1.4;margin-bottom:12px}
-.stage{background:var(--surface);border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:center;min-height:230px}
-.stage img,.stage video{max-width:100%;max-height:440px;border-radius:10px;box-shadow:0 8px 26px rgba(3,56,65,.14);display:block}
-.meta{font-size:13px;color:var(--deep);background:var(--ok-bg);border:1px solid var(--ok-bg);border-radius:10px;padding:9px 12px;margin-top:12px}
+.stage{background:var(--surface);border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:center;min-height:240px}
+.stage img{max-width:100%;max-height:520px;border-radius:10px;box-shadow:0 8px 26px rgba(3,56,65,.14);display:block;cursor:zoom-in}
+.meta{font-size:13px;color:var(--deep);background:var(--ok-bg);border-radius:10px;padding:9px 12px;margin-top:12px}
 .result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 .result-actions a{text-decoration:none;display:inline-block}
 .spinner{width:46px;height:46px;border:5px solid var(--surface);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading{text-align:center;padding:48px 20px;color:var(--muted)}
 .loading b{display:block;color:var(--ink);font-size:18px;margin-bottom:8px}
-.clock{font-variant-numeric:tabular-nums;font-size:15px;margin-top:10px;color:var(--muted)}
+.clock{font-variant-numeric:tabular-nums;font-size:15px;margin-top:10px}
 
 /* ===== גלריה ===== */
 .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
 .g-card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
-.g-thumb{aspect-ratio:1;background:var(--surface);cursor:zoom-in;position:relative}
+.g-thumb{aspect-ratio:1;background:var(--surface);cursor:zoom-in}
 .g-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.g-badge{position:absolute;top:8px;inset-inline-start:8px;background:rgba(3,56,65,.78);color:#fff;border-radius:100px;padding:2px 9px;font-size:11px}
 .g-body{padding:11px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
 .g-text{font-size:13px;line-height:1.5;color:var(--ink);white-space:pre-wrap;flex:1;max-height:74px;overflow:hidden}
 .g-foot{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--placeholder);gap:6px}
@@ -200,24 +189,21 @@ a{color:inherit}
 .notice{border-radius:12px;padding:13px 16px;font-size:15px;margin-bottom:18px;line-height:1.6}
 .notice.warn{background:var(--warn-bg);border:1px solid #ffe1a3;color:#8a5f00}
 .notice.err{background:var(--err-bg);border:1px solid #ffd0da;color:var(--err)}
-.notice.info{background:#eafaff;border:1px solid #cbe9f7;color:var(--ink)}
 .live-badge{display:inline-flex;align-items:center;gap:7px;background:var(--ok-bg);color:var(--deep);border-radius:100px;padding:5px 13px;font-size:13px;font-weight:600}
 .live-badge i{width:8px;height:8px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 3px rgba(13,172,129,.2)}
 .lightbox{position:fixed;inset:0;background:rgba(3,26,26,.86);display:grid;place-items:center;z-index:99;cursor:zoom-out;padding:30px}
-.lightbox img,.lightbox video{max-width:94%;max-height:94%;border-radius:10px}
+.lightbox img{max-width:94%;max-height:94%;border-radius:10px}
 .chat-fab{position:fixed;bottom:26px;left:26px;width:56px;height:56px;border-radius:50%;background:var(--ink);color:#fff;border:0;cursor:pointer;display:grid;place-items:center;box-shadow:0 8px 22px rgba(3,56,65,.28);z-index:80}
 .chat-fab svg{width:24px;height:26px;fill:currentColor}
-.chat-fab:hover{background:rgba(255,255,255,.12)}
 .toast{position:fixed;bottom:24px;left:96px;background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;z-index:120;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
 .toast.show{opacity:1;transform:none}
 .hidden{display:none!important}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.stepbody{animation:fadeUp .22s ease}
 
-@media(max-width:1080px){.board{grid-template-columns:1fr}}
 @media(max-width:640px){
-  .main{padding:22px 16px 70px}.rail{width:58px;flex-basis:58px}.topbar{padding:0 16px;height:72px;flex-basis:72px;gap:10px}
-  .two{grid-template-columns:1fr}.hello{gap:14px}.hello-disc{width:72px;height:72px;flex-basis:72px}.hello-disc img{width:46px}.hello h1{font-size:22px}
+  .main{padding:22px 16px 110px}.rail{width:58px;flex-basis:58px}.topbar{padding:0 16px;height:72px;flex-basis:72px;gap:10px}
+  .hello{gap:14px}.hello-disc{width:70px;height:70px;flex-basis:70px}.hello-disc img{width:44px}.hello h1{font-size:22px}
+  .sec{padding:18px}.sec-sub,.sec-body{padding-inline-start:0}
+  .biz-fields{grid-template-columns:1fr}
   .opts{grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}
 }
 </style>
@@ -252,14 +238,14 @@ a{color:inherit}
       <button class="fab" title="מודעה חדשה" id="fab"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     </header>
 
-    <main class="main">
+    <main class="main" id="main">
       <div class="wrap">
 
         <section class="hello">
           <div class="hello-disc"><img src="assets/morning-logo.svg" alt="morning"></div>
           <div>
             <h1>יוצר המודעות</h1>
-            <p>בוחרים, לוחצים, ומקבלים מודעה מוכנה לפרסום עם הנכסים של הלקוח</p>
+            <p>עונים על כמה שאלות, ומקבלים מודעה מוכנה לפרסום לעסק שלכם</p>
             <div style="margin-top:10px" id="statusSlot"></div>
           </div>
         </section>
@@ -274,27 +260,82 @@ a{color:inherit}
 
         <!-- ============ יצירה ============ -->
         <section id="tab-create">
-          <div class="stepper" id="stepper"></div>
-          <div class="board">
-            <div class="panel" id="stepPanel"></div>
-            <div class="panel">
-              <h2>התוצאה</h2>
-              <p class="sub">המודעה תופיע כאן, מוכנה להורדה</p>
-              <div id="result">
-                <div class="result-empty">
-                  <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 15l4.5-4.5 3 3L16 9l4 4"/><circle cx="9" cy="8.5" r="1.3"/></svg>
-                  <div>עברו על השלבים ולחצו על יצירת המודעה</div>
-                </div>
-              </div>
+
+          <div class="biz">
+            <div class="biz-head"><h3>העסק שלכם</h3><span class="from">מתוך החשבון שלכם במורנינג</span></div>
+            <p class="biz-sub">הפרטים נלקחים מהחשבון. אפשר לדייק אותם כאן לצורך המודעה</p>
+            <div class="biz-fields">
+              <label class="field" style="margin:0"><span>שם העסק</span><input id="b_name" placeholder="סטודיו מוב"></label>
+              <label class="field" style="margin:0"><span>תחום</span><input id="b_field" placeholder="סטודיו לפילאטיס"></label>
+              <label class="field" style="margin:0"><span>עיר</span><input id="b_city" placeholder="תל אביב"></label>
             </div>
           </div>
+
+          <section class="sec" id="sec-promote">
+            <div class="sec-head"><span class="sec-num">1</span><h2>מה מקדמים</h2><span class="sec-pick" id="pick-promote"></span></div>
+            <p class="sec-sub">בוחרים, והמסך ממשיך לשאלה הבאה</p>
+            <div class="sec-body"><div class="opts" id="optsPromote"></div>
+              <label class="field" style="margin-top:16px"><span>רוצים לדייק? (לא חובה)</span>
+                <input id="promoteFree" placeholder="לדוגמה: שיעור היכרות ראשון ללא עלות"></label>
+            </div>
+          </section>
+
+          <section class="sec" id="sec-style">
+            <div class="sec-head"><span class="sec-num">2</span><h2>איך המודעה תיראה</h2><span class="sec-pick" id="pick-style"></span></div>
+            <p class="sec-sub">צילום, איור מצויר, גרפיקה. זה קובע את כל אופי הקריאייטיב</p>
+            <div class="sec-body"><div class="opts" id="optsStyle"></div></div>
+          </section>
+
+          <section class="sec" id="sec-format">
+            <div class="sec-head"><span class="sec-num">3</span><h2>פורמט</h2><span class="sec-pick" id="pick-format"></span></div>
+            <p class="sec-sub">לאן המודעה הולכת</p>
+            <div class="sec-body"><div class="opts wide" id="optsFormat"></div></div>
+          </section>
+
+          <section class="sec" id="sec-aud">
+            <div class="sec-head"><span class="sec-num">4</span><h2>למי מדברים</h2><span class="sec-pick" id="pick-aud"></span></div>
+            <p class="sec-sub">קהל היעד והטון של הפנייה</p>
+            <div class="sec-body">
+              <div class="grouplabel">קהל היעד</div><div class="chips" id="chipsAud"></div>
+              <div class="grouplabel">הטון</div><div class="chips" id="chipsTone"></div>
+              <label class="field" style="margin-top:18px"><span>קריאה לפעולה</span>
+                <input id="ctaIn" placeholder="קבעו שיעור היכרות"></label>
+            </div>
+          </section>
+
+          <section class="sec" id="sec-assets">
+            <div class="sec-head"><span class="sec-num">5</span><h2>נכסי המותג</h2><span class="sec-pick" id="pick-assets"></span></div>
+            <p class="sec-sub">הלוגו ותמונות המוצר שתבחרו ישולבו במודעה עצמה</p>
+            <div class="sec-body" id="assetPick"></div>
+          </section>
+
+          <section class="sec" id="sec-go">
+            <div class="sec-head"><span class="sec-num">6</span><h2>יצירה</h2></div>
+            <p class="sec-sub">אפשר להוסיף הנחיות, או פשוט ליצור</p>
+            <div class="sec-body">
+              <label class="field"><span>הנחיות נוספות (לא חובה)</span>
+                <textarea id="extraIn" rows="2" placeholder="לדוגמה: אור בוקר רך, בלי אנשים בפריים, צבעי המותג ירוק ולבן"></textarea></label>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:14px;color:var(--muted);font-weight:500">הפרומפט שיישלח למנוע</span>
+                <button class="btn btn-ghost" id="resetPrompt">איפוס אוטומטי</button>
+              </div>
+              <label class="field"><textarea id="promptIn" rows="6"></textarea></label>
+              <button class="btn btn-primary btn-lg" id="go">יצירת המודעה</button>
+            </div>
+          </section>
+
+          <section class="sec hidden" id="sec-result">
+            <div class="sec-head"><span class="sec-num">✓</span><h2>המודעה</h2></div>
+            <div class="sec-body" id="result"></div>
+          </section>
+
         </section>
 
         <!-- ============ נכסי מותג ============ -->
         <section id="tab-library" class="hidden">
-          <div class="panel">
-            <h2>נכסי המותג</h2>
-            <p class="sub">לוגו, תמונות מוצר ותמונות רקע. נשמרים כאן וזמינים לכל מודעה שתיצרו</p>
+          <div class="sec">
+            <div class="sec-head"><h2>נכסי המותג</h2></div>
+            <p class="sec-sub" style="padding:0">לוגו, תמונות מוצר ותמונות רקע. נשמרים כאן וזמינים לכל מודעה שתיצרו</p>
             <label class="drop" id="drop">
               <input type="file" id="file" accept="image/*" multiple>
               <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 17v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1"/></svg></div>
@@ -305,11 +346,11 @@ a{color:inherit}
           </div>
         </section>
 
-        <!-- ============ גלריה ============ -->
+        <!-- ============ המודעות שלי ============ -->
         <section id="tab-gallery" class="hidden">
-          <div class="panel">
+          <div class="sec">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-              <div><h2>המודעות שלי</h2><p class="sub" style="margin:2px 0 0">כל מה שיצרתם, שמור בדפדפן הזה</p></div>
+              <div><h2 style="font-size:20px">המודעות שלי</h2><p class="sec-sub" style="padding:0;margin:2px 0 0">כל מה שיצרתם, שמור בדפדפן הזה</p></div>
               <button class="btn btn-ghost" id="clearGal">ניקוי הכל</button>
             </div>
             <div id="gal"></div>
@@ -328,7 +369,7 @@ a{color:inherit}
    יוצר המודעות של morning
    היצירה רצה בשרת (api/generate + api/post) מול OpenAI.
    מפתח ה-API יושב אך ורק במשתני הסביבה של השרת, לעולם לא בדף הזה.
-   נכסי המותג, הלקוחות והמודעות נשמרים ב-IndexedDB של הדפדפן הזה בלבד.
+   פרטי העסק, נכסי המותג והמודעות נשמרים ב-IndexedDB של הדפדפן הזה בלבד.
    =================================================================== */
 
 const API_BASE = /github\.io$/.test(location.hostname) ? 'https://REPLACE_WITH_VERCEL_URL' : '';
@@ -349,25 +390,25 @@ function accessCode(){
 }
 const headers = () => ({'Content-Type':'application/json','x-access-code':accessCode()});
 
-/* =================== אחסון מקומי (IndexedDB) =================== */
+/* =================== אחסון מקומי =================== */
 const DB = {
   _p:null,
   open(){
     if(this._p)return this._p;
     this._p=new Promise((res,rej)=>{
-      const r=indexedDB.open('morning_ads',1);
-      r.onupgradeneeded=()=>{const d=r.result;['assets','clients','ads'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};
+      const r=indexedDB.open('morning_ads',2);
+      r.onupgradeneeded=()=>{const d=r.result;['assets','ads','settings'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};
       r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
     });
     return this._p;
   },
   async all(s){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction(s).objectStore(s).getAll();t.onsuccess=()=>res(t.result||[]);t.onerror=()=>rej(t.error)})},
+  async get(s,id){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction(s).objectStore(s).get(id);t.onsuccess=()=>res(t.result||null);t.onerror=()=>rej(t.error)})},
   async put(s,v){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction(s,'readwrite').objectStore(s).put(v);t.onsuccess=()=>res(v);t.onerror=()=>rej(t.error)})},
   async del(s,id){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction(s,'readwrite').objectStore(s).delete(id);t.onsuccess=()=>res();t.onerror=()=>rej(t.error)})},
   async clear(s){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction(s,'readwrite').objectStore(s).clear();t.onsuccess=()=>res();t.onerror=()=>rej(t.error)})}
 };
-
-let ASSETS=[], ADS=[], CLIENTS=[];
+let ASSETS=[], ADS=[];
 
 /* =================== בדיקת חיבור =================== */
 fetch(API_BASE+'/api/health',{cache:'no-store'})
@@ -383,294 +424,211 @@ fetch(API_BASE+'/api/health',{cache:'no-store'})
 function offline(why){
   LIVE.on=false;
   $('#notice').innerHTML='<div class="notice warn"><b>מצב לא מחובר.</b> '+esc(why)+
-    '. אפשר לעבור על כל השלבים ולנהל נכסים, אבל היצירה עצמה דורשת שרת עם מפתח OpenAI פעיל. הפרטים ב-DEPLOY.md שבמאגר</div>';
+    '. אפשר לעבור על הכל ולנהל נכסים, אבל היצירה עצמה דורשת שרת עם מפתח OpenAI פעיל. הפרטים ב-DEPLOY.md שבמאגר</div>';
 }
 
 /* =================== האפשרויות =================== */
 const PROMOTE = [
   {v:'מבצע או הנחה', d:'הטבה לזמן מוגבל', ic:'M9 15 15 9M9.5 9.5h.01M14.5 14.5h.01M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Z'},
   {v:'מוצר חדש', d:'השקה של משהו חדש', ic:'m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9Z'},
-  {v:'שירות', d:'שירות מקצועי שנותנים', ic:'M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM4 21c1-5 15-5 16 0'},
+  {v:'שירות', d:'שירות מקצועי שאתם נותנים', ic:'M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM4 21c1-5 15-5 16 0'},
   {v:'אירוע', d:'סדנה, כנס או ערב לקוחות', ic:'M7 3v3M17 3v3M4 9h16M5 6h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z'},
   {v:'פתיחת עסק', d:'הכרזה על פתיחה או סניף', ic:'M4 10h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9ZM3 10l2-5h14l2 5M12 10v11'},
   {v:'גיוס לקוחות', d:'הגדלת פניות ולידים', ic:'M12 21s-7-4.3-7-9.5A4.5 4.5 0 0 1 12 8a4.5 4.5 0 0 1 7 3.5C19 16.7 12 21 12 21Z'},
   {v:'תוכן מיתוגי', d:'חשיפה ובניית מותג', ic:'M4 7h16M4 12h10M4 17h7M17 14l4 4-4 4'},
   {v:'גיוס עובדים', d:'דרושים לצוות', ic:'M16 21v-2a4 4 0 0 0-8 0v2M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM19 8v6M22 11h-6'}
 ];
-const KIND = [
-  {v:'תמונה', d:'מודעת תמונה סטטית', ic:'M4 5h16v14H4zM4 15l4.5-4.5 3 3L16 9l4 4'},
-  {v:'אנימציה', d:'תנועה עדינה, מוכן לסטורי', ic:'m10 8 6 4-6 4V8ZM5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z'}
+
+/* לכל סגנון יש תצוגה מקדימה ומשפט שנכנס לפרומפט. כאן נקבע אופי הקריאייטיב. */
+const STYLE = [
+  {v:'איור קרטון', d:'דמויות מצוירות, קווי מתאר',
+   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#FFE08A"/><circle cx="34" cy="26" r="13" fill="#FFC24D" stroke="#2B2B2B" stroke-width="3"/><circle cx="29" cy="23" r="2.2" fill="#2B2B2B"/><circle cx="39" cy="23" r="2.2" fill="#2B2B2B"/><path d="M28 31q6 6 12 0" stroke="#2B2B2B" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="58" y="14" width="28" height="24" rx="5" fill="#4FC3F7" stroke="#2B2B2B" stroke-width="3"/></svg>',
+   p:'איור קרטון צבעוני ושמח, דמויות מסוגננות עם קווי מתאר נקיים ועבים, שטחי צבע שטוחים ובהירים, פרופורציות מוגזמות בטוב טעם, מראה של איור מודעה מצויר ולא של צילום.'},
+  {v:'קומיקס', d:'פאנל, קווים חדים, הדגשות',
+   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#F5515F"/><path d="M50 6 58 20l16-3-8 13 12 10-16 2-3 14-9-11-13 7 2-15-15-5 13-8-9-11 16 3Z" fill="#FFE14D" stroke="#1B1B1B" stroke-width="2.5"/></svg>',
+   p:'סגנון קומיקס נועז, קווי דיו שחורים חזקים, צללים גרפיים, נקודות הלפטון, צבעים רוויים וניגודיות גבוהה, כמו פאנל מתוך חוברת קומיקס.'},
+  {v:'ציור יד', d:'קווי עיפרון, מרקם נייר',
+   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#F6EFE2"/><path d="M12 40q14-26 30-12t26-14" stroke="#8A6F4E" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M16 44q16-22 32-9t28-16" stroke="#C0A57E" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="74" cy="16" r="7" fill="#E3A857" opacity=".75"/></svg>',
+   p:'איור מצויר ביד, קווי עיפרון ודיו עדינים, צבעי מים רכים, מרקם נייר, מראה חם ואישי של סקיצה מוקפדת.'},
+  {v:'מינימליסטי גרפי', d:'צורות ושטחי צבע',
+   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#033841"/><circle cx="32" cy="26" r="14" fill="#0DAC81"/><rect x="56" y="12" width="28" height="28" rx="6" fill="#F5F6FA"/></svg>',
+   p:'עיצוב גרפי מינימליסטי, צורות גיאומטריות גדולות, שטחי צבע נקיים, הרבה מרחב נשימה, בלי צילום ובלי פרטים מיותרים.'},
+  {v:'צילום אותנטי', d:'נראה אמיתי, לא סטוק',
+   sw:'<svg viewBox="0 0 100 52"><defs><linearGradient id="s5" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#C9A27E"/><stop offset="1" stop-color="#8E6B4F"/></linearGradient></defs><rect width="100" height="52" fill="url(#s5)"/><circle cx="70" cy="16" r="8" fill="#FFF1D8" opacity=".7"/></svg>',
+   p:'צילום אותנטי ואמיתי, אנשים ורגעים טבעיים, אור טבעי רך, עומק שדה מצומצם, מראה של קמפיין אמיתי ולא של תמונת סטוק.'},
+  {v:'סטודיו נקי', d:'רקע חלק, מוצר במרכז',
+   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#F2F4F5"/><ellipse cx="50" cy="42" rx="24" ry="5" fill="#CFD8D9"/><rect x="38" y="14" width="24" height="24" rx="4" fill="#fff" stroke="#CFD8D9" stroke-width="2"/></svg>',
+   p:'צילום סטודיו נקי, רקע חלק ואחיד, תאורה רכה ומדויקת, המוצר במרכז הפריים, צל עדין מתחתיו.'},
+  {v:'לייפסטייל חם', d:'אנשים, אור טבעי',
+   sw:'<svg viewBox="0 0 100 52"><defs><linearGradient id="s7" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F6C79B"/><stop offset="1" stop-color="#E2856B"/></linearGradient></defs><rect width="100" height="52" fill="url(#s7)"/><circle cx="26" cy="14" r="7" fill="#FFF3E2" opacity=".8"/></svg>',
+   p:'צילום לייפסטייל חם, אנשים בסיטואציה יומיומית, אור שעת זהב, גוונים חמימים, תחושת קרבה ונינוחות.'},
+  {v:'תלת מימד', d:'רינדור נקי ומודרני',
+   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#EEF1FE"/><path d="M50 10 70 21v20L50 52 30 41V21Z" fill="#8FA6F5"/><path d="M50 10 70 21 50 32 30 21Z" fill="#B6C6FA"/></svg>',
+   p:'רינדור תלת מימד נקי, חומרים מט ורכים, תאורת סטודיו רכה, צבעים פסטליים, מראה מודרני של איור תלת מימדי.'},
+  {v:'מודגש וצבעוני', d:'ניגודיות גבוהה',
+   sw:'<svg viewBox="0 0 100 52"><defs><linearGradient id="s9" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F5515F"/><stop offset="1" stop-color="#9F2BE0"/></linearGradient></defs><rect width="100" height="52" fill="url(#s9)"/><path d="M0 40h100v12H0z" fill="#FFE14D"/></svg>',
+   p:'קריאייטיב נועז וצבעוני, ניגודיות גבוהה, שטחי צבע חזקים, טיפוגרפיה גדולה, אנרגטי ובולט בפיד.'}
 ];
+
 const FORMAT = [
   {v:'1:1', t:'ריבוע', d:'פוסט בפיד'},
   {v:'9:16', t:'אנכי', d:'סטורי וריל'},
   {v:'16:9', t:'רוחב', d:'באנר ויוטיוב'}
 ];
-const STYLE = [
-  {v:'צילום אותנטי', d:'נראה אמיתי, לא סטוק', g:'linear-gradient(135deg,#C9A27E,#8E6B4F)'},
-  {v:'סטודיו נקי', d:'רקע חלק, מוצר במרכז', g:'linear-gradient(135deg,#F2F4F5,#CFD8D9)'},
-  {v:'לייפסטייל חם', d:'אנשים, אור טבעי', g:'linear-gradient(135deg,#F6C79B,#E2856B)'},
-  {v:'מינימליסטי גרפי', d:'צורות ושטחי צבע', g:'linear-gradient(135deg,var(--ink),#0DAC81)'},
-  {v:'מודגש וצבעוני', d:'ניגודיות גבוהה', g:'linear-gradient(135deg,#F5515F,#9F2BE0)'},
-  {v:'איור', d:'מצויר, חם ואישי', g:'linear-gradient(135deg,#8FD3F4,#84FAB0)'}
-];
 const AUDIENCE = ['קהל רחב','נשים 25-40','נשים 40-60','גברים 25-45','הורים צעירים','בעלי עסקים','דור צעיר 18-28','גיל הזהב','תושבי האזור'];
 const TONE = ['ידידותי וחם','מקצועי ומהוקצע','אנרגטי ומניע','יוקרתי ורגוע','שובב וקליל'];
 
 /* =================== המצב =================== */
-const S = {
-  step:0, client:null, promote:'', promoteFree:'', kind:'תמונה', format:'1:1',
-  style:'', audience:'', tone:'', cta:'', extra:'', assets:[], prompt:'', promptTouched:false
-};
-const STEPS = [
-  {k:'client',  t:'הלקוח',      need:()=>!!(S.client&&S.client.name)},
-  {k:'promote', t:'מה מקדמים',  need:()=>!!S.promote},
-  {k:'kind',    t:'סוג המודעה', need:()=>!!S.kind},
-  {k:'format',  t:'פורמט',      need:()=>!!S.format},
-  {k:'style',   t:'סגנון',      need:()=>!!S.style},
-  {k:'aud',     t:'קהל וטון',   need:()=>!!(S.audience&&S.tone)},
-  {k:'assets',  t:'נכסי מותג',  need:()=>true},
-  {k:'go',      t:'יצירה',      need:()=>true}
-];
+const S = { promote:'', promoteFree:'', style:'', format:'1:1', audience:'', tone:'', cta:'',
+            extra:'', assets:[], prompt:'', promptTouched:false };
+const BIZ = { id:'biz', name:'', field:'', city:'' };
 
 const DRAFT='morning_ads_draft';
-function saveDraft(){
-  try{
-    const {step,client,promote,promoteFree,kind,format,style,audience,tone,cta,extra,assets,prompt,promptTouched}=S;
-    localStorage.setItem(DRAFT,JSON.stringify({step,client,promote,promoteFree,kind,format,style,audience,tone,cta,extra,assets,prompt,promptTouched}));
-  }catch(e){}
-}
-function loadDraft(){
-  try{
-    const d=JSON.parse(localStorage.getItem(DRAFT)||'null');
-    if(d&&typeof d==='object')Object.assign(S,d);
-  }catch(e){}
-}
-function reachable(i){for(let x=0;x<i;x++)if(!STEPS[x].need())return false;return true}
-function goStep(i){
-  if(i<0||i>=STEPS.length)return;
-  if(!reachable(i)){toast('צריך להשלים את השלבים הקודמים');return}
-  S.step=i; saveDraft(); renderStepper(); renderStep();
-}
-function next(){
-  if(!STEPS[S.step].need()){toast('בחרו אפשרות כדי להמשיך');return}
-  goStep(Math.min(S.step+1,STEPS.length-1));
+function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify(S)) }catch(e){} }
+function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d) }catch(e){} }
+
+/* =================== גלילה לשלב הבא =================== */
+/* כל בחירה מורידה את המשתמש למקטע הבא, שכבר נמצא שם על המסך */
+function slideTo(id){
+  const el=document.getElementById(id), main=$('#main');
+  if(!el||!main)return;
+  /* גלילה מונפשת משלנו ולא scroll-behavior של ה-CSS, כדי שההתנהגות תהיה ודאית */
+  const delta=el.getBoundingClientRect().top-main.getBoundingClientRect().top-12;
+  const max=main.scrollHeight-main.clientHeight;
+  const from=main.scrollTop, to=Math.max(0,Math.min(max,from+delta)), dist=to-from;
+  if(Math.abs(dist)<2)return;
+  const dur=Math.min(700,240+Math.abs(dist)*0.3), t0=performance.now();
+  const ease=t=>1-Math.pow(1-t,3);
+  /* setTimeout ולא requestAnimationFrame: rAF נעצר בלשונית מוסתרת והגלילה לא הייתה מתבצעת */
+  (function step(){
+    const t=Math.min(1,(performance.now()-t0)/dur);
+    main.scrollTop=from+dist*ease(t);
+    if(t<1)setTimeout(step,16);
+  })();
 }
 
-function renderStepper(){
-  $('#stepper').innerHTML = STEPS.map((st,i)=>{
-    const done = st.need() && i<S.step;
-    const cls = i===S.step?'now':(done?'done':'');
-    return `<button class="${cls}" data-go="${i}" ${reachable(i)?'':'disabled'}><i>${done?'✓':(i+1)}</i>${esc(st.t)}</button>`
-      + (i<STEPS.length-1?'<span class="arrow">‹</span>':'');
-  }).join('');
-  $$('#stepper [data-go]').forEach(b=>b.onclick=()=>goStep(+b.dataset.go));
-}
-
-/* =================== מסכי השלבים =================== */
-function optCard(o,cur){
-  return `<button class="opt ${cur===o.v?'on':''}" data-pick="${attr(o.v)}">
+/* =================== בניית המקטעים (פעם אחת) =================== */
+function optCard(o){
+  return `<button class="opt" data-v="${attr(o.v)}">
     ${o.ic?`<span class="ic"><svg viewBox="0 0 24 24"><path d="${o.ic}"/></svg></span>`:''}
-    ${o.g?`<span class="swatch" style="background:${o.g}"></span>`:''}
+    ${o.sw?`<span class="swatch">${o.sw}</span>`:''}
     <b>${esc(o.t||o.v)}</b>${o.d?`<small>${esc(o.d)}</small>`:''}</button>`;
 }
 
-function renderStep(){
-  const k=STEPS[S.step].k;
-  const head=(t,s)=>`<div class="step-title"><h2>${t}</h2><small>שלב ${S.step+1} מתוך ${STEPS.length}</small></div><p class="sub">${s}</p>`;
-  let html='';
+function buildSections(){
+  $('#optsPromote').innerHTML = PROMOTE.map(optCard).join('');
+  $('#optsStyle').innerHTML   = STYLE.map(optCard).join('');
+  $('#optsFormat').innerHTML  = FORMAT.map(optCard).join('');
+  $('#chipsAud').innerHTML    = AUDIENCE.map(a=>`<button class="chip" data-v="${attr(a)}">${esc(a)}</button>`).join('');
+  $('#chipsTone').innerHTML   = TONE.map(t=>`<button class="chip" data-v="${attr(t)}">${esc(t)}</button>`).join('');
 
-  if(k==='client'){
-    html = head('בשביל מי המודעה','בחרו לקוח שמור או הוסיפו חדש. הפרטים יישמרו לפעם הבאה')
-      + `<div class="opts wide">
-          ${CLIENTS.map(c=>`<button class="opt ${S.client&&S.client.id===c.id?'on':''}" data-client="${attr(c.id)}">
-            <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6"/></svg></span>
-            <b>${esc(c.name)}</b><small>${esc(c.field||'')}${c.city?' · '+esc(c.city):''}</small></button>`).join('')}
-          <button class="opt" data-newclient="1"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><b>לקוח חדש</b><small>הוספת עסק</small></button>
-        </div>
-        <div id="clientForm" class="${S.client&&S.client._new?'':'hidden'}" style="margin-top:18px">
-          <div class="two">
-            <label class="field"><span>שם העסק</span><input id="c_name" value="${attr(S.client&&S.client.name)}" placeholder="סטודיו מוב"></label>
-            <label class="field"><span>תחום</span><input id="c_field" value="${attr(S.client&&S.client.field)}" placeholder="סטודיו לפילאטיס"></label>
-          </div>
-          <label class="field"><span>עיר</span><input id="c_city" value="${attr(S.client&&S.client.city)}" placeholder="תל אביב"></label>
-          <button class="btn btn-primary btn-sm" id="saveClient">שמירה והמשך</button>
-        </div>`;
-  }
+  wirePick('#optsPromote','promote','sec-promote','pick-promote','sec-style');
+  wirePick('#optsStyle','style','sec-style','pick-style','sec-format');
+  wirePick('#optsFormat','format','sec-format','pick-format','sec-aud',v=>FORMAT.find(f=>f.v===v).t);
 
-  if(k==='promote'){
-    html = head('מה מקדמים','לחיצה על אפשרות ממשיכה אתכם לשלב הבא')
-      + `<div class="opts">${PROMOTE.map(o=>optCard(o,S.promote)).join('')}</div>
-         <label class="field" style="margin-top:18px"><span>רוצים לדייק? (לא חובה)</span>
-           <input id="promoteFree" value="${attr(S.promoteFree)}" placeholder="לדוגמה: שיעור היכרות ראשון ללא עלות"></label>`;
-  }
-
-  if(k==='kind'){
-    html = head('סוג המודעה','תמונה סטטית או מודעה עם תנועה')
-      + `<div class="opts wide">${KIND.map(o=>optCard(o,S.kind)).join('')}</div>`
-      + (S.kind==='אנימציה'
-        ? `<div class="notice info" style="margin-top:18px">האנימציה נבנית מהתמונה שנוצרת: תנועת מצלמה איטית עם חשיפה רכה, ומתקבל קובץ וידאו מוכן לסטורי. בלי עלות יצירה נוספת</div>`
-        : '');
-  }
-
-  if(k==='format'){
-    html = head('פורמט','לאן המודעה הולכת')
-      + `<div class="opts wide">${FORMAT.map(o=>optCard(o,S.format)).join('')}</div>`;
-  }
-
-  if(k==='style'){
-    html = head('סגנון ויזואלי','איך המודעה תיראה')
-      + `<div class="opts">${STYLE.map(o=>optCard(o,S.style)).join('')}</div>`;
-  }
-
-  if(k==='aud'){
-    html = head('קהל יעד וטון','למי מדברים, ואיך')
-      + `<div class="grouplabel">קהל היעד</div>
-         <div class="chips">${AUDIENCE.map(a=>`<button class="chip ${S.audience===a?'on':''}" data-aud="${attr(a)}">${esc(a)}</button>`).join('')}</div>
-         <div class="grouplabel">הטון</div>
-         <div class="chips">${TONE.map(t=>`<button class="chip ${S.tone===t?'on':''}" data-tone="${attr(t)}">${esc(t)}</button>`).join('')}</div>
-         <label class="field" style="margin-top:20px"><span>קריאה לפעולה</span>
-           <input id="ctaIn" value="${attr(S.cta)}" placeholder="קבעו שיעור היכרות"></label>`;
-  }
-
-  if(k==='assets'){
-    html = head('נכסי המותג','בחרו מה לשלב במודעה. הנכסים נשלחים למנוע כתמונות ייחוס')
-      + (ASSETS.length
-        ? `<div class="asset-grid">${ASSETS.map(a=>`
-            <div class="asset ${S.assets.includes(a.id)?'on':''}" data-asset="${attr(a.id)}">
-              <span class="tick">✓</span>
-              <div class="thumb"><img src="${a.url}" alt=""></div>
-              <div class="cap"><b>${esc(a.name)}</b><span>${esc(a.tag)}</span></div>
-            </div>`).join('')}</div>`
-        : `<div class="empty-lib">עדיין אין נכסים שמורים.<br>אפשר להעלות לוגו ותמונות בלשונית נכסי המותג, או פשוט לדלג</div>`)
-      + `<button class="btn btn-ghost" data-tabjump="library" style="margin-top:12px">לניהול נכסי המותג</button>`;
-  }
-
-  if(k==='go'){
-    syncPrompt();
-    html = head('סיכום ויצירה','לחיצה על צ׳יפ מחזירה לשלב שלו')
-      + `<div class="sum">
-          ${sumChip(0,'לקוח',S.client&&S.client.name)}
-          ${sumChip(1,'מקדמים',S.promote+(S.promoteFree?' · '+S.promoteFree:''))}
-          ${sumChip(2,'סוג',S.kind)}
-          ${sumChip(3,'פורמט',S.format)}
-          ${sumChip(4,'סגנון',S.style)}
-          ${sumChip(5,'קהל',S.audience+(S.tone?' · '+S.tone:''))}
-          ${sumChip(6,'נכסים',S.assets.length?S.assets.length+' נבחרו':'ללא')}
-         </div>
-         <label class="field"><span>הנחיות נוספות (לא חובה)</span>
-           <textarea id="extraIn" rows="2" placeholder="לדוגמה: אור בוקר רך, בלי אנשים בפריים">${esc(S.extra)}</textarea></label>
-         <div style="display:flex;justify-content:space-between;align-items:center">
-           <span style="font-size:14px;color:var(--muted);font-weight:500">הפרומפט שיישלח למנוע</span>
-           <button class="btn btn-ghost" id="resetPrompt">איפוס אוטומטי</button>
-         </div>
-         <label class="field"><textarea id="promptIn" rows="6">${esc(S.prompt)}</textarea></label>
-         <button class="btn btn-primary" id="go">${S.kind==='אנימציה'?'יצירת המודעה המונפשת':'יצירת המודעה'}</button>`;
-  }
-
-  $('#stepPanel').innerHTML = `<div class="stepbody">${html}
-    <div class="step-foot">
-      ${S.step>0?'<button class="btn btn-outline btn-sm" id="back">חזרה</button>':''}
-      <div class="spacer"></div>
-      ${k!=='go'?`<button class="btn btn-primary btn-sm" id="nextBtn">${STEPS[S.step].need()?'המשך':'דילוג'}</button>`:''}
-    </div></div>`;
-  bindStep(k);
+  $('#chipsAud').onclick  = e => pickChip(e,'audience','#chipsAud');
+  $('#chipsTone').onclick = e => pickChip(e,'tone','#chipsTone');
 }
 
-function sumChip(i,label,val){
-  return `<button data-go="${i}"><em>${esc(label)}</em>${esc(val||'לא נבחר')}</button>`;
+function wirePick(sel,key,secId,pickId,nextId,label){
+  $(sel).onclick = e => {
+    const b=e.target.closest('[data-v]'); if(!b)return;
+    S[key]=b.dataset.v; S.promptTouched=false;
+    $(sel).querySelectorAll('.opt').forEach(x=>x.classList.toggle('on',x===b));
+    markDone(secId,pickId,label?label(S[key]):S[key]);
+    refreshPrompt(); saveDraft();
+    setTimeout(()=>slideTo(nextId),240);
+  };
 }
 
-function bindStep(k){
-  const b=$('#back'); if(b)b.onclick=()=>goStep(S.step-1);
-  const n=$('#nextBtn'); if(n)n.onclick=next;
-  $$('#stepPanel [data-go]').forEach(el=>el.onclick=()=>goStep(+el.dataset.go));
-  $$('#stepPanel [data-tabjump]').forEach(el=>el.onclick=()=>showTab(el.dataset.tabjump));
+function pickChip(e,key,sel){
+  const b=e.target.closest('[data-v]'); if(!b)return;
+  S[key]=b.dataset.v; S.promptTouched=false;
+  $(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
+  if(S.audience&&S.tone){
+    markDone('sec-aud','pick-aud',S.audience+' · '+S.tone);
+    setTimeout(()=>slideTo('sec-assets'),260);
+  }
+  refreshPrompt(); saveDraft();
+}
 
-  /* בחירה בקלף מסמנת ומעבירה מיד לשלב הבא */
-  $$('#stepPanel [data-pick]').forEach(el=>el.onclick=()=>{
-    const v=el.dataset.pick;
-    S.promptTouched=false;
-    if(k==='kind'){ S.kind=v; renderStepper(); renderStep(); setTimeout(next,500); return }
-    if(k==='promote')S.promote=v;
-    if(k==='format')S.format=v;
-    if(k==='style')S.style=v;
-    $$('#stepPanel [data-pick]').forEach(x=>x.classList.toggle('on',x===el));
-    renderStepper(); setTimeout(next,200);
+function markDone(secId,pickId,text){
+  const sec=document.getElementById(secId);
+  if(sec)sec.classList.add('done');
+  const p=document.getElementById(pickId);
+  if(p)p.textContent=text;
+}
+
+/* מקטע נכסי המותג נבנה מחדש כשהספרייה משתנה */
+function renderAssetPick(){
+  $('#assetPick').innerHTML = ASSETS.length
+    ? `<div class="asset-grid">${ASSETS.map(a=>`
+        <div class="asset ${S.assets.includes(a.id)?'on':''}" data-asset="${attr(a.id)}">
+          <span class="tick">✓</span>
+          <div class="thumb"><img src="${a.url}" alt=""></div>
+          <div class="cap"><b>${esc(a.name)}</b><span>${esc(a.tag)}</span></div>
+        </div>`).join('')}</div>
+       <button class="btn btn-ghost" data-tabjump="library" style="margin-top:12px">לניהול נכסי המותג</button>`
+    : `<div class="empty-lib">עדיין אין נכסים שמורים.<br>אפשר להעלות לוגו ותמונות בלשונית נכסי המותג, או פשוט להמשיך</div>
+       <button class="btn btn-ghost" data-tabjump="library" style="margin-top:12px">להעלאת נכסים</button>`;
+
+  $$('#assetPick [data-asset]').forEach(el=>el.onclick=()=>{
+    const id=el.dataset.asset;
+    S.assets = S.assets.includes(id) ? S.assets.filter(x=>x!==id) : S.assets.concat(id);
+    el.classList.toggle('on');
+    markDone('sec-assets','pick-assets',S.assets.length?S.assets.length+' נבחרו':'ללא');
+    refreshPrompt(); saveDraft();
+    if(S.assets.length===1)setTimeout(()=>slideTo('sec-go'),300);
   });
+  $$('#assetPick [data-tabjump]').forEach(el=>el.onclick=()=>showTab(el.dataset.tabjump));
+}
 
-  if(k==='client'){
-    $$('#stepPanel [data-client]').forEach(el=>el.onclick=()=>{
-      S.client=CLIENTS.find(c=>c.id===el.dataset.client)||null;
-      S.promptTouched=false; renderStepper(); setTimeout(next,200);
-    });
-    const nc=$('#stepPanel [data-newclient]');
-    if(nc)nc.onclick=()=>{S.client={id:'c'+Date.now(),name:'',field:'',city:'',_new:true};renderStep();const f=$('#c_name');if(f)f.focus()};
-    const sc=$('#saveClient');
-    if(sc)sc.onclick=async()=>{
-      const name=$('#c_name').value.trim();
-      if(!name){toast('צריך שם עסק');$('#c_name').focus();return}
-      const rec={id:S.client.id,name,field:$('#c_field').value.trim(),city:$('#c_city').value.trim()};
-      await DB.put('clients',rec); CLIENTS=await DB.all('clients'); S.client=rec; S.promptTouched=false;
-      toast('הלקוח נשמר'); renderStepper(); next();
-    };
-  }
-
-  if(k==='promote'){const f=$('#promoteFree');if(f)f.oninput=()=>{S.promoteFree=f.value.trim();S.promptTouched=false;saveDraft()}}
-
-  if(k==='aud'){
-    $$('#stepPanel [data-aud]').forEach(el=>el.onclick=()=>{
-      S.audience=el.dataset.aud; S.promptTouched=false;
-      $$('#stepPanel [data-aud]').forEach(x=>x.classList.toggle('on',x===el));
-      renderStepper(); if(S.tone)setTimeout(next,240);
-    });
-    $$('#stepPanel [data-tone]').forEach(el=>el.onclick=()=>{
-      S.tone=el.dataset.tone; S.promptTouched=false;
-      $$('#stepPanel [data-tone]').forEach(x=>x.classList.toggle('on',x===el));
-      renderStepper(); if(S.audience)setTimeout(next,240);
-    });
-    const c=$('#ctaIn'); if(c)c.oninput=()=>{S.cta=c.value.trim();saveDraft()};
-  }
-
-  if(k==='assets'){
-    $$('#stepPanel [data-asset]').forEach(el=>el.onclick=()=>{
-      const id=el.dataset.asset;
-      S.assets = S.assets.includes(id) ? S.assets.filter(x=>x!==id) : S.assets.concat(id);
-      S.promptTouched=false; el.classList.toggle('on'); saveDraft();
-    });
-  }
-
-  if(k==='go'){
-    const e=$('#extraIn'); if(e)e.oninput=()=>{S.extra=e.value;S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
-    const pi=$('#promptIn'); if(pi)pi.oninput=()=>{S.prompt=pi.value;S.promptTouched=true;saveDraft()};
-    $('#resetPrompt').onclick=()=>{S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;toast('הפרומפט אופס')};
-    $('#go').onclick=generate;
-  }
+/* החזרת המצב השמור אל המסך */
+function applyState(){
+  const set=(sel,val)=>{const g=$(sel).querySelector(`[data-v="${(val||'').replace(/"/g,'\\"')}"]`);
+    if(g){$(sel).querySelectorAll('[data-v]').forEach(x=>x.classList.remove('on'));g.classList.add('on')}};
+  set('#optsPromote',S.promote); set('#optsStyle',S.style); set('#optsFormat',S.format);
+  set('#chipsAud',S.audience);   set('#chipsTone',S.tone);
+  if(S.promote)markDone('sec-promote','pick-promote',S.promote);
+  if(S.style)markDone('sec-style','pick-style',S.style);
+  if(S.format)markDone('sec-format','pick-format',(FORMAT.find(f=>f.v===S.format)||{}).t||S.format);
+  if(S.audience&&S.tone)markDone('sec-aud','pick-aud',S.audience+' · '+S.tone);
+  if(S.assets.length)markDone('sec-assets','pick-assets',S.assets.length+' נבחרו');
+  $('#promoteFree').value=S.promoteFree||'';
+  $('#ctaIn').value=S.cta||'';
+  $('#extraIn').value=S.extra||'';
+  refreshPrompt();
 }
 
 /* =================== הפרומפט =================== */
 function syncPrompt(){
   if(S.promptTouched)return;
-  const c=S.client||{}, p=[];
-  p.push(`מודעה חזותית לפרסום ברשתות החברתיות עבור ${c.name||'העסק'}${c.field?', '+c.field:''}${c.city?', '+c.city:''}.`);
+  const p=[];
+  p.push(`מודעה לפרסום ברשתות החברתיות עבור ${BIZ.name||'העסק'}${BIZ.field?', '+BIZ.field:''}${BIZ.city?', '+BIZ.city:''}.`);
   if(S.promote)p.push(`מה שמקדמים: ${S.promote}${S.promoteFree?' · '+S.promoteFree:''}.`);
   if(S.audience)p.push(`קהל היעד: ${S.audience}.`);
   if(S.tone)p.push(`טון: ${S.tone}.`);
-  if(S.style)p.push(`סגנון חזותי: ${S.style}.`);
+  const st=STYLE.find(x=>x.v===S.style);
+  if(st)p.push(st.p);
   const chosen=ASSETS.filter(a=>S.assets.includes(a.id));
   if(chosen.some(a=>a.tag==='לוגו'))p.push('שלב את הלוגו המצורף בתמונה, נקי וקריא, בפינה אחת, בלי לעוות אותו ובלי לשנות את צבעיו.');
   if(chosen.some(a=>a.tag!=='לוגו'))p.push('השתמש בתמונות הייחוס המצורפות כמקור לנראות של המוצר או המקום, ושמור על נאמנות להן.');
-  p.push('הרכב מקצועי ונקי, תאורה טבעית ומחמיאה, מראה של קמפיין אמיתי ולא של תמונת סטוק. השאר שטח שקט בפריים למיקום טקסט.');
-  if(S.kind==='אנימציה')p.push('הפריים ישמש בסיס לאנימציה, לכן שמור על מרכז יציב ועל שוליים נדיבים.');
+  p.push('הרכב מקצועי ונקי, והשאר שטח שקט בפריים למיקום טקסט.');
   if(S.extra&&S.extra.trim())p.push(S.extra.trim());
   S.prompt=p.join(' ');
 }
 
+/* מעדכן גם את הפרומפט שבמצב וגם את התיבה שהמשתמש רואה */
+function refreshPrompt(){
+  syncPrompt();
+  const el=$('#promptIn');
+  if(el&&!S.promptTouched)el.value=S.prompt;
+}
+
 function copyBrief(){
-  const c=S.client||{};
   return {
     type:'ad', engine:'openai',
-    business:{name:c.name||'',field:c.field||'',city:c.city||'',vibe:S.style,website:''},
+    business:{name:BIZ.name,field:BIZ.field,city:BIZ.city,vibe:S.style,website:''},
     goal:'קידום: '+S.promote+(S.promoteFree?' · '+S.promoteFree:''),
     tone:S.tone, framework:'AIDA',
     platform:S.format==='9:16'?'אינסטגרם סטורי':'אינסטגרם',
@@ -684,11 +642,16 @@ let busy=false;
 async function generate(){
   if(busy)return;
   if(!LIVE.on){toast('אין חיבור לשרת היצירה');return}
-  if(!S.client||!S.client.name){toast('חסר לקוח');goStep(0);return}
-  busy=true; const btn=$('#go'); if(btn)btn.disabled=true;
+  if(!BIZ.name){toast('מלאו את שם העסק למעלה');$('#b_name').focus();return}
+  if(!S.promote){toast('בחרו מה מקדמים');slideTo('sec-promote');return}
+  if(!S.style){toast('בחרו איך המודעה תיראה');slideTo('sec-style');return}
+
+  busy=true; $('#go').disabled=true;
+  $('#sec-result').classList.remove('hidden');
   const t0=Date.now();
   $('#result').innerHTML='<div class="loading"><div class="spinner"></div><b>מייצרים את המודעה</b>'+
     '<div>כותבים את הקופי ומרכיבים את הקריאייטיב</div><div class="clock" id="clock">0:00</div></div>';
+  slideTo('sec-result');
   const tick=setInterval(()=>{const el=$('#clock');if(!el)return clearInterval(tick);
     const s=Math.floor((Date.now()-t0)/1000);el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')},1000);
 
@@ -702,98 +665,37 @@ async function generate(){
     .catch(e=>({_err:e.message||String(e)}));
 
   const [copy,img]=await Promise.all([copyP,imgP]);
-  clearInterval(tick); busy=false;
+  clearInterval(tick); busy=false; $('#go').disabled=false;
 
   if(img._err&&copy._err){
     $('#result').innerHTML='<div class="notice err"><b>היצירה נכשלה.</b> '+esc(img._err)+'</div>';
-    renderStep(); return;
+    return;
   }
-  let video=null;
-  if(img.url&&S.kind==='אנימציה'){
-    $('#result').innerHTML='<div class="loading"><div class="spinner"></div><b>מנפישים את המודעה</b><div>בונים תנועת מצלמה על הפריים</div></div>';
-    try{ video=await animate(img.url,S.format) }catch(e){ toast('ההנפשה נכשלה, מוצגת התמונה') }
-  }
-  showResult(img,copy,video);
-  renderStep();
+  showResult(img,copy);
 }
 
-function showResult(img,copy,video){
+function showResult(img,copy){
   const text=(copy&&copy.text)?copy.text.trim():'';
-  const media = video
-    ? `<video src="${video.url}" controls autoplay muted loop playsinline></video>`
-    : (img&&img.url?`<img src="${img.url}" alt="המודעה שנוצרה" id="resImg">`:'');
   $('#result').innerHTML=`
-    <div class="stage">${media||'<div style="color:var(--muted)">לא נוצרה תמונה</div>'}</div>
+    ${img&&img.url?`<div class="stage"><img src="${img.url}" alt="המודעה שנוצרה" id="resImg"></div>`:''}
     <label class="field" style="margin-top:16px"><span>הקופי למודעה</span><textarea id="resText" rows="6">${esc(text)}</textarea></label>
     ${copy&&copy._err?'<div class="notice err">כתיבת הקופי נכשלה: '+esc(copy._err)+'</div>':''}
     ${img&&img._err?'<div class="notice err">יצירת התמונה נכשלה: '+esc(img._err)+'</div>':''}
-    ${img&&img.url?`<div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took!=null?' · '+img.took+' שניות':''}${img.refs?' · '+img.refs+' נכסי מותג שולבו':''}${video?' · אנימציה '+video.seconds+' שניות':''}</div>`:''}
+    ${img&&img.url?`<div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took!=null?' · '+img.took+' שניות':''}${img.refs?' · '+img.refs+' נכסי מותג שולבו':''}</div>`:''}
     <div class="result-actions">
       ${img&&img.url?`<a class="btn btn-primary btn-sm" href="${img.url}" download="morning-ad.webp">הורדת התמונה</a>`:''}
-      ${video?`<a class="btn btn-primary btn-sm" href="${video.url}" download="morning-ad.${video.ext}">הורדת האנימציה</a>`:''}
       <button class="btn btn-outline btn-sm" id="copyText">העתקת הקופי</button>
-      <button class="btn btn-outline btn-sm" id="again">מודעה נוספת</button>
+      <button class="btn btn-outline btn-sm" id="again">יצירה נוספת</button>
     </div>`;
-  const ri=$('#resImg'); if(ri){ri.style.cursor='zoom-in';ri.onclick=()=>lightbox(img.url,false)}
+  const ri=$('#resImg'); if(ri)ri.onclick=()=>lightbox(img.url);
   $('#copyText').onclick=()=>{if(navigator.clipboard)navigator.clipboard.writeText($('#resText').value);toast('הקופי הועתק')};
-  $('#again').onclick=()=>goStep(1);
-  if(img&&img.url)saveAd(img,text,video);
+  $('#again').onclick=()=>generate();
+  if(img&&img.url)saveAd(img,text);
 }
 
-/* =================== אנימציה: תנועת מצלמה על הפריים =================== */
-function animate(url,format,seconds){
-  seconds=seconds||6;
-  return new Promise((resolve,reject)=>{
-    const img=new Image();
-    img.onerror=()=>reject(new Error('טעינת התמונה נכשלה'));
-    img.onload=()=>{
-      const [W,H]=({'1:1':[1080,1080],'9:16':[1080,1920],'16:9':[1920,1080]})[format]||[1080,1080];
-      const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
-      const ctx=cv.getContext('2d');
-      if(!cv.captureStream||!window.MediaRecorder)return reject(new Error('הדפדפן לא תומך בהקלטה'));
-      const mime=['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']
-        .find(m=>MediaRecorder.isTypeSupported(m));
-      if(!mime)return reject(new Error('אין קודק וידאו זמין'));
-      const rec=new MediaRecorder(cv.captureStream(30),{mimeType:mime,videoBitsPerSecond:6e6});
-      const chunks=[];
-      rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
-      rec.onerror=()=>reject(new Error('ההקלטה נכשלה'));
-      rec.onstop=()=>{
-        const type=mime.split(';')[0];
-        const blob=new Blob(chunks,{type});
-        resolve({url:URL.createObjectURL(blob),blob,seconds,ext:type==='video/mp4'?'mp4':'webm'});
-      };
-      rec.start();
-      const t0=performance.now();
-      let done=false;
-      const finish=()=>{ if(done)return; done=true; try{rec.stop()}catch(e){} };
-      /* רשת ביטחון: אם משהו נתקע, עוצרים בכל מקרה ולא משאירים הבטחה תלויה */
-      const guard=setTimeout(finish,seconds*1000+10000);
-      const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;   /* פנימה והחוצה, בלי קפיצות */
-      /* משתמשים ב-setTimeout ולא ב-requestAnimationFrame: בלשונית מוסתרת rAF נעצר,
-         וההנפשה הייתה נתקעת לנצח. ההתקדמות נגזרת מהשעון, כך שהאורך תמיד נכון. */
-      (function frame(){
-        const t=Math.min(1,(performance.now()-t0)/(seconds*1000));
-        const e=ease(t);
-        const zoom=1.05+0.10*e;                 /* זום איטי פנימה */
-        const panY=(e-0.5)*0.03;                /* תזוזה אנכית עדינה */
-        const sc=Math.max(W/img.width,H/img.height)*zoom;
-        const dw=img.width*sc, dh=img.height*sc;
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
-        ctx.drawImage(img,(W-dw)/2,(H-dh)/2+panY*H,dw,dh);
-        const fade = t<0.12 ? 1-t/0.12 : (t>0.9 ? (t-0.9)/0.1 : 0);   /* חשיפה בפתיחה, דהייה בסוף */
-        if(fade>0){ctx.fillStyle='rgba(0,0,0,'+fade+')';ctx.fillRect(0,0,W,H)}
-        if(t<1)setTimeout(frame,33); else setTimeout(()=>{clearTimeout(guard);finish()},150);
-      })();
-    };
-    img.src=url;
-  });
-}
-
-function lightbox(url,isVideo){
+function lightbox(url){
   const d=document.createElement('div');
-  d.className='lightbox';
-  d.innerHTML=isVideo?`<video src="${url}" controls autoplay loop muted></video>`:`<img src="${url}" alt="">`;
+  d.className='lightbox'; d.innerHTML=`<img src="${url}" alt="">`;
   d.onclick=()=>d.remove(); document.body.appendChild(d);
 }
 
@@ -802,8 +704,8 @@ const TAGS=['לוגו','מוצר','רקע','אחר'];
 
 function shrink(file,max){
   max=max||1280;
-  /* כל קובץ עובר רסטור לקנבס ויוצא כ-WebP: זה מקטין, מאחד פורמט,
-     ושומר שקיפות. חשוב במיוחד ל-SVG, שמנוע התמונות של OpenAI לא מקבל. */
+  /* כל קובץ עובר רסטור לקנבס ויוצא כ-WebP: מקטין, מאחד פורמט ושומר שקיפות.
+     חשוב במיוחד ל-SVG, שמנוע התמונות של OpenAI לא מקבל. */
   const raster=src=>new Promise((res,rej)=>{
     const im=new Image();
     im.onerror=()=>rej(new Error('הקובץ אינו תמונה תקינה'));
@@ -855,11 +757,11 @@ async function addFiles(files){
       added++;
     }catch(e){toast('לא הצלחנו לקרוא את '+f.name)}
   }
-  if(added){ASSETS=await DB.all('assets');renderLib();renderCounts();toast(added===1?'נכס נוסף':added+' נכסים נוספו')}
+  if(added){ASSETS=await DB.all('assets');renderLib();renderAssetPick();renderCounts();toast(added===1?'נכס נוסף':added+' נכסים נוספו')}
 }
 
 function renderLib(){
-  if(!ASSETS.length){$('#lib').innerHTML='<div class="empty-lib">עדיין לא הועלו נכסים.<br>התחילו מהלוגו של הלקוח</div>';return}
+  if(!ASSETS.length){$('#lib').innerHTML='<div class="empty-lib" style="margin-top:16px">עדיין לא הועלו נכסים.<br>התחילו מהלוגו של העסק</div>';return}
   $('#lib').innerHTML='<div class="asset-grid">'+ASSETS.map(a=>`
     <div class="asset">
       <button class="del" data-del="${attr(a.id)}" title="מחיקה">×</button>
@@ -871,12 +773,12 @@ function renderLib(){
     ev.stopPropagation();
     await DB.del('assets',b.dataset.del);
     S.assets=S.assets.filter(x=>x!==b.dataset.del);
-    ASSETS=await DB.all('assets'); renderLib(); renderCounts(); toast('הנכס נמחק');
+    ASSETS=await DB.all('assets'); renderLib(); renderAssetPick(); renderCounts(); saveDraft(); toast('הנכס נמחק');
   });
   $$('#lib [data-tag]').forEach(b=>b.onclick=async()=>{
     const parts=b.dataset.tag.split('|');
     const a=ASSETS.find(x=>x.id===parts[0]); if(!a)return;
-    a.tag=parts[1]; await DB.put('assets',a); ASSETS=await DB.all('assets'); renderLib();
+    a.tag=parts[1]; await DB.put('assets',a); ASSETS=await DB.all('assets'); renderLib(); renderAssetPick(); refreshPrompt();
   });
 }
 
@@ -887,10 +789,9 @@ $('#file').onchange=e=>{addFiles(e.target.files);e.target.value=''};
 drop.addEventListener('drop',e=>addFiles(e.dataTransfer.files));
 
 /* =================== המודעות שנוצרו =================== */
-async function saveAd(img,text,video){
-  const rec={id:'ad'+Date.now(),url:img.url,text,biz:(S.client&&S.client.name)||'',
-    format:S.format,kind:S.kind,promote:S.promote,date:new Date().toLocaleString('he-IL')};
-  if(video&&video.blob)rec.video=video.blob;
+async function saveAd(img,text){
+  const rec={id:'ad'+Date.now(),url:img.url,text,biz:BIZ.name,format:S.format,
+    style:S.style,promote:S.promote,date:new Date().toLocaleString('he-IL')};
   await DB.put('ads',rec); ADS=await DB.all('ads'); renderGallery(); renderCounts();
 }
 
@@ -899,13 +800,10 @@ function renderGallery(){
   if(!arr.length){$('#gal').innerHTML='<div class="g-empty">עדיין לא נוצרו מודעות. המודעות שתיצרו יישמרו כאן</div>';return}
   $('#gal').innerHTML='<div class="gallery-grid">'+arr.map(c=>`
     <div class="g-card">
-      <div class="g-thumb" data-zoom="${attr(c.id)}">
-        ${c.kind==='אנימציה'?'<span class="g-badge">אנימציה</span>':''}
-        <img src="${c.url}" alt="">
-      </div>
+      <div class="g-thumb" data-zoom="${attr(c.id)}"><img src="${c.url}" alt=""></div>
       <div class="g-body">
         <div class="g-text">${esc((c.text||'').slice(0,140))}</div>
-        <div class="g-foot"><span>${esc(c.biz)}</span><span>${esc(c.promote||'')}</span></div>
+        <div class="g-foot"><span>${esc(c.promote||'')}</span><span>${esc(c.style||'')}</span></div>
         <div class="g-foot">
           <button class="btn btn-ghost" data-copy="${attr(c.id)}" style="padding:2px 0">העתקה</button>
           <a class="btn btn-ghost" href="${c.url}" download="morning-ad.webp" style="padding:2px 0;text-decoration:none">הורדה</a>
@@ -913,10 +811,7 @@ function renderGallery(){
         </div>
       </div>
     </div>`).join('')+'</div>';
-  $$('#gal [data-zoom]').forEach(el=>el.onclick=()=>{
-    const c=ADS.find(x=>x.id===el.dataset.zoom); if(!c)return;
-    if(c.video)lightbox(URL.createObjectURL(c.video),true); else lightbox(c.url,false);
-  });
+  $$('#gal [data-zoom]').forEach(el=>el.onclick=()=>{const c=ADS.find(x=>x.id===el.dataset.zoom);if(c)lightbox(c.url)});
   $$('#gal [data-copy]').forEach(b=>b.onclick=()=>{
     const c=ADS.find(x=>x.id===b.dataset.copy);
     if(c&&navigator.clipboard){navigator.clipboard.writeText(c.text||'');toast('הקופי הועתק')}
@@ -931,14 +826,16 @@ $('#clearGal').onclick=async()=>{if(confirm('למחוק את כל המודעות
 function showTab(name){
   $$('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===name));
   ['create','library','gallery'].forEach(n=>$('#tab-'+n).classList.toggle('hidden',n!==name));
-  if(name==='create')renderStep();
+  $('#main').scrollTop=0;
 }
 $$('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
 $('#fab').onclick=()=>{
-  Object.assign(S,{step:0,client:null,promote:'',promoteFree:'',kind:'תמונה',format:'1:1',
-    style:'',audience:'',tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
-  saveDraft(); showTab('create'); renderStepper(); renderStep();
-  $('.main').scrollTo({top:0,behavior:'smooth'});
+  Object.assign(S,{promote:'',promoteFree:'',style:'',format:'1:1',audience:'',tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
+  saveDraft();
+  $$('.sec').forEach(x=>x.classList.remove('done'));
+  $$('.opt,.chip').forEach(x=>x.classList.remove('on'));
+  $('#sec-result').classList.add('hidden');
+  renderAssetPick(); applyState(); showTab('create');
 };
 
 function renderCounts(){
@@ -946,15 +843,33 @@ function renderCounts(){
   $('#cAds').textContent=ADS.length;
 }
 
+/* =================== שדות טקסט =================== */
+['b_name','b_field','b_city'].forEach(id=>{
+  $('#'+id).oninput=()=>{
+    BIZ[id.slice(2)]=$('#'+id).value.trim();
+    S.promptTouched=false; syncPrompt(); $('#promptIn').value=S.prompt;
+    clearTimeout(BIZ._t); BIZ._t=setTimeout(()=>DB.put('settings',{id:'biz',name:BIZ.name,field:BIZ.field,city:BIZ.city}),400);
+  };
+});
+$('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
+$('#ctaIn').oninput=()=>{S.cta=$('#ctaIn').value.trim();saveDraft()};
+$('#extraIn').oninput=()=>{S.extra=$('#extraIn').value;S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
+$('#promptIn').oninput=()=>{S.prompt=$('#promptIn').value;S.promptTouched=true;saveDraft()};
+$('#resetPrompt').onclick=()=>{S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft();toast('הפרומפט אופס')};
+$('#go').onclick=generate;
+
 /* =================== התחלה =================== */
 (async()=>{
-  try{ const r=await Promise.all([DB.all('assets'),DB.all('ads'),DB.all('clients')]); ASSETS=r[0];ADS=r[1];CLIENTS=r[2]; }
-  catch(e){ toast('האחסון המקומי לא זמין בדפדפן הזה') }
+  try{
+    const r=await Promise.all([DB.all('assets'),DB.all('ads'),DB.get('settings','biz')]);
+    ASSETS=r[0]; ADS=r[1];
+    if(r[2])Object.assign(BIZ,r[2]);
+  }catch(e){ toast('האחסון המקומי לא זמין בדפדפן הזה') }
   loadDraft();
-  /* אם נכס שנבחר נמחק בינתיים, מסירים אותו מהטיוטה */
   S.assets=(S.assets||[]).filter(id=>ASSETS.some(a=>a.id===id));
-  while(S.step>0&&!reachable(S.step))S.step--;
-  renderCounts(); renderLib(); renderGallery(); renderStepper(); renderStep();
+  $('#b_name').value=BIZ.name||''; $('#b_field').value=BIZ.field||''; $('#b_city').value=BIZ.city||'';
+  buildSections(); renderAssetPick(); applyState();
+  renderCounts(); renderLib(); renderGallery();
 })();
 </script>
 </body>
