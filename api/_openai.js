@@ -81,6 +81,71 @@ async function generateText(system, user, model) {
   return text;
 }
 
+/* פענוח data URL לבאפר, לצורך שליחת נכסי מותג כקבצי ייחוס */
+function fromDataUrl(u) {
+  const m = /^data:([^;,]+)(;base64)?,(.*)$/s.exec(u || '');
+  if (!m) throw new Error('קובץ ייחוס לא תקין');
+  const mime = m[1];
+  const buf = m[2] ? Buffer.from(m[3], 'base64') : Buffer.from(decodeURIComponent(m[3]), 'utf8');
+  const ext = (mime.split('/')[1] || 'png').replace('jpeg', 'jpg');
+  return { mime, buf, ext };
+}
+
+/* יצירת תמונה עם נכסי מותג כייחוס (לוגו, תמונות מוצר) דרך images/edits.
+   OpenAI מקבל כאן multipart בלבד, ולכן זו לא אותה קריאה כמו generations. */
+async function generateImageWithRefs(opts) {
+  const o = opts || {};
+  const t0 = Date.now();
+  const model = o.model || IMAGE_MODEL;
+  const refs = (o.images || []).slice(0, 6);
+  if (!refs.length) return generateImage(o);
+
+  const build = (extras) => {
+    const fd = new FormData();
+    fd.append('model', model);
+    fd.append('prompt', o.prompt || '');
+    fd.append('size', SIZES[o.format] || SIZES['1:1']);
+    fd.append('quality', o.quality || IMAGE_QUALITY);
+    fd.append('n', '1');
+    for (const k of Object.keys(extras || {})) fd.append(k, extras[k]);
+    refs.forEach((u, i) => {
+      const { mime, buf, ext } = fromDataUrl(u);
+      fd.append('image[]', new Blob([buf], { type: mime }), 'ref' + i + '.' + ext);
+    });
+    return fd;
+  };
+
+  /* ניסיון ראשון עם פורמט פלט מוקטן, ואם הפרמטרים לא נתמכים חוזרים לברירת המחדל */
+  const attempts = [{ output_format: 'webp', output_compression: '92' }, {}];
+  let lastErr;
+  for (const extras of attempts) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 180000);
+    try {
+      const r = await fetch(API + '/images/edits', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + key() },
+        body: build(extras),
+        signal: ctrl.signal
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        lastErr = new Error((j.error && j.error.message) || ('שגיאת OpenAI ' + r.status));
+        if (r.status === 400 && Object.keys(extras).length) continue; /* ננסה בלי הפרמטרים האופציונליים */
+        throw lastErr;
+      }
+      const b64 = j.data && j.data[0] && j.data[0].b64_json;
+      if (!b64) throw new Error('לא התקבלה תמונה מ-OpenAI');
+      const fmt = extras.output_format || 'png';
+      return { kind: 'image', url: 'data:image/' + fmt + ';base64,' + b64, took: Math.round((Date.now() - t0) / 1000), model, refs: refs.length };
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('תם הזמן הקצוב לתשובה מ-OpenAI');
+      lastErr = e;
+    } finally { clearTimeout(timer); }
+  }
+  throw lastErr || new Error('יצירת התמונה נכשלה');
+}
+
 function hasKey() { return !!ENV.OPENAI_API_KEY; }
 
-module.exports = { generateImage, generateText, hasKey, IMAGE_MODEL, TEXT_MODEL, SIZES };
+module.exports = { generateImage, generateImageWithRefs, generateText, hasKey, IMAGE_MODEL, TEXT_MODEL, SIZES };

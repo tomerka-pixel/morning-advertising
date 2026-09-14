@@ -438,7 +438,7 @@ http.createServer(async (req, res) => {
   }
   if (req.url === '/api/post' && req.method === 'POST') {
     let body = '';
-    req.on('data', c => { body += c; if (body.length > 1e6) req.destroy(); });
+    req.on('data', c => { body += c; if (body.length > 2.5e7) req.destroy(); });
     req.on('end', async () => {
       try {
         const brief = JSON.parse(body || '{}');
@@ -458,7 +458,7 @@ http.createServer(async (req, res) => {
   }
   if (req.url === '/api/generate' && req.method === 'POST') {
     let body = '';
-    req.on('data', c => { body += c; if (body.length > 1e6) req.destroy(); });
+    req.on('data', c => { body += c; if (body.length > 2.5e7) req.destroy(); });
     req.on('end', async () => {
       try {
         const b = JSON.parse(body || '{}');
@@ -470,7 +470,8 @@ http.createServer(async (req, res) => {
         }
         if (b.engine === 'openai') {
           if (!(openai && openai.hasKey())) throw new Error('חסר OPENAI_API_KEY בסביבה של השרת המקומי');
-          const o = await openai.generateImage({ prompt: b.prompt, format: b.format, quality: b.quality, model: b.model });
+          const oargs = { prompt: b.prompt, format: b.format, quality: b.quality, model: b.model, images: b.images };
+          const o = (b.images && b.images.length) ? await openai.generateImageWithRefs(oargs) : await openai.generateImage(oargs);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(o));
           return;
