@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 let sharp = null; try { sharp = require('sharp'); } catch (e) { /* כתוביות ידרשו sharp */ }
+let openai = null; try { openai = require('./api/_openai'); } catch (e) { /* מסלול OpenAI לא זמין */ }
 
 const ENV = process['env'] || {};
 const ROOT = __dirname;
@@ -433,7 +434,7 @@ http.createServer(async (req, res) => {
   }
   if (req.url === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ live: true, engine: 'claude', version: 'v7-skill-locks' }));
+    return res.end(JSON.stringify({ live: true, engine: 'claude', openai: !!(openai && openai.hasKey()), imageModel: openai ? openai.IMAGE_MODEL : null, textModel: openai ? openai.TEXT_MODEL : null, version: 'v8-openai' }));
   }
   if (req.url === '/api/post' && req.method === 'POST') {
     let body = '';
@@ -441,7 +442,10 @@ http.createServer(async (req, res) => {
     req.on('end', async () => {
       try {
         const brief = JSON.parse(body || '{}');
-        const text = await runClaude(buildPrompt(brief), brief.type === 'ad' ? SYSTEM_AD : SYSTEM);
+        const sys = brief.type === 'ad' ? SYSTEM_AD : SYSTEM;
+        const text = (brief.engine === 'openai' && openai && openai.hasKey())
+          ? await openai.generateText(sys, buildPrompt(brief))
+          : await runClaude(buildPrompt(brief), sys);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ text }));
       } catch (e) {
@@ -462,6 +466,13 @@ http.createServer(async (req, res) => {
           const v = await generateVideo(b);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(v));
+          return;
+        }
+        if (b.engine === 'openai') {
+          if (!(openai && openai.hasKey())) throw new Error('חסר OPENAI_API_KEY בסביבה של השרת המקומי');
+          const o = await openai.generateImage({ prompt: b.prompt, format: b.format, quality: b.quality, model: b.model });
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(o));
           return;
         }
         const g = await runHiggsfield(HF_IMAGE_MODEL, b.prompt || '', b.format || '');

@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>morning · יוצר המודעות</title>
+<link rel="stylesheet" href="https://static.greeninvoice.co.il/fonts/ploni.min.css">
+<link rel="icon" href="assets/morning-mark.svg">
+<style>
+:root{
+  --ink:#033841;          /* צבע הטקסט של המערכת */
+  --brand:#18534E;        /* ירוק המותג (לוגו) */
+  --green:#0DACB1;        /* יוחלף מיד למטה, נשמר לתאימות */
+  --primary:#0DAC81;      /* הירוק של כפתורי הפעולה במערכת */
+  --primary-dark:#0a8e6a;
+  --blue:#1D58E3;
+  --rail:#0E3F3A;
+  --rail-hover:#1c544d;
+  --bg:#F6F8F8;
+  --card:#fff;
+  --line:#E6ECEC;
+  --muted:#6C8085;
+  --pink:#F4556B;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:ploni,Ping,Arial,sans-serif;color:var(--ink);background:var(--bg);direction:rtl;font-size:16px;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+h1,h2,h3{margin:0;font-weight:700}
+a{color:inherit}
+
+/* ===== שלד המערכת: סרגל ימני + משטח ===== */
+.app{display:flex;height:100%;overflow:hidden}
+.rail{width:76px;flex:0 0 76px;background:var(--rail);color:#fff;display:flex;flex-direction:column;align-items:center;padding:20px 0 16px;gap:2px;order:1}
+.rail .mark{width:34px;height:34px;margin-bottom:20px;opacity:.97}
+.rail-btn{position:relative;width:52px;height:48px;border:0;background:transparent;color:#fff;border-radius:12px;cursor:pointer;display:grid;place-items:center;opacity:.88}
+.rail-btn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.rail-btn:hover{background:var(--rail-hover);opacity:1}
+.rail-btn.active{background:var(--rail-hover);opacity:1}
+.rail-btn .dot{position:absolute;top:9px;left:11px;width:7px;height:7px;border-radius:50%;background:#2BD9A0}
+.rail-sep{width:40px;height:1px;background:rgba(255,255,255,.16);margin:8px 0}
+.rail-bottom{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:14px}
+.rail-avatar{width:40px;height:40px;border-radius:50%;background:#fff;display:grid;place-items:center}
+.rail-avatar img{width:22px;height:22px}
+.rail-collapse{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.12);border:0;color:#fff;cursor:pointer;display:grid;place-items:center}
+.rail-collapse svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.surface{flex:1;min-width:0;display:flex;flex-direction:column;order:2;overflow:hidden}
+.topbar{height:84px;flex:0 0 84px;background:#fff;display:flex;align-items:center;gap:20px;padding:0 40px;border-bottom:1px solid #F0F3F3}
+.fab{width:58px;height:58px;border-radius:50%;background:var(--primary);color:#fff;border:0;cursor:pointer;display:grid;place-items:center;box-shadow:0 6px 18px rgba(13,172,129,.32)}
+.fab svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.top-icon{width:38px;height:38px;border-radius:50%;border:0;background:transparent;color:var(--ink);cursor:pointer;display:grid;place-items:center}
+.top-icon:hover{background:#F2F5F5}
+.top-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.top-spacer{flex:1}
+.top-logo{height:26px;opacity:.95}
+
+.main{flex:1;overflow:auto;padding:38px 46px 70px}
+.wrap{max-width:1240px;margin:0 auto}
+
+/* ===== ברכה ===== */
+.hello{display:flex;align-items:center;gap:22px;margin-bottom:30px}
+.hello-disc{width:104px;height:104px;flex:0 0 104px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 2px 14px rgba(3,56,65,.07)}
+.hello-disc img{width:66px}
+.hello h1{font-size:28px;margin-bottom:6px}
+.hello p{margin:0;color:#41616a;font-size:17px}
+
+/* ===== כרטיסים ===== */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.card-head h3{font-size:18px}
+.card-ico{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;flex:0 0 46px}
+.card-ico svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ico-blue{background:#EEF1FE;color:#3C5BD6}
+.ico-green{background:#E6F7F1;color:#0DAC81}
+.ico-red{background:#FEECEC;color:#E8596A}
+.ico-amber{background:#FEF4E3;color:#E8A33D}
+.card p{margin:5px 0;color:var(--muted);font-size:15px}
+.card b.big{display:block;font-size:26px;margin:2px 0 6px}
+
+/* ===== כפתורים ===== */
+.btn{border-radius:100px;padding:11px 26px;cursor:pointer;font-size:17px;border:1px solid transparent;background:transparent;transition:.15s}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark);border-color:var(--primary-dark)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{border-color:var(--ink);color:var(--ink)}
+.btn-outline:hover{background:#F2F5F5}
+.btn-ghost{color:var(--primary);padding:8px 12px;font-size:15px}
+.btn-ghost:hover{text-decoration:underline}
+.btn-sm{padding:8px 18px;font-size:15px}
+
+/* ===== כלי היצירה ===== */
+.tool{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.panel>h2{font-size:21px;margin-bottom:4px}
+.panel .sub{color:var(--muted);font-size:15px;margin:0 0 18px}
+.field{display:block;margin-bottom:15px}
+.field span{display:block;font-size:14px;color:#456068;margin-bottom:6px;font-weight:500}
+.field input,.field textarea,.field select{width:100%;border:1px solid #D8E2E2;border-radius:12px;padding:11px 14px;font-size:16px;background:#fff;outline:0}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,172,129,.12)}
+.field textarea{resize:vertical;line-height:1.6}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{flex:1;min-width:96px;border:1px solid #D8E2E2;background:#fff;border-radius:12px;padding:11px 8px;cursor:pointer;font-size:15px;text-align:center}
+.seg button small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.seg button.on{border-color:var(--primary);background:#F0FBF7;color:var(--brand);font-weight:600}
+.switch{display:flex;align-items:center;gap:10px;font-size:15px;margin-bottom:15px;cursor:pointer}
+.switch input{width:18px;height:18px;accent-color:var(--primary)}
+.prompt-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.tool-actions{display:flex;gap:10px;align-items:center;margin-top:6px}
+
+/* ===== תוצאה ===== */
+.result-empty{text-align:center;color:var(--muted);padding:56px 20px;line-height:1.8}
+.result-empty svg{width:54px;height:54px;stroke:#B8CBCB;fill:none;stroke-width:1.4;margin-bottom:12px}
+.stage{background:#F3F6F6;border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:center;min-height:220px}
+.stage img{max-width:100%;max-height:460px;border-radius:10px;box-shadow:0 8px 26px rgba(3,56,65,.14);display:block}
+.ph{width:100%;border-radius:10px;background:linear-gradient(135deg,#0E3F3A,#0DAC81);display:grid;place-items:center;color:#fff;text-align:center;padding:20px}
+.ph.r11{aspect-ratio:1}.ph.r916{aspect-ratio:9/16;max-width:250px;margin:0 auto}.ph.r169{aspect-ratio:16/9}
+.copy-box{margin-top:16px}
+.copy-box textarea{min-height:150px}
+.meta{font-size:13px;color:#46666d;background:#F0FBF7;border:1px solid #CFEDE1;border-radius:10px;padding:9px 12px;margin-top:12px}
+.result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.result-actions a{text-decoration:none;display:inline-block}
+.spinner{width:46px;height:46px;border:5px solid #E2EFEC;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:46px 20px;color:var(--muted)}
+.loading b{display:block;color:var(--ink);font-size:18px;margin-bottom:8px}
+.clock{font-variant-numeric:tabular-nums;font-size:15px;margin-top:10px;color:#46666d}
+
+/* ===== גלריה ===== */
+.gallery{margin-top:22px}
+.gallery-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.g-card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.g-thumb{aspect-ratio:1;background:#EEF3F3;cursor:zoom-in}
+.g-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.g-body{padding:11px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
+.g-text{font-size:13px;line-height:1.5;color:#2C4A4A;white-space:pre-wrap;flex:1;max-height:74px;overflow:hidden}
+.g-foot{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#7E9195}
+.g-empty{color:var(--muted);padding:28px;text-align:center;background:#fff;border:1px dashed #D3E0E0;border-radius:14px}
+
+/* ===== מצבים ותצוגות ===== */
+.notice{border-radius:12px;padding:13px 16px;font-size:15px;margin-bottom:18px;line-height:1.6}
+.notice.warn{background:#FFF7E8;border:1px solid #F4E0B6;color:#7A5713}
+.notice.err{background:#FDEDED;border:1px solid #F5C9C9;color:#8E2C2C}
+.live-badge{display:inline-flex;align-items:center;gap:7px;background:#E6F7F1;color:#0A6B52;border-radius:100px;padding:5px 13px;font-size:13px;font-weight:600}
+.live-badge i{width:8px;height:8px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 3px rgba(13,172,129,.2)}
+.lightbox{position:fixed;inset:0;background:rgba(3,26,26,.86);display:grid;place-items:center;z-index:99;cursor:zoom-out;padding:30px}
+.lightbox img{max-width:94%;max-height:94%;border-radius:10px}
+.chat-fab{position:fixed;bottom:26px;left:26px;width:56px;height:56px;border-radius:50%;background:var(--rail);color:#fff;border:0;cursor:pointer;display:grid;place-items:center;box-shadow:0 8px 22px rgba(3,56,65,.28);z-index:80}
+.chat-fab svg{width:24px;height:26px;fill:currentColor}
+.chat-fab:hover{background:var(--rail-hover)}
+.toast{position:fixed;bottom:24px;left:96px;background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;z-index:120;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+
+@media(max-width:1080px){.cards{grid-template-columns:repeat(2,1fr)}.tool{grid-template-columns:1fr}}
+@media(max-width:640px){
+  .main{padding:24px 18px 60px}.rail{width:60px;flex-basis:60px}.topbar{padding:0 18px;height:72px;flex-basis:72px}
+  .cards{grid-template-columns:1fr}.two{grid-template-columns:1fr}.hello{gap:14px}.hello-disc{width:76px;height:76px;flex-basis:76px}.hello-disc img{width:48px}.hello h1{font-size:23px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== סרגל הניווט של המערכת ===== -->
+  <aside class="rail">
+    <img class="mark" src="assets/morning-mark.svg" alt="morning" style="filter:brightness(0) invert(1)">
+    <button class="rail-btn" title="מועדפים"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg></button>
+    <div class="rail-sep"></div>
+    <button class="rail-btn" title="הכנסות"><svg viewBox="0 0 24 24"><path d="M4 19V12m6 7V8m6 11V5m4 14H2M4 8l5-4 5 2 6-4"/></svg></button>
+    <button class="rail-btn" title="ניהול שוטף"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5"/></svg></button>
+    <button class="rail-btn" title="הוצאות"><svg viewBox="0 0 24 24"><path d="M3 7h15a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H3zM3 7l3-4h9l3 4M16 13h5"/></svg></button>
+    <button class="rail-btn" title="מכירות ולידים"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg></button>
+    <button class="rail-btn" title="רשות המיסים"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M14.5 8.5c-1-1-5-.7-5 1.5 0 3 5 1 5 4 0 2-4 2.5-5 .8M12 7v10"/></svg></button>
+    <button class="rail-btn" title="ניהול פיננסי"><svg viewBox="0 0 24 24"><path d="M4 18V6h16v12zM7 15l3-3 3 2 4-5"/></svg></button>
+    <button class="rail-btn active" title="ניהול פרסום"><span class="dot"></span><svg viewBox="0 0 24 24"><path d="M4 14V9l12-4v13L4 14Zm0 0 2 6h4l-2-5M19 8l2-2M19 15l2 2M20 11h3"/></svg></button>
+    <button class="rail-btn" title="תוספים לעסק"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM16.5 13.5v6M13.5 16.5h6"/></svg></button>
+    <div class="rail-bottom">
+      <div class="rail-avatar"><img src="assets/morning-mark.svg" alt=""></div>
+      <button class="rail-collapse" title="כיווץ"><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button>
+    </div>
+  </aside>
+
+  <!-- ===== המשטח ===== -->
+  <div class="surface">
+    <header class="topbar">
+      <div class="top-spacer"></div>
+      <button class="top-icon" title="התראות"><svg viewBox="0 0 24 24"><path d="M18 15v-4a6 6 0 1 0-12 0v4l-2 3h16ZM10 21h4"/></svg></button>
+      <button class="top-icon" title="מצב תצוגה"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18Z" fill="currentColor" stroke="none"/></svg></button>
+      <button class="top-icon" title="עזרה"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.6.2-1 .8-1 1.4v.4M12 17h.01"/></svg></button>
+      <button class="fab" title="יצירה חדשה" id="fab"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    </header>
+
+    <main class="main">
+      <div class="wrap">
+
+        <section class="hello">
+          <div class="hello-disc"><img src="assets/morning-logo.svg" alt="morning"></div>
+          <div>
+            <h1>יוצר המודעות</h1>
+            <p>מייצרים ללקוחות שלכם מודעת תמונה מוכנה לפרסום, עם קופי בעברית, תוך פחות מדקה</p>
+            <div style="margin-top:10px" id="statusSlot"></div>
+          </div>
+        </section>
+
+        <div id="notice"></div>
+
+        <section class="cards">
+          <div class="card">
+            <div class="card-head"><h3>מודעות שנוצרו</h3><div class="card-ico ico-green"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 15l4.5-4.5 3 3L16 9l4 4"/><circle cx="9" cy="8.5" r="1.3"/></svg></div></div>
+            <b class="big" id="statCount">0</b>
+            <p>סה״כ בחשבון הזה</p>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>לקוחות</h3><div class="card-ico ico-blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-4 12.8-4 14 0"/></svg></div></div>
+            <b class="big" id="statClients">0</b>
+            <p>עסקים שיצרתם עבורם</p>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>זמן יצירה</h3><div class="card-ico ico-amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div></div>
+            <b class="big" id="statTime">—</b>
+            <p>ממוצע למודעה אחרונה</p>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>מנוע היצירה</h3><div class="card-ico ico-red"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M3 12h3M18 12h3M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3.2"/></svg></div></div>
+            <b class="big" id="statEngine">—</b>
+            <p id="statEngineSub">בודקים חיבור</p>
+          </div>
+        </section>
+
+        <section class="tool">
+          <!-- בריף -->
+          <div class="panel">
+            <h2>הבריף של הלקוח</h2>
+            <p class="sub">ככל שתמלאו יותר, המודעה תהיה מדויקת יותר</p>
+
+            <div class="two">
+              <label class="field"><span>שם העסק</span><input id="f_name" placeholder="לדוגמה: סטודיו מוב"></label>
+              <label class="field"><span>תחום</span><input id="f_field" placeholder="סטודיו לפילאטיס"></label>
+            </div>
+            <div class="two">
+              <label class="field"><span>עיר</span><input id="f_city" placeholder="תל אביב"></label>
+              <label class="field"><span>קהל יעד</span><input id="f_audience" placeholder="נשים 30-45 באזור"></label>
+            </div>
+            <label class="field"><span>מה מקדמים / ההצעה</span><input id="f_offer" placeholder="שיעור היכרות חינם למצטרפות חדשות"></label>
+            <label class="field"><span>קריאה לפעולה</span><input id="f_cta" placeholder="קבעו שיעור היכרות"></label>
+
+            <div class="two">
+              <label class="field"><span>טון</span><select id="f_tone">
+                <option>ידידותי וחם</option><option>מקצועי ומהוקצע</option><option>אנרגטי ומניע</option><option>יוקרתי ורגוע</option><option>שובב וקליל</option>
+              </select></label>
+              <label class="field"><span>סגנון ויזואלי</span><select id="f_style">
+                <option>צילום אותנטי</option><option>סטודיו נקי</option><option>לייפסטייל חם</option><option>מינימליסטי גרפי</option><option>מודגש וצבעוני</option>
+              </select></label>
+            </div>
+
+            <div class="field"><span>פורמט</span>
+              <div class="seg" id="f_format">
+                <button data-v="1:1" class="on">ריבוע<small>פוסט בפיד</small></button>
+                <button data-v="9:16">אנכי<small>סטורי וריל</small></button>
+                <button data-v="16:9">רוחב<small>באנר</small></button>
+              </div>
+            </div>
+
+            <label class="switch"><input type="checkbox" id="f_textin" checked><span>לשלב את הכותרת בתוך התמונה</span></label>
+
+            <label class="field"><span>הנחיות נוספות</span><textarea id="f_extra" rows="2" placeholder="לדוגמה: אור בוקר רך, בלי אנשים בפריים, צבעי המותג ירוק ולבן"></textarea></label>
+
+            <div class="prompt-head">
+              <span style="font-size:14px;color:#456068;font-weight:500">הפרומפט שיישלח למנוע</span>
+              <button class="btn btn-ghost" id="resetPrompt">איפוס להצעה האוטומטית</button>
+            </div>
+            <label class="field"><textarea id="f_prompt" rows="5"></textarea></label>
+
+            <div class="tool-actions">
+              <button class="btn btn-primary" id="go">יצירת מודעה</button>
+              <button class="btn btn-outline btn-sm" id="fillDemo">מילוי דוגמה</button>
+            </div>
+          </div>
+
+          <!-- תוצאה -->
+          <div class="panel" id="resultPanel">
+            <h2>המודעה</h2>
+            <p class="sub">התוצאה תופיע כאן, מוכנה להורדה ולפרסום</p>
+            <div id="result">
+              <div class="result-empty">
+                <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 15l4.5-4.5 3 3L16 9l4 4"/><circle cx="9" cy="8.5" r="1.3"/></svg>
+                <div>מלאו את הבריף מימין ולחצו על יצירת מודעה</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="gallery">
+          <div class="gallery-head">
+            <h2 style="font-size:20px">המודעות שנוצרו</h2>
+            <button class="btn btn-ghost" id="clearGal">ניקוי הכל</button>
+          </div>
+          <div id="gal"></div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+<button class="chat-fab" title="לעזרה במערכת, אני כאן"><svg viewBox="0 0 28 32"><path d="M28 32s-4.714-1.855-8.527-3.34H3.437C1.54 28.66 0 27.026 0 25.013V3.644C0 1.633 1.54 0 3.437 0h21.125c1.898 0 3.437 1.632 3.437 3.645v18.404H28V32z"/></svg></button>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================================================================
+   יוצר המודעות של morning
+   הפרונטאנד בלבד. היצירה עצמה רצה בשרת (api/generate + api/post) מול OpenAI.
+   המפתח של OpenAI יושב אך ורק במשתני הסביבה של השרת, לעולם לא כאן.
+   =================================================================== */
+
+/* כתובת השרת: מקומית ריק (אותו origin), באתר הציבורי הכתובת של Vercel */
+const API_BASE = /github\.io$/.test(location.hostname) ? 'https://REPLACE_WITH_VERCEL_URL' : '';
+
+const $ = s => document.querySelector(s);
+const LIVE = { on: false, info: null };
+let busy = false;
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 3200);
+}
+function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+/* קוד גישה: נשמר במחשב הזה בלבד, נשלח ככותרת לשרת */
+let _ac;
+function accessCode() {
+  if (_ac !== undefined) return _ac;
+  let c = '';
+  try {
+    c = localStorage.getItem('morning_ac') || '';
+    if (!c && API_BASE) { c = prompt('הזינו קוד גישה ליצירה (נשמר במחשב זה בלבד):') || ''; if (c) localStorage.setItem('morning_ac', c); }
+  } catch (e) {}
+  _ac = c; return _ac;
+}
+function headers() { return { 'Content-Type': 'application/json', 'x-access-code': accessCode() }; }
+
+/* ===== בדיקת חיבור ===== */
+fetch(API_BASE + '/api/health', { cache: 'no-store' })
+  .then(r => r.ok ? r.json() : null)
+  .then(j => {
+    if (!j) return offline('לא הצלחנו להגיע לשרת היצירה');
+    if (!j.openai) return offline('השרת עונה אבל אין מפתח OpenAI מוגדר');
+    LIVE.on = true; LIVE.info = j;
+    $('#statusSlot').innerHTML = '<span class="live-badge"><i></i>מחובר ליצירה אמיתית</span>';
+    $('#statEngine').textContent = 'OpenAI';
+    $('#statEngineSub').textContent = (j.imageModel || 'GPT Image') + ' · תמונה וקופי';
+  })
+  .catch(() => offline('לא הצלחנו להגיע לשרת היצירה'));
+
+function offline(why) {
+  LIVE.on = false;
+  $('#statEngine').textContent = 'לא מחובר';
+  $('#statEngineSub').textContent = 'היצירה מושבתת';
+  $('#notice').innerHTML = '<div class="notice warn"><b>מצב לא מחובר.</b> ' + esc(why) +
+    '. הכלי מוצג כאן במלואו, אבל כדי לייצר מודעות אמיתיות צריך שרת עם מפתח OpenAI פעיל. ' +
+    'הפרטים ב-DEPLOY.md שבמאגר</div>';
+}
+
+/* ===== מצב ===== */
+const state = { format: '1:1', promptTouched: false, last: null };
+
+const F = {
+  name: () => $('#f_name').value.trim(),
+  field: () => $('#f_field').value.trim(),
+  city: () => $('#f_city').value.trim(),
+  audience: () => $('#f_audience').value.trim(),
+  offer: () => $('#f_offer').value.trim(),
+  cta: () => $('#f_cta').value.trim(),
+  tone: () => $('#f_tone').value,
+  style: () => $('#f_style').value,
+  extra: () => $('#f_extra').value.trim(),
+  textin: () => $('#f_textin').checked
+};
+
+/* בניית הפרומפט לתמונה מתוך הבריף */
+function autoPrompt() {
+  const biz = F.name() || 'העסק';
+  const parts = [];
+  parts.push(`מודעה חזותית לפרסום ברשתות החברתיות עבור ${biz}${F.field() ? ', ' + F.field() : ''}${F.city() ? ', ' + F.city() : ''}.`);
+  if (F.offer()) parts.push(`מה שמקדמים: ${F.offer()}.`);
+  if (F.audience()) parts.push(`קהל היעד: ${F.audience()}.`);
+  parts.push(`טון: ${F.tone()}. סגנון חזותי: ${F.style()}.`);
+  parts.push(`הרכב מקצועי ונקי, פריים אנכי או ריבועי לפי הפורמט, תאורה טבעית ומחמיאה, צבעים עשירים אך לא רוויים מדי, מראה של קמפיין אמיתי ולא של תמונת סטוק.`);
+  parts.push(`השאר שטח שקט בחלק אחד של הפריים למיקום טקסט.`);
+  if (F.textin()) parts.push(`שלב בתמונה כותרת קצרה בעברית, מנוקדת נכון מבחינת כתיב, בטיפוגרפיה נקייה ומודרנית, בלי שגיאות ובלי אותיות הפוכות.`);
+  else parts.push(`בלי שום טקסט בתוך התמונה.`);
+  if (F.extra()) parts.push(F.extra());
+  return parts.join(' ');
+}
+function syncPrompt(force) {
+  if (state.promptTouched && !force) return;
+  $('#f_prompt').value = autoPrompt();
+}
+
+/* ===== חיווט טופס ===== */
+document.querySelectorAll('#f_name,#f_field,#f_city,#f_audience,#f_offer,#f_cta,#f_tone,#f_style,#f_extra,#f_textin')
+  .forEach(el => el.addEventListener('input', () => syncPrompt()));
+$('#f_prompt').addEventListener('input', () => { state.promptTouched = true; });
+$('#resetPrompt').onclick = () => { state.promptTouched = false; syncPrompt(true); toast('הפרומפט אופס'); };
+$('#f_format').onclick = e => {
+  const b = e.target.closest('button[data-v]'); if (!b) return;
+  state.format = b.dataset.v;
+  $('#f_format').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+};
+$('#fillDemo').onclick = () => {
+  $('#f_name').value = 'סטודיו מוב';
+  $('#f_field').value = 'סטודיו בוטיק לפילאטיס מכשירים';
+  $('#f_city').value = 'תל אביב';
+  $('#f_audience').value = 'נשים 30-45 שגרות בסביבה ומחפשות אימון מדויק';
+  $('#f_offer').value = 'שיעור היכרות ראשון ללא עלות';
+  $('#f_cta').value = 'קבעו שיעור היכרות';
+  $('#f_extra').value = 'אור בוקר רך, אווירה רגועה, צבעוניות חמימה';
+  state.promptTouched = false; syncPrompt(true);
+  toast('מולא בריף לדוגמה');
+};
+$('#fab').onclick = () => { $('#f_name').focus(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+/* ===== בריף לשרת הכתיבה ===== */
+function copyBrief() {
+  return {
+    type: 'ad',
+    engine: 'openai',
+    business: { name: F.name(), field: F.field(), city: F.city(), vibe: F.style(), website: '' },
+    goal: F.offer() ? 'קידום ההצעה: ' + F.offer() : 'הגדלת פניות מלקוחות חדשים',
+    tone: F.tone(),
+    framework: 'AIDA',
+    platform: state.format === '9:16' ? 'אינסטגרם סטורי' : 'אינסטגרם',
+    audience: F.audience(),
+    offer: F.offer(),
+    cta: F.cta(),
+    length: 'קצר',
+    emoji: 'מדוד',
+    extra: F.extra()
+  };
+}
+
+/* ===== היצירה ===== */
+$('#go').onclick = async () => {
+  if (busy) return;
+  if (!LIVE.on) { toast('אין חיבור לשרת היצירה'); return; }
+  if (!F.name()) { toast('מלאו לפחות את שם העסק'); $('#f_name').focus(); return; }
+
+  busy = true; $('#go').disabled = true;
+  const t0 = Date.now();
+  $('#result').innerHTML = '<div class="loading"><div class="spinner"></div><b>מייצרים את המודעה</b>' +
+    '<div>כותבים את הקופי ומרכיבים את הקריאייטיב</div><div class="clock" id="clock">0:00</div></div>';
+  const tick = setInterval(() => {
+    const el = $('#clock'); if (!el) return clearInterval(tick);
+    const s = Math.floor((Date.now() - t0) / 1000);
+    el.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }, 1000);
+
+  const copyP = fetch(API_BASE + '/api/post', { method: 'POST', headers: headers(), body: JSON.stringify(copyBrief()) })
+    .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || ('שגיאה ' + r.status)); return j; })
+    .catch(e => ({ _err: e.message || String(e) }));
+
+  const imgP = fetch(API_BASE + '/api/generate', {
+    method: 'POST', headers: headers(),
+    body: JSON.stringify({ kind: 'image', engine: 'openai', prompt: $('#f_prompt').value, format: state.format })
+  }).then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || ('שגיאה ' + r.status)); return j; })
+    .catch(e => ({ _err: e.message || String(e) }));
+
+  const [copy, img] = await Promise.all([copyP, imgP]);
+  clearInterval(tick);
+  busy = false; $('#go').disabled = false;
+
+  if (img._err && copy._err) { showError(img._err); return; }
+  showResult(img, copy);
+};
+
+function showError(msg) {
+  $('#result').innerHTML = '<div class="notice err"><b>היצירה נכשלה.</b> ' + esc(msg) + '</div>' +
+    '<button class="btn btn-outline btn-sm" onclick="document.querySelector(\'#go\').click()">ניסיון נוסף</button>';
+}
+
+function showResult(img, copy) {
+  const cls = state.format === '9:16' ? 'r916' : state.format === '16:9' ? 'r169' : 'r11';
+  const text = (copy && copy.text) ? copy.text.trim() : '';
+  const stage = (img && img.url)
+    ? `<img src="${img.url}" alt="המודעה שנוצרה" id="resImg">`
+    : `<div class="ph ${cls}"><div><b>לא נוצרה תמונה</b><br><small>${esc(img && img._err || '')}</small></div></div>`;
+
+  $('#result').innerHTML = `
+    <div class="stage">${stage}</div>
+    <div class="copy-box">
+      <label class="field"><span>הקופי למודעה</span><textarea id="resText" rows="6">${esc(text || (copy && copy._err ? '' : ''))}</textarea></label>
+      ${copy && copy._err ? '<div class="notice err">כתיבת הקופי נכשלה: ' + esc(copy._err) + '</div>' : ''}
+    </div>
+    <div class="meta">${img && img.url ? 'נוצר עכשיו · ' + esc(img.model || '') + (img.took != null ? ' · ' + img.took + ' שניות' : '') : 'ללא תמונה'}</div>
+    <div class="result-actions">
+      ${img && img.url ? `<a class="btn btn-primary btn-sm" href="${img.url}" download="morning-ad-${Date.now()}.webp">הורדת התמונה</a>` : ''}
+      <button class="btn btn-outline btn-sm" id="copyText">העתקת הקופי</button>
+      <button class="btn btn-outline btn-sm" id="regen">יצירה נוספת</button>
+    </div>`;
+
+  state.last = { img, text };
+  if (img && img.took != null) $('#statTime').textContent = img.took + 'ש׳';
+  const ri = $('#resImg'); if (ri) { ri.style.cursor = 'zoom-in'; ri.onclick = () => lightbox(img.url); }
+  $('#copyText').onclick = () => { navigator.clipboard && navigator.clipboard.writeText($('#resText').value); toast('הקופי הועתק'); };
+  $('#regen').onclick = () => $('#go').click();
+  if (img && img.url) saveToGallery(img, text);
+}
+
+function lightbox(url) {
+  const d = document.createElement('div');
+  d.className = 'lightbox'; d.innerHTML = '<img src="' + url + '" alt="">';
+  d.onclick = () => d.remove(); document.body.appendChild(d);
+}
+
+/* ===== גלריה: נשמרת בדפדפן הזה בלבד ===== */
+const GKEY = 'morning_ads_gallery';
+function galLoad() { try { return JSON.parse(localStorage.getItem(GKEY) || '[]'); } catch (e) { return []; } }
+function galSave(arr) {
+  /* תמונות data URL תופסות מקום, לכן שומרים מעט ומוותרים בשקט כשנגמר המקום */
+  for (let keep = arr.length; keep > 0; keep--) {
+    try { localStorage.setItem(GKEY, JSON.stringify(arr.slice(0, keep))); return arr.slice(0, keep); }
+    catch (e) { /* ננסה עם פחות פריטים */ }
+  }
+  try { localStorage.removeItem(GKEY); } catch (e) {}
+  return [];
+}
+function saveToGallery(img, text) {
+  const arr = galLoad();
+  arr.unshift({ id: 'a' + Date.now(), url: img.url, text, biz: F.name(), format: state.format, date: new Date().toLocaleString('he-IL') });
+  renderGallery(galSave(arr.slice(0, 24)));
+}
+function renderGallery(arr) {
+  arr = arr || galLoad();
+  $('#statCount').textContent = arr.length;
+  $('#statClients').textContent = new Set(arr.map(x => x.biz).filter(Boolean)).size;
+  if (!arr.length) { $('#gal').innerHTML = '<div class="g-empty">עדיין לא נוצרו מודעות. המודעות שתיצרו יישמרו כאן</div>'; return; }
+  $('#gal').innerHTML = '<div class="gallery-grid">' + arr.map(c => `
+    <div class="g-card">
+      <div class="g-thumb" data-zoom="${c.id}"><img src="${c.url}" alt=""></div>
+      <div class="g-body">
+        <div class="g-text">${esc((c.text || '').slice(0, 140))}</div>
+        <div class="g-foot"><span>${esc(c.biz || '')}</span><span>${esc(c.date)}</span></div>
+        <div class="g-foot">
+          <button class="btn btn-ghost" data-copy="${c.id}" style="padding:2px 0">העתקה</button>
+          <a class="btn btn-ghost" href="${c.url}" download="morning-ad.webp" style="padding:2px 0;text-decoration:none">הורדה</a>
+          <button class="btn btn-ghost" data-del="${c.id}" style="padding:2px 0;color:#C0392B">מחיקה</button>
+        </div>
+      </div>
+    </div>`).join('') + '</div>';
+
+  $('#gal').querySelectorAll('[data-zoom]').forEach(el => el.onclick = () => {
+    const c = arr.find(x => x.id === el.dataset.zoom); if (c) lightbox(c.url);
+  });
+  $('#gal').querySelectorAll('[data-copy]').forEach(b => b.onclick = () => {
+    const c = arr.find(x => x.id === b.dataset.copy);
+    if (c && navigator.clipboard) { navigator.clipboard.writeText(c.text || ''); toast('הקופי הועתק'); }
+  });
+  $('#gal').querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    renderGallery(galSave(galLoad().filter(x => x.id !== b.dataset.del)));
+  });
+}
+$('#clearGal').onclick = () => { if (confirm('למחוק את כל המודעות השמורות?')) renderGallery(galSave([])); };
+
+/* ===== התחלה ===== */
+syncPrompt(true);
+renderGallery();
+</script>
+</body>
+</html>
