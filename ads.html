@@ -326,7 +326,12 @@ a{color:inherit}
             <div class="sec-head"><span class="sec-num">6</span><h2>יצירה</h2></div>
             <p class="sec-sub">אפשר להוסיף הנחיות, או פשוט ליצור</p>
             <div class="sec-body">
-              <label class="field"><span>הנחיות נוספות (לא חובה)</span>
+              <div class="grouplabel" style="margin-top:0">כיתוב על המודעה</div>
+              <div class="chips" id="chipsOverlay"></div>
+              <div class="addrow" id="overlayRow">
+                <input id="overlayText" placeholder="רוצים כותרת משלכם? כתבו אותה כאן. אחרת היא תיכתב אוטומטית">
+              </div>
+              <label class="field" style="margin-top:18px"><span>הנחיות נוספות (לא חובה)</span>
                 <textarea id="extraIn" rows="2" placeholder="לדוגמה: אור בוקר רך, בלי אנשים בפריים, צבעי המותג ירוק ולבן"></textarea></label>
               <div style="display:flex;justify-content:space-between;align-items:center">
                 <span style="font-size:14px;color:var(--muted);font-weight:500">הפרומפט שיישלח למנוע</span>
@@ -507,9 +512,11 @@ const FORMAT = [
 const AUDIENCE = ['קהל רחב','נשים 25-40','נשים 40-60','גברים 25-45','הורים צעירים','בעלי עסקים','דור צעיר 18-28','גיל הזהב','תושבי האזור'];
 let MY_AUDIENCES = [];   /* קהלים שהמשתמש הוסיף, נשמרים ונשארים לבחירה */
 const TONE = ['ידידותי וחם','מקצועי ומהוקצע','אנרגטי ומניע','יוקרתי ורגוע','שובב וקליל'];
+const OVERLAY = ['כותרת על התמונה','בלי טקסט על התמונה'];
 
 /* =================== המצב =================== */
 const S = { promote:'', promoteFree:'', style:'', format:'1:1', audience:'', tone:'', cta:'',
+            overlay:'כותרת על התמונה', overlayText:'',
             extra:'', assets:[], prompt:'', promptTouched:false };
 const BIZ = { id:'biz', name:'', field:'', city:'' };
 
@@ -551,6 +558,14 @@ function buildSections(){
   $('#optsFormat').innerHTML  = FORMAT.map(optCard).join('');
   renderAudChips();
   $('#chipsTone').innerHTML   = TONE.map(t=>`<button class="chip" data-v="${attr(t)}">${esc(t)}</button>`).join('');
+  $('#chipsOverlay').innerHTML= OVERLAY.map(o=>`<button class="chip ${S.overlay===o?'on':''}" data-v="${attr(o)}">${esc(o)}</button>`).join('');
+  $('#chipsOverlay').onclick = e => {
+    const b=e.target.closest('[data-v]'); if(!b)return;
+    S.overlay=b.dataset.v; S.promptTouched=false;
+    $('#chipsOverlay').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
+    $('#overlayRow').style.display = S.overlay===OVERLAY[1] ? 'none' : 'flex';
+    refreshPrompt(); saveDraft();
+  };
 
   wirePick('#optsPromote','promote','sec-promote','pick-promote','sec-style');
   wirePick('#optsStyle','style','sec-style','pick-style','sec-format');
@@ -665,6 +680,9 @@ function applyState(){
   $('#promoteFree').value=S.promoteFree||'';
   $('#ctaIn').value=S.cta||'';
   $('#extraIn').value=S.extra||'';
+  $('#overlayText').value=S.overlayText||'';
+  $('#chipsOverlay').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S.overlay));
+  $('#overlayRow').style.display = S.overlay===OVERLAY[1] ? 'none' : 'flex';
   refreshPrompt();
 }
 
@@ -681,9 +699,27 @@ function syncPrompt(){
   const chosen=ASSETS.filter(a=>S.assets.includes(a.id));
   if(chosen.some(a=>a.tag==='לוגו'))p.push('שלב את הלוגו המצורף בתמונה, נקי וקריא, בפינה אחת, בלי לעוות אותו ובלי לשנות את צבעיו.');
   if(chosen.some(a=>a.tag!=='לוגו'))p.push('השתמש בתמונות הייחוס המצורפות כמקור לנראות של המוצר או המקום, ושמור על נאמנות להן.');
-  p.push('הרכב מקצועי ונקי, והשאר שטח שקט בפריים למיקום טקסט.');
+  p.push('הרכב מקצועי ונקי, עם שטח נושם שבו הכיתוב יישב טוב.');
+  if(S.overlay===OVERLAY[1]){
+    p.push('בלי שום טקסט בתוך התמונה. השאר שטח שקט בפריים להוספת טקסט בהמשך.');
+  }else{
+    const h=(S.overlayText||'').trim()||'{{כותרת}}';
+    p.push('שלב בתמונה את הכותרת הזו בעברית, בדיוק כפי שהיא כתובה ובלי שום שינוי: "'+h+'".');
+    p.push('עברית תקינה מימין לשמאל, אותיות שלמות וברורות, בלי אותיות הפוכות, בלי אותיות חסרות ובלי סימנים מומצאים. טיפוגרפיה נקייה ומודרנית, גדולה וקריאה, ממוקמת בשטח הפנוי של הפריים ובניגודיות טובה מול הרקע. אל תוסיף שום טקסט אחר בתמונה.');
+  }
   if(S.extra&&S.extra.trim())p.push(S.extra.trim());
   S.prompt=p.join(' ');
+}
+
+/* השורה הראשונה של הקופי היא הכותרת. מנקים אימוג'י וסימני קצה כדי שתיצרב נקי */
+function headlineOf(text){
+  const first=String(text||'').split('\n').map(x=>x.trim()).filter(Boolean)[0]||'';
+  return first
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{2190}-\u{21FF}]/gu,'')
+    .replace(/\s{2,}/g,' ')
+    .replace(/^["'\u201c\u201d\s]+|["'\u201c\u201d\s]+$/g,'')
+    .slice(0,60)
+    .trim();
 }
 
 /* מעדכן גם את הפרומפט שבמצב וגם את התיבה שהמשתמש רואה */
@@ -749,18 +785,31 @@ async function generate(){
     const s=Math.floor((Date.now()-t0)/1000);el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')},1000);
 
   const refs=ASSETS.filter(a=>S.assets.includes(a.id)).map(a=>a.url);
-  const copyP=fetch(API_BASE+'/api/post',{method:'POST',headers:headers(),body:JSON.stringify(copyBrief())})
+
+  const askCopy = () => fetch(API_BASE+'/api/post',{method:'POST',headers:headers(),body:JSON.stringify(copyBrief())})
     .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
     .catch(e=>({_err:e.message||String(e)}));
-  const imgP = LIVE.image
+
+  const askImage = prompt => LIVE.image
     ? fetch(API_BASE+'/api/generate',{method:'POST',headers:headers(),
-        body:JSON.stringify({kind:'image',prompt:S.prompt,format:S.format,images:refs})})
+        body:JSON.stringify({kind:'image',prompt,format:S.format,images:refs})})
       .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
       .catch(e=>({_err:e.message||String(e)}))
     : Promise.resolve({_skipped:true});
 
-  const [copy,img]=await Promise.all([copyP,imgP]);
-  clearInterval(tick); busy=false; $('#go').disabled=false;
+  const copyP=askCopy();
+  let copy, img;
+
+  if(S.prompt.indexOf('{{כותרת}}')>=0){
+    /* הכותרת נצרבת בתמונה, ולכן צריך את הקופי לפני שמייצרים אותה */
+    copy=await copyP;
+    const head=headlineOf(copy && copy.text) || S.promoteFree || S.promote || BIZ.name;
+    img=await askImage(S.prompt.split('{{כותרת}}').join(head));
+    if(img&&img.url)img.headline=head;
+  }else{
+    const r=await Promise.all([copyP,askImage(S.prompt)]);
+    copy=r[0]; img=r[1];
+  }
 
   if((img._err||img._skipped)&&copy._err){
     $('#result').innerHTML='<div class="notice err"><b>היצירה נכשלה.</b> '+esc(img._err)+'</div>';
@@ -777,7 +826,7 @@ function showResult(img,copy){
     ${copy&&copy._err?'<div class="notice err">כתיבת הקופי נכשלה: '+esc(copy._err)+'</div>':''}
     ${img&&img._err?'<div class="notice err">יצירת התמונה נכשלה: '+esc(img._err)+'</div>':''}
     ${img&&img._skipped?'<div class="notice warn">התמונה לא נוצרה כי מנוע התמונות לא מחובר. הקופי למעלה אמיתי ומוכן לשימוש</div>':''}
-    ${img&&img.url?`<div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took!=null?' · '+img.took+' שניות':''}${img.refs?' · '+img.refs+' נכסי מותג שולבו':''}</div>`:''}
+    ${img&&img.url?`<div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took!=null?' · '+img.took+' שניות':''}${img.refs?' · '+img.refs+' נכסי מותג שולבו':''}${img.headline?'<br>כותרת שנצרבה: '+esc(img.headline):''}</div>`:''}
     <div class="result-actions">
       ${img&&img.url?`<a class="btn btn-primary btn-sm" href="${img.url}" download="morning-ad.webp">הורדת התמונה</a>`:''}
       <button class="btn btn-outline btn-sm" id="copyText">העתקת הקופי</button>
@@ -962,6 +1011,7 @@ function renderCounts(){
   };
 });
 $('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
+$('#overlayText').oninput=()=>{S.overlayText=$('#overlayText').value;S.promptTouched=false;refreshPrompt();saveDraft()};
 $('#audAdd').onclick=addAudience;
 $('#audOther').onkeydown=e=>{ if(e['key']==='Enter'){ e.preventDefault(); addAudience() } };
 $('#ctaIn').oninput=()=>{S.cta=$('#ctaIn').value.trim();saveDraft()};
