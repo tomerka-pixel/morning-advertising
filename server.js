@@ -20,7 +20,8 @@ const PORT = ENV.PORT || 8787;
 const CLAUDE_BIN = ENV.CLAUDE_BIN || 'claude';
 const CLAUDE_MODEL = ENV.CLAUDE_MODEL || '';
 const HF_BIN = ENV.HF_BIN || 'higgsfield';
-const HF_IMAGE_MODEL = ENV.HF_IMAGE_MODEL || 'gpt_image_2';
+const HF_IMAGE_MODEL = ENV.HF_IMAGE_MODEL || 'gpt_image_2_5';
+const HF_VARIANT = ENV.HF_VARIANT || 'flare'; // flare = מהיר לשוטף, sunburst = איכותי ומדויק יותר בעריכה
 const HF_RESOLUTION = ENV.HF_RESOLUTION || '1k'; // 1k=זול יותר, 2k=יקר
 const HF_QUALITY = ENV.HF_QUALITY || 'medium'; // medium = מהיר וזול (1k medium=1.5 קרדיטים); high=4.5, 2k high=8.5
 const HF_VIDEO_OMNI = ENV.HF_VIDEO_OMNI || 'gemini_omni_flash_1_1'; // דיבור עברי, עד 10ש׳
@@ -86,6 +87,11 @@ function runClaude(userPrompt, system) {
   });
 }
 
+function hfModelLabel() {
+  if (!/gpt_image_2_5/.test(HF_IMAGE_MODEL)) return 'GPT Image 2 · היגספילד';
+  return 'GPT Image 2.5 ' + (HF_VARIANT === 'sunburst' ? 'Sunburst' : 'Flare') + ' · היגספילד';
+}
+
 /* זמינות ה-CLI של היגספילד. הוא מחובר לחשבון ולקרדיטים, בלי מפתח API. */
 function hasHiggsfield() {
   try {
@@ -120,6 +126,7 @@ function runHiggsfield(model, prompt, aspect, images) {
     const args = ['generate', 'create', model, '--prompt', prompt, '--resolution', HF_RESOLUTION,
                   '--quality', HF_QUALITY, '--wait', '--wait-timeout', '5m', '--json'];
     if (aspect) args.push('--aspect_ratio', aspect);
+    if (/gpt_image_2_5/.test(model)) args.push('--variant', HF_VARIANT);   /* 2.5 בלבד */
     refs.forEach(f => args.push('--image-references', f));
     const t0 = Date.now();
     let child;
@@ -135,7 +142,7 @@ function runHiggsfield(model, prompt, aspect, images) {
       const urls = out.match(/https?:\/\/[^\s"'\\)]+/g) || [];
       const url = urls.reverse().find(u => /\.(png|jpg|jpeg|webp|avif)(\?|$)/i.test(u)) || urls[0];
       if (code === 0 && url) resolve({ kind: 'image', url, took: Math.round((Date.now() - t0) / 1000),
-                                       model: 'GPT Image 2 · היגספילד', refs: refs.length });
+                                       model: hfModelLabel(), refs: refs.length });
       else reject(new Error((err || out || ('higgsfield exited ' + code)).slice(0, 300)));
     });
   });
@@ -460,7 +467,8 @@ http.createServer(async (req, res) => {
       live: true,
       text,                                   /* מי כותב את הקופי */
       image,                                  /* מי מייצר את התמונה */
-      imageLabel: image === 'higgsfield' ? 'GPT Image 2 דרך היגספילד' : (image === 'openai' ? 'GPT Image 2.5' : null),
+      imageLabel: image === 'higgsfield' ? hfModelLabel().replace(' · היגספילד', ' דרך היגספילד')
+                 : (image === 'openai' ? 'GPT Image 2.5' : null),
       imageCost: image === 'higgsfield' ? 1 : null,   /* קרדיטים למודעה */
       textLabel: text === 'codex' ? 'ChatGPT (המנוי שלך)' : (text === 'openai' ? 'OpenAI API' : 'Claude'),
       imageModel: key ? openai.IMAGE_MODEL : (image === 'higgsfield' ? HF_IMAGE_MODEL : null),
