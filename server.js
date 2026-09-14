@@ -86,23 +86,56 @@ function runClaude(userPrompt, system) {
   });
 }
 
+/* זמינות ה-CLI של היגספילד. הוא מחובר לחשבון ולקרדיטים, בלי מפתח API. */
+function hasHiggsfield() {
+  try {
+    if (HF_BIN.includes('/')) return fs.existsSync(HF_BIN);
+    const home = ENV.HOME || '';
+    return ['/usr/local/bin/', '/opt/homebrew/bin/', home + '/.local/bin/']
+      .some(d => fs.existsSync(d + HF_BIN));
+  } catch (e) { return false; }
+}
+
+/* נכסי המותג מגיעים כ-data URL. ה-CLI מעלה קבצים מקומיים לבד, לכן כותבים אותם לקבצים זמניים. */
+const HF_REF_DIR = path.join(require('os').tmpdir(), 'morning-hf-refs');
+function writeRefs(images) {
+  const files = [];
+  if (!images || !images.length) return files;
+  try { if (!fs.existsSync(HF_REF_DIR)) fs.mkdirSync(HF_REF_DIR, { recursive: true }); } catch (e) { return files; }
+  (images || []).slice(0, 6).forEach((u, i) => {
+    const m = /^data:([^;,]+);base64,(.*)$/s.exec(u || '');
+    if (!m) return;
+    const ext = (m[1].split('/')[1] || 'png').replace('jpeg', 'jpg').replace('svg+xml', 'svg');
+    const f = path.join(HF_REF_DIR, 'ref' + Date.now() + '_' + i + '.' + ext);
+    try { fs.writeFileSync(f, Buffer.from(m[2], 'base64')); files.push(f); } catch (e) {}
+  });
+  return files;
+}
+function cleanRefs(files) { (files || []).forEach(f => { try { fs.unlinkSync(f); } catch (e) {} }); }
+
 /* יצירת מודעת תמונה אמיתית עם היגספילד (GPT Image 2) דרך ה-CLI (חשבון+קרדיטים, בלי מפתח API). */
-function runHiggsfield(model, prompt, aspect) {
+function runHiggsfield(model, prompt, aspect, images) {
   return new Promise((resolve, reject) => {
-    const args = ['generate', 'create', model, '--prompt', prompt, '--resolution', HF_RESOLUTION, '--quality', HF_QUALITY, '--wait', '--wait-timeout', '5m', '--json'];
+    const refs = writeRefs(images);
+    const args = ['generate', 'create', model, '--prompt', prompt, '--resolution', HF_RESOLUTION,
+                  '--quality', HF_QUALITY, '--wait', '--wait-timeout', '5m', '--json'];
     if (aspect) args.push('--aspect_ratio', aspect);
+    refs.forEach(f => args.push('--image-references', f));
     const t0 = Date.now();
     let child;
-    try { child = spawn(HF_BIN, args, { cwd: ROOT }); }
-    catch (e) { return reject(e); }
+    /* stdin סגור, אחרת תהליכי CLI ממתינים לקלט ותוקעים את הבקשה */
+    try { child = spawn(HF_BIN, args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] }); }
+    catch (e) { cleanRefs(refs); return reject(e); }
     let out = '', err = '';
     child.stdout.on('data', d => out += d);
     child.stderr.on('data', d => err += d);
-    child.on('error', e => reject(e));
+    child.on('error', e => { cleanRefs(refs); reject(e); });
     child.on('close', code => {
+      cleanRefs(refs);
       const urls = out.match(/https?:\/\/[^\s"'\\)]+/g) || [];
       const url = urls.reverse().find(u => /\.(png|jpg|jpeg|webp|avif)(\?|$)/i.test(u)) || urls[0];
-      if (code === 0 && url) resolve({ url, took: Math.round((Date.now() - t0) / 1000) });
+      if (code === 0 && url) resolve({ kind: 'image', url, took: Math.round((Date.now() - t0) / 1000),
+                                       model: 'GPT Image 2 · היגספילד', refs: refs.length });
       else reject(new Error((err || out || ('higgsfield exited ' + code)).slice(0, 300)));
     });
   });
@@ -418,12 +451,15 @@ http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     const key = !!(openai && openai.hasKey());
     const text = key ? 'openai' : (hasCodex() ? 'codex' : 'claude');
+    const image = key ? 'openai' : (hasHiggsfield() ? 'higgsfield' : null);
     return res.end(JSON.stringify({
       live: true,
       text,                                   /* מי כותב את הקופי */
-      image: key ? 'openai' : null,           /* מי מייצר את התמונה */
+      image,                                  /* מי מייצר את התמונה */
+      imageLabel: image === 'higgsfield' ? 'GPT Image 2 דרך היגספילד' : (image === 'openai' ? 'GPT Image 2.5' : null),
+      imageCost: image === 'higgsfield' ? 1 : null,   /* קרדיטים למודעה */
       textLabel: text === 'codex' ? 'ChatGPT (המנוי שלך)' : (text === 'openai' ? 'OpenAI API' : 'Claude'),
-      imageModel: key ? openai.IMAGE_MODEL : null,
+      imageModel: key ? openai.IMAGE_MODEL : (image === 'higgsfield' ? HF_IMAGE_MODEL : null),
       openai: key,
       version: 'v9-codex'
     }));
@@ -462,17 +498,17 @@ http.createServer(async (req, res) => {
           res.end(JSON.stringify(v));
           return;
         }
-        if (b.engine === 'openai') {
-          if (!(openai && openai.hasKey())) throw new Error('חסר OPENAI_API_KEY בסביבה של השרת המקומי');
+        let out;
+        if (openai && openai.hasKey()) {
           const oargs = { prompt: b.prompt, format: b.format, quality: b.quality, model: b.model, images: b.images };
-          const o = (b.images && b.images.length) ? await openai.generateImageWithRefs(oargs) : await openai.generateImage(oargs);
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(o));
-          return;
+          out = (b.images && b.images.length) ? await openai.generateImageWithRefs(oargs) : await openai.generateImage(oargs);
+        } else if (hasHiggsfield()) {
+          out = await runHiggsfield(HF_IMAGE_MODEL, b.prompt || '', b.format || '', b.images);
+        } else {
+          throw new Error('אין מנוע תמונות מחובר: לא נמצא מפתח OpenAI ולא ה-CLI של היגספילד');
         }
-        const g = await runHiggsfield(HF_IMAGE_MODEL, b.prompt || '', b.format || '');
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ kind: 'image', url: g.url, took: g.took, model: HF_IMAGE_MODEL }));
+        res.end(JSON.stringify(out));
       } catch (e) {
         console.error('[generate] error:', e && (e.stack || e.message || e));
         res.writeHead(500, { 'Content-Type': 'application/json' });

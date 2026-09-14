@@ -322,6 +322,7 @@ a{color:inherit}
                 <button class="btn btn-ghost" id="resetPrompt">איפוס אוטומטי</button>
               </div>
               <label class="field"><textarea id="promptIn" rows="6"></textarea></label>
+              <div class="costline" id="costline"></div>
               <button class="btn btn-primary btn-lg" id="go">יצירת המודעה</button>
             </div>
           </section>
@@ -425,8 +426,9 @@ fetch(API_BASE+'/api/health',{cache:'no-store'})
     if(!LIVE.image){
       $('#notice').innerHTML='<div class="notice warn"><b>התמונות עדיין לא מחוברות.</b> '+
         'הקופי נכתב עכשיו דרך '+esc(j.textLabel||'מנוע הטקסט')+', בלי עלות נוספת. '+
-        'יצירת התמונה עצמה דורשת מפתח OpenAI, כי המנוי של ChatGPT לא נותן גישה למנוע התמונות דרך ה-API</div>';
+        'יצירת התמונה עצמה דורשת מפתח OpenAI או את ה-CLI של היגספילד</div>';
     }
+    renderCost();
   })
   .catch(()=>offline('לא הצלחנו להגיע לשרת היצירה'));
 
@@ -696,7 +698,7 @@ async function generate(){
     .catch(e=>({_err:e.message||String(e)}));
   const imgP = LIVE.image
     ? fetch(API_BASE+'/api/generate',{method:'POST',headers:headers(),
-        body:JSON.stringify({kind:'image',engine:'openai',prompt:S.prompt,format:S.format,images:refs})})
+        body:JSON.stringify({kind:'image',prompt:S.prompt,format:S.format,images:refs})})
       .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
       .catch(e=>({_err:e.message||String(e)}))
     : Promise.resolve({_skipped:true});
@@ -876,6 +878,19 @@ $('#fab').onclick=()=>{
   $('#sec-result').classList.add('hidden');
   renderAssetPick(); applyState(); showTab('create');
 };
+
+/* מה רץ ובכמה זה עולה, לפני שלוחצים */
+function renderCost(){
+  const el=$('#costline'); if(!el)return;
+  const j=LIVE.info||{};
+  const bits=[];
+  if(j.textLabel)bits.push('קופי: <b>'+esc(j.textLabel)+'</b>');
+  if(j.imageLabel)bits.push('תמונה: <b>'+esc(j.imageLabel)+'</b>');
+  if(j.imageCost)bits.push('עלות: <b>'+j.imageCost+' קרדיט למודעה</b>');
+  if(!bits.length){el.style.display='none';return}
+  el.innerHTML=bits.join(' · ');
+  el.style.display='block';
+}
 
 function renderCounts(){
   $('#cAssets').textContent=ASSETS.length;
