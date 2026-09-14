@@ -124,6 +124,15 @@ a{color:inherit}
 .chip{border:1px solid var(--line);background:#fff;border-radius:100px;padding:8px 16px;cursor:pointer;font-size:15px;transition:.14s}
 .chip:hover{border-color:var(--primary);background:var(--surface)}
 .chip.on{border-color:var(--primary);background:var(--ok-bg);color:var(--teal);font-weight:600}
+.addrow{display:flex;gap:10px;align-items:center;margin-top:12px}
+.addrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:var(--input-radius);padding:11px 14px;font-size:16px;background:#fff;outline:0}
+.addrow input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,172,129,.12)}
+.addrow input::placeholder{color:var(--placeholder)}
+.addrow .btn{flex:0 0 auto}
+.chip.custom{padding-inline-end:8px;display:inline-flex;align-items:center;gap:8px}
+.chip .x{width:18px;height:18px;border-radius:50%;border:0;background:var(--surface);color:var(--muted);cursor:pointer;font-size:13px;line-height:1;display:grid;place-items:center;flex:0 0 18px}
+.chip.on .x{background:#fff}
+.chip .x:hover{background:var(--err);color:#fff}
 .grouplabel{font-size:14px;color:var(--muted);font-weight:500;margin:18px 0 8px}
 .grouplabel:first-child{margin-top:0}
 
@@ -297,8 +306,10 @@ a{color:inherit}
             <p class="sec-sub">קהל היעד והטון של הפנייה</p>
             <div class="sec-body">
               <div class="grouplabel">קהל היעד</div><div class="chips" id="chipsAud"></div>
-              <label class="field hidden" id="audOtherWrap" style="margin-top:12px"><span>מי קהל היעד שלכם</span>
-                <input id="audOther" placeholder="לדוגמה: מנהלות משאבי אנוש בחברות הייטק"></label>
+              <div class="addrow">
+                <input id="audOther" placeholder="לא מצאתם? כתבו כאן קהל יעד משלכם">
+                <button class="btn btn-outline btn-sm" id="audAdd">הוספה</button>
+              </div>
               <div class="grouplabel">הטון</div><div class="chips" id="chipsTone"></div>
               <label class="field" style="margin-top:18px"><span>קריאה לפעולה</span>
                 <input id="ctaIn" placeholder="קבעו שיעור היכרות"></label>
@@ -487,10 +498,11 @@ const FORMAT = [
   {v:'16:9', t:'רוחב', d:'באנר ויוטיוב'}
 ];
 const AUDIENCE = ['קהל רחב','נשים 25-40','נשים 40-60','גברים 25-45','הורים צעירים','בעלי עסקים','דור צעיר 18-28','גיל הזהב','תושבי האזור'];
+let MY_AUDIENCES = [];   /* קהלים שהמשתמש הוסיף, נשמרים ונשארים לבחירה */
 const TONE = ['ידידותי וחם','מקצועי ומהוקצע','אנרגטי ומניע','יוקרתי ורגוע','שובב וקליל'];
 
 /* =================== המצב =================== */
-const S = { promote:'', promoteFree:'', style:'', format:'1:1', audience:'', audCustom:false, tone:'', cta:'',
+const S = { promote:'', promoteFree:'', style:'', format:'1:1', audience:'', tone:'', cta:'',
             extra:'', assets:[], prompt:'', promptTouched:false };
 const BIZ = { id:'biz', name:'', field:'', city:'' };
 
@@ -530,8 +542,7 @@ function buildSections(){
   $('#optsPromote').innerHTML = PROMOTE.map(optCard).join('');
   $('#optsStyle').innerHTML   = STYLE.map(optCard).join('');
   $('#optsFormat').innerHTML  = FORMAT.map(optCard).join('');
-  $('#chipsAud').innerHTML    = AUDIENCE.map(a=>`<button class="chip" data-v="${attr(a)}">${esc(a)}</button>`).join('')
-    + '<button class="chip" data-other="1">אחר, אני אכתוב</button>';
+  renderAudChips();
   $('#chipsTone').innerHTML   = TONE.map(t=>`<button class="chip" data-v="${attr(t)}">${esc(t)}</button>`).join('');
 
   wirePick('#optsPromote','promote','sec-promote','pick-promote','sec-style');
@@ -553,22 +564,41 @@ function wirePick(sel,key,secId,pickId,nextId,label){
   };
 }
 
-function pickChip(e,key,sel){
-  const other=e.target.closest('[data-other]');
-  const b=e.target.closest('[data-v]');
-  if(!other&&!b)return;
+function renderAudChips(){
+  $('#chipsAud').innerHTML =
+    AUDIENCE.map(a=>`<button class="chip ${S.audience===a?'on':''}" data-v="${attr(a)}">${esc(a)}</button>`).join('') +
+    MY_AUDIENCES.map(a=>`<button class="chip custom ${S.audience===a?'on':''}" data-v="${attr(a)}">${esc(a)}<span class="x" data-rm="${attr(a)}" title="הסרה">×</span></button>`).join('');
+}
 
-  if(other){
-    /* קהל יעד משלהם: פותחים שדה חופשי ומחכים שיכתבו */
-    S.audCustom=true; S.audience=$('#audOther').value.trim();
-    $(sel).querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));
-    other.classList.add('on');
-    $('#audOtherWrap').classList.remove('hidden');
-    $('#audOther').focus();
-    refreshPrompt(); saveDraft(); afterAud(false);
-    return;
+/* הוספת קהל יעד משלהם: נשמר, הופך לשבב, ונבחר מיד */
+async function addAudience(){
+  const v=$('#audOther').value.trim();
+  if(!v){toast('כתבו קהל יעד');$('#audOther').focus();return}
+  if(!MY_AUDIENCES.includes(v)&&!AUDIENCE.includes(v)){
+    MY_AUDIENCES.push(v);
+    try{ await DB.put('settings',{id:'audiences',list:MY_AUDIENCES}) }catch(e){}
   }
-  if(key==='audience'){ S.audCustom=false; $('#audOtherWrap').classList.add('hidden') }
+  S.audience=v; S.promptTouched=false;
+  $('#audOther').value='';
+  renderAudChips(); refreshPrompt(); saveDraft(); afterAud(true);
+  toast('קהל היעד נוסף');
+}
+
+async function removeAudience(v){
+  MY_AUDIENCES=MY_AUDIENCES.filter(x=>x!==v);
+  try{ await DB.put('settings',{id:'audiences',list:MY_AUDIENCES}) }catch(e){}
+  if(S.audience===v){
+    S.audience=''; markDone('sec-aud','pick-aud','');
+    document.getElementById('sec-aud').classList.remove('done');
+  }
+  renderAudChips(); refreshPrompt(); saveDraft();
+}
+
+function pickChip(e,key,sel){
+  const rm=e.target.closest('[data-rm]');
+  if(rm){ e.stopPropagation(); removeAudience(rm.dataset.rm); return }
+  const b=e.target.closest('[data-v]');
+  if(!b)return;
   S[key]=b.dataset.v; S.promptTouched=false;
   $(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
   refreshPrompt(); saveDraft(); afterAud(true);
@@ -619,10 +649,7 @@ function applyState(){
     if(g){$(sel).querySelectorAll('[data-v]').forEach(x=>x.classList.remove('on'));g.classList.add('on')}};
   set('#optsPromote',S.promote); set('#optsStyle',S.style); set('#optsFormat',S.format);
   set('#chipsTone',S.tone);
-  if(S.audCustom){
-    const o=$('#chipsAud').querySelector('[data-other]'); if(o)o.classList.add('on');
-    $('#audOtherWrap').classList.remove('hidden'); $('#audOther').value=S.audience||'';
-  }else set('#chipsAud',S.audience);
+  renderAudChips();
   if(S.promote)markDone('sec-promote','pick-promote',S.promote);
   if(S.style)markDone('sec-style','pick-style',S.style);
   if(S.format)markDone('sec-format','pick-format',(FORMAT.find(f=>f.v===S.format)||{}).t||S.format);
@@ -870,8 +897,8 @@ function showTab(name){
 }
 $$('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
 $('#fab').onclick=()=>{
-  Object.assign(S,{promote:'',promoteFree:'',style:'',format:'1:1',audience:'',audCustom:false,tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
-  $('#audOtherWrap').classList.add('hidden'); $('#audOther').value='';
+  Object.assign(S,{promote:'',promoteFree:'',style:'',format:'1:1',audience:'',tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
+  $('#audOther').value='';
   saveDraft();
   $$('.sec').forEach(x=>x.classList.remove('done'));
   $$('.opt,.chip').forEach(x=>x.classList.remove('on'));
@@ -906,10 +933,8 @@ function renderCounts(){
   };
 });
 $('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
-$('#audOther').oninput=()=>{
-  S.audience=$('#audOther').value.trim(); S.audCustom=true; S.promptTouched=false;
-  refreshPrompt(); saveDraft(); afterAud(false);
-};
+$('#audAdd').onclick=addAudience;
+$('#audOther').onkeydown=e=>{ if(e['key']==='Enter'){ e.preventDefault(); addAudience() } };
 $('#ctaIn').oninput=()=>{S.cta=$('#ctaIn').value.trim();saveDraft()};
 $('#extraIn').oninput=()=>{S.extra=$('#extraIn').value;S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
 $('#promptIn').oninput=()=>{S.prompt=$('#promptIn').value;S.promptTouched=true;saveDraft()};
@@ -919,9 +944,10 @@ $('#go').onclick=generate;
 /* =================== התחלה =================== */
 (async()=>{
   try{
-    const r=await Promise.all([DB.all('assets'),DB.all('ads'),DB.get('settings','biz')]);
+    const r=await Promise.all([DB.all('assets'),DB.all('ads'),DB.get('settings','biz'),DB.get('settings','audiences')]);
     ASSETS=r[0]; ADS=r[1];
     if(r[2])Object.assign(BIZ,r[2]);
+    if(r[3]&&Array.isArray(r[3].list))MY_AUDIENCES=r[3].list;
   }catch(e){ toast('האחסון המקומי לא זמין בדפדפן הזה') }
   loadDraft();
   S.assets=(S.assets||[]).filter(id=>ASSETS.some(a=>a.id===id));
