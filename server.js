@@ -21,6 +21,8 @@ const CLAUDE_BIN = ENV.CLAUDE_BIN || 'claude';
 const CLAUDE_MODEL = ENV.CLAUDE_MODEL || '';
 const HF_BIN = ENV.HF_BIN || 'higgsfield';
 const HF_IMAGE_MODEL = ENV.HF_IMAGE_MODEL || 'gpt_image_2_5';
+const HF_AD_FORMAT = ENV.HF_AD_FORMAT || 'fd9b886c-8b4d-4e9a-aa4d-11b4a67456a5'; // Benefits
+const HF_AD_QUALITY = ENV.HF_AD_QUALITY || 'medium';
 const HF_VARIANT = ENV.HF_VARIANT || 'flare'; // flare = מהיר לשוטף, sunburst = איכותי ומדויק יותר בעריכה
 const HF_RESOLUTION = ENV.HF_RESOLUTION || '1k'; // 1k=זול יותר, 2k=יקר
 const HF_QUALITY = ENV.HF_QUALITY || 'medium'; // medium = מהיר וזול (1k medium=1.5 קרדיטים); high=4.5, 2k high=8.5
@@ -118,6 +120,62 @@ function writeRefs(images) {
   return files;
 }
 function cleanRefs(files) { (files || []).forEach(f => { try { fs.unlinkSync(f); } catch (e) {} }); }
+
+/* הרצת פקודת היגספילד כללית, מחזירה stdout גולמי */
+function hf(args, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    let child;
+    try { child = spawn(HF_BIN, args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] }); }
+    catch (e) { return reject(e); }
+    const killer = setTimeout(() => { try { child.kill(); } catch (e) {} }, timeoutMs || 360000);
+    let out = '', err = '';
+    child.stdout.on('data', d => out += d);
+    child.stderr.on('data', d => err += d);
+    child.on('error', e => { clearTimeout(killer); reject(e); });
+    child.on('close', code => {
+      clearTimeout(killer);
+      if (code === 0) resolve(out);
+      else reject(new Error((err || out || ('higgsfield exited ' + code)).slice(0, 400)));
+    });
+  });
+}
+
+/* העלאת נכס מותג והחזרת media id, לשימוש במנוע המודעות */
+async function uploadAsset(file) {
+  const out = await hf(['upload', 'create', file, '--json'], 120000);
+  const m = /"id"\s*:\s*"([0-9a-f-]{36})"/i.exec(out);
+  if (!m) throw new Error('העלאת הנכס נכשלה');
+  return m[1];
+}
+
+/* מנוע המודעות הממותגות של היגספילד (DTC Ads Engine).
+   בניגוד ליצירת תמונה רגילה, כאן הבקאנד מרכיב לייאאוט מלא של מודעה:
+   כותרת, תגית, נקודות תועלת, הצעה ורצועת פרטים. 0.5 קרדיט למודעה. */
+async function runDtcAd(opts) {
+  const o = opts || {};
+  const t0 = Date.now();
+  const refs = writeRefs(o.images);
+  try {
+    const media = [];
+    for (const f of refs) {
+      try { media.push(await uploadAsset(f)); } catch (e) { /* נכס שנכשל לא יעצור את היצירה */ }
+    }
+    const args = ['marketing-studio', 'dtc-ads', 'generate',
+                  '--prompt', o.prompt || '',
+                  '--format-id', o.formatId || HF_AD_FORMAT,
+                  '--aspect-ratio', o.aspect || '1:1',
+                  '--quality', o.quality || HF_AD_QUALITY,
+                  '--resolution', HF_RESOLUTION,
+                  '--wait', '--timeout', '5m', '--json'];
+    media.forEach(id => args.push('--media', id + ':image'));
+    const out = await hf(args, 360000);
+    const urls = out.match(/https?:\/\/[^\s"'\\)]+/g) || [];
+    const url = urls.reverse().find(u => /\.(png|jpg|jpeg|webp|avif)(\?|$)/i.test(u)) || urls[0];
+    if (!url) throw new Error('לא התקבלה תמונה ממנוע המודעות');
+    return { kind: 'image', url, took: Math.round((Date.now() - t0) / 1000),
+             model: 'מנוע המודעות של היגספילד', refs: media.length, adFormat: o.formatName || '' };
+  } finally { cleanRefs(refs); }
+}
 
 /* יצירת מודעת תמונה אמיתית עם היגספילד (GPT Image 2) דרך ה-CLI (חשבון+קרדיטים, בלי מפתח API). */
 function runHiggsfield(model, prompt, aspect, images) {
@@ -469,7 +527,9 @@ http.createServer(async (req, res) => {
       image,                                  /* מי מייצר את התמונה */
       imageLabel: image === 'higgsfield' ? hfModelLabel().replace(' · היגספילד', ' דרך היגספילד')
                  : (image === 'openai' ? 'GPT Image 2.5' : null),
-      imageCost: image === 'higgsfield' ? 1 : null,   /* קרדיטים למודעה */
+      imageCost: image === 'higgsfield' ? 1 : null,   /* קרדיטים לתמונה חופשית */
+      adEngine: image === 'higgsfield',                /* מנוע המודעות הממותגות */
+      adCost: image === 'higgsfield' ? 0.5 : null,
       textLabel: text === 'codex' ? 'ChatGPT (המנוי שלך)' : (text === 'openai' ? 'OpenAI API' : 'Claude'),
       imageModel: key ? openai.IMAGE_MODEL : (image === 'higgsfield' ? HF_IMAGE_MODEL : null),
       openai: key,
@@ -515,7 +575,10 @@ http.createServer(async (req, res) => {
           const oargs = { prompt: b.prompt, format: b.format, quality: b.quality, model: b.model, images: b.images };
           out = (b.images && b.images.length) ? await openai.generateImageWithRefs(oargs) : await openai.generateImage(oargs);
         } else if (hasHiggsfield()) {
-          out = await runHiggsfield(HF_IMAGE_MODEL, b.prompt || '', b.format || '', b.images);
+          out = b.adFormat
+            ? await runDtcAd({ prompt: b.prompt, aspect: b.format, formatId: b.adFormat,
+                               formatName: b.adFormatName, images: b.images })
+            : await runHiggsfield(HF_IMAGE_MODEL, b.prompt || '', b.format || '', b.images);
         } else {
           throw new Error('אין מנוע תמונות מחובר: לא נמצא מפתח OpenAI ולא ה-CLI של היגספילד');
         }

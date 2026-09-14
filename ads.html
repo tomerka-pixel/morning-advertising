@@ -124,6 +124,8 @@ a{color:inherit}
 .chip{border:1px solid var(--line);background:#fff;border-radius:100px;padding:8px 16px;cursor:pointer;font-size:15px;transition:.14s}
 .chip:hover{border-color:var(--primary);background:var(--surface)}
 .chip.on{border-color:var(--primary);background:var(--ok-bg);color:var(--teal);font-weight:600}
+.prompt-hint{font-size:13.5px;line-height:1.6;color:var(--deep);background:var(--ok-bg);border-radius:10px;padding:10px 13px;margin-bottom:16px}
+.prompt-hint code{background:#fff;border-radius:4px;padding:1px 6px;font-family:inherit;font-weight:600}
 .addrow{display:flex;gap:10px;align-items:center;margin-top:12px}
 .addrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:var(--input-radius);padding:11px 14px;font-size:16px;background:#fff;outline:0}
 .addrow input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,172,129,.12)}
@@ -295,14 +297,20 @@ a{color:inherit}
             <div class="sec-body"><div class="opts" id="optsStyle"></div></div>
           </section>
 
+          <section class="sec" id="sec-layout">
+            <div class="sec-head"><span class="sec-num">3</span><h2>מבנה המודעה</h2><span class="sec-pick" id="pick-layout"></span></div>
+            <p class="sec-sub">איך הטקסט מסודר על המודעה. זה מה שהופך תמונה למודעה שלמה</p>
+            <div class="sec-body"><div class="opts" id="optsLayout"></div></div>
+          </section>
+
           <section class="sec" id="sec-format">
-            <div class="sec-head"><span class="sec-num">3</span><h2>פורמט</h2><span class="sec-pick" id="pick-format"></span></div>
+            <div class="sec-head"><span class="sec-num">4</span><h2>פורמט</h2><span class="sec-pick" id="pick-format"></span></div>
             <p class="sec-sub">לאן המודעה הולכת</p>
             <div class="sec-body"><div class="opts wide" id="optsFormat"></div></div>
           </section>
 
           <section class="sec" id="sec-aud">
-            <div class="sec-head"><span class="sec-num">4</span><h2>למי מדברים</h2><span class="sec-pick" id="pick-aud"></span></div>
+            <div class="sec-head"><span class="sec-num">5</span><h2>למי מדברים</h2><span class="sec-pick" id="pick-aud"></span></div>
             <p class="sec-sub">קהל היעד והטון של הפנייה</p>
             <div class="sec-body">
               <div class="grouplabel">קהל היעד</div><div class="chips" id="chipsAud"></div>
@@ -317,13 +325,13 @@ a{color:inherit}
           </section>
 
           <section class="sec" id="sec-assets">
-            <div class="sec-head"><span class="sec-num">5</span><h2>נכסי המותג</h2><span class="sec-pick" id="pick-assets"></span></div>
+            <div class="sec-head"><span class="sec-num">6</span><h2>נכסי המותג</h2><span class="sec-pick" id="pick-assets"></span></div>
             <p class="sec-sub">הלוגו ותמונות המוצר שתבחרו ישולבו במודעה עצמה</p>
             <div class="sec-body" id="assetPick"></div>
           </section>
 
           <section class="sec" id="sec-go">
-            <div class="sec-head"><span class="sec-num">6</span><h2>יצירה</h2></div>
+            <div class="sec-head"><span class="sec-num">7</span><h2>יצירה</h2></div>
             <p class="sec-sub">אפשר להוסיף הנחיות, או פשוט ליצור</p>
             <div class="sec-body">
               <div class="grouplabel" style="margin-top:0">כיתוב על המודעה</div>
@@ -337,7 +345,8 @@ a{color:inherit}
                 <span style="font-size:14px;color:var(--muted);font-weight:500">הפרומפט שיישלח למנוע</span>
                 <button class="btn btn-ghost" id="resetPrompt">איפוס אוטומטי</button>
               </div>
-              <label class="field"><textarea id="promptIn" rows="6"></textarea></label>
+              <label class="field" style="margin-bottom:8px"><textarea id="promptIn" rows="6"></textarea></label>
+              <div class="prompt-hint hidden" id="promptHint"></div>
               <div class="costline" id="costline"></div>
               <button class="btn btn-primary btn-lg" id="go">יצירת המודעה</button>
             </div>
@@ -514,8 +523,26 @@ let MY_AUDIENCES = [];   /* קהלים שהמשתמש הוסיף, נשמרים �
 const TONE = ['ידידותי וחם','מקצועי ומהוקצע','אנרגטי ומניע','יוקרתי ורגוע','שובב וקליל'];
 const OVERLAY = ['כותרת על התמונה','בלי טקסט על התמונה'];
 
+/* תבניות מנוע המודעות של היגספילד. הבקאנד מרכיב מהן לייאאוט מלא:
+   כותרת, תגית, נקודות תועלת, הצעה ורצועת פרטים. */
+const LAYOUTS = [
+  {id:'fd9b886c-8b4d-4e9a-aa4d-11b4a67456a5', v:'תועלות',        d:'כותרת ושלוש נקודות עם אייקונים'},
+  {id:'c4c9ee3e-c161-4cc6-b401-77f122cd3c3c', v:'הצעה מיוחדת',   d:'מבצע או הנחה בולטים'},
+  {id:'18e9f327-b667-40f1-84d1-f234c67a4929', v:'כותרת גדולה',   d:'אמירה אחת חזקה'},
+  {id:'cb2da9cc-f477-4fd3-b9d6-aa9cbfa14dcd', v:'צ׳ק ליסט',      d:'רשימת תועלות מסומנת'},
+  {id:'4b71d6d0-4a79-4241-8f3a-60bb766d1945', v:'מה מקבלים',     d:'פירוט המאפיינים'},
+  {id:'c7932132-dbe5-4806-a7cc-ee9bc5094367', v:'בפעולה',        d:'המוצר או השירות בשימוש'},
+  {id:'e961f13c-c96d-4504-bb70-77abeeaa9027', v:'ציטוט לקוח',    d:'המלצה בתוך המודעה'},
+  {id:'c3884bf7-5d3b-460b-8815-81f82e5bc0fb', v:'ביקורת כוכבים', d:'דירוג והמלצה'},
+  {id:'30ab1615-9b6f-4d73-bf84-9436b0861cb4', v:'הוכחה חברתית',  d:'כמה כבר הצטרפו'},
+  {id:'cfb067f6-735a-46d8-a2f0-22e5a47b122e', v:'אמירה נועזת',   d:'משפט אחד על כל הפריים'},
+  {id:'9f83c485-959d-4ea1-a2ff-7a4e7370dd62', v:'סגנון מגזין',   d:'עריכה מוקפדת כמו כתבה'},
+  {id:'7200218e-d78e-492c-ae9b-a3a08af2b923', v:'פוסט אורגני',   d:'נראה כמו פוסט רגיל בפיד'},
+  {id:'', v:'בלי מבנה', d:'תמונה חופשית, בלי לייאאוט מודעה'}
+];
+
 /* =================== המצב =================== */
-const S = { promote:'', promoteFree:'', style:'', format:'1:1', audience:'', tone:'', cta:'',
+const S = { promote:'', promoteFree:'', style:'', layout:'תועלות', format:'1:1', audience:'', tone:'', cta:'',
             overlay:'כותרת על התמונה', overlayText:'',
             extra:'', assets:[], prompt:'', promptTouched:false };
 const BIZ = { id:'biz', name:'', field:'', city:'' };
@@ -555,6 +582,7 @@ function optCard(o){
 function buildSections(){
   $('#optsPromote').innerHTML = PROMOTE.map(optCard).join('');
   $('#optsStyle').innerHTML   = STYLE.map(optCard).join('');
+  $('#optsLayout').innerHTML  = LAYOUTS.map(optCard).join('');
   $('#optsFormat').innerHTML  = FORMAT.map(optCard).join('');
   renderAudChips();
   $('#chipsTone').innerHTML   = TONE.map(t=>`<button class="chip" data-v="${attr(t)}">${esc(t)}</button>`).join('');
@@ -568,7 +596,8 @@ function buildSections(){
   };
 
   wirePick('#optsPromote','promote','sec-promote','pick-promote','sec-style');
-  wirePick('#optsStyle','style','sec-style','pick-style','sec-format');
+  wirePick('#optsStyle','style','sec-style','pick-style','sec-layout');
+  wirePick('#optsLayout','layout','sec-layout','pick-layout','sec-format');
   wirePick('#optsFormat','format','sec-format','pick-format','sec-aud',v=>FORMAT.find(f=>f.v===v).t);
 
   $('#chipsAud').onclick  = e => pickChip(e,'audience','#chipsAud');
@@ -669,12 +698,13 @@ function renderAssetPick(){
 function applyState(){
   const set=(sel,val)=>{const g=$(sel).querySelector(`[data-v="${(val||'').replace(/"/g,'\\"')}"]`);
     if(g){$(sel).querySelectorAll('[data-v]').forEach(x=>x.classList.remove('on'));g.classList.add('on')}};
-  set('#optsPromote',S.promote); set('#optsStyle',S.style); set('#optsFormat',S.format);
+  set('#optsPromote',S.promote); set('#optsStyle',S.style); set('#optsFormat',S.format); set('#optsLayout',S.layout);
   set('#chipsTone',S.tone);
   renderAudChips();
   if(S.promote)markDone('sec-promote','pick-promote',S.promote);
   if(S.style)markDone('sec-style','pick-style',S.style);
   if(S.format)markDone('sec-format','pick-format',(FORMAT.find(f=>f.v===S.format)||{}).t||S.format);
+  if(S.layout)markDone('sec-layout','pick-layout',S.layout);
   if(S.audience&&S.tone)markDone('sec-aud','pick-aud',S.audience+' · '+S.tone);
   if(S.assets.length)markDone('sec-assets','pick-assets',S.assets.length+' נבחרו');
   $('#promoteFree').value=S.promoteFree||'';
@@ -687,30 +717,6 @@ function applyState(){
 }
 
 /* =================== הפרומפט =================== */
-function syncPrompt(){
-  if(S.promptTouched)return;
-  const p=[];
-  p.push(`מודעה לפרסום ברשתות החברתיות עבור ${BIZ.name||'העסק'}${BIZ.field?', '+BIZ.field:''}${BIZ.city?', '+BIZ.city:''}.`);
-  if(S.promote)p.push(`מה שמקדמים: ${S.promote}${S.promoteFree?' · '+S.promoteFree:''}.`);
-  if(S.audience)p.push(`קהל היעד: ${S.audience}.`);
-  if(S.tone)p.push(`טון: ${S.tone}.`);
-  const st=STYLE.find(x=>x.v===S.style);
-  if(st)p.push(st.p);
-  const chosen=ASSETS.filter(a=>S.assets.includes(a.id));
-  if(chosen.some(a=>a.tag==='לוגו'))p.push('שלב את הלוגו המצורף בתמונה, נקי וקריא, בפינה אחת, בלי לעוות אותו ובלי לשנות את צבעיו.');
-  if(chosen.some(a=>a.tag!=='לוגו'))p.push('השתמש בתמונות הייחוס המצורפות כמקור לנראות של המוצר או המקום, ושמור על נאמנות להן.');
-  p.push('הרכב מקצועי ונקי, עם שטח נושם שבו הכיתוב יישב טוב.');
-  if(S.overlay===OVERLAY[1]){
-    p.push('בלי שום טקסט בתוך התמונה. השאר שטח שקט בפריים להוספת טקסט בהמשך.');
-  }else{
-    const h=(S.overlayText||'').trim()||'{{כותרת}}';
-    p.push('שלב בתמונה את הכותרת הזו בעברית, בדיוק כפי שהיא כתובה ובלי שום שינוי: "'+h+'".');
-    p.push('עברית תקינה מימין לשמאל, אותיות שלמות וברורות, בלי אותיות הפוכות, בלי אותיות חסרות ובלי סימנים מומצאים. טיפוגרפיה נקייה ומודרנית, גדולה וקריאה, ממוקמת בשטח הפנוי של הפריים ובניגודיות טובה מול הרקע. אל תוסיף שום טקסט אחר בתמונה.');
-  }
-  if(S.extra&&S.extra.trim())p.push(S.extra.trim());
-  S.prompt=p.join(' ');
-}
-
 /* השורה הראשונה של הקופי היא הכותרת. מנקים אימוג'י וסימני קצה כדי שתיצרב נקי */
 function headlineOf(text){
   const first=String(text||'').split('\n').map(x=>x.trim()).filter(Boolean)[0]||'';
@@ -727,6 +733,64 @@ function refreshPrompt(){
   syncPrompt();
   const el=$('#promptIn');
   if(el&&!S.promptTouched)el.value=S.prompt;
+  renderPromptHint();
+}
+
+/* הסבר על הסמן, אחרת נראה כאילו המילה {{כותרת}} תיכתב על המודעה */
+function renderPromptHint(){
+  const box=$('#promptHint'); if(!box)return;
+  const cur=($('#promptIn')&&$('#promptIn').value)||S.prompt||'';
+  if(cur.indexOf('{{כותרת}}')<0){ box.classList.add('hidden'); return }
+  box.innerHTML='<code>{{כותרת}}</code> הוא סמן, לא טקסט. קודם נכתב הקופי, ואז השורה הראשונה שלו '+
+    'נכנסת במקומו רגע לפני השליחה, כך שהכותרת על המודעה זהה לקופי. '+
+    'רוצים לקבוע אותה בעצמכם? כתבו אותה בשדה הכיתוב למעלה.';
+  box.classList.remove('hidden');
+}
+
+function layoutId(){ const l=LAYOUTS.find(x=>x.v===S.layout); return l?l.id:'' }
+function usingAdEngine(){ return !!layoutId() && !!(LIVE.info&&LIVE.info.adEngine) }
+
+function syncPrompt(){
+  if(S.promptTouched)return;
+  const p=[];
+  const who=(BIZ.name||'העסק')+(BIZ.field?', '+BIZ.field:'')+(BIZ.city?', '+BIZ.city:'');
+  const st=STYLE.find(x=>x.v===S.style);
+  const chosen=ASSETS.filter(a=>S.assets.includes(a.id));
+  const head=(S.overlayText||'').trim()||'{{כותרת}}';
+
+  if(layoutId()){
+    /* מנוע המודעות מרכיב את הלייאאוט בעצמו, ולכן כאן כותבים בריף של מודעה ולא תיאור תמונה */
+    p.push('מודעה שיווקית בעברית עבור '+who+'.');
+    p.push('כותרת ראשית: "'+head+'".');
+    if(S.promote)p.push('מה שמקדמים: '+S.promote+(S.promoteFree?'. פירוט: '+S.promoteFree:'')+'.');
+    if(S.audience)p.push('קהל היעד: '+S.audience+'.');
+    if(S.tone)p.push('טון: '+S.tone+'.');
+    if(S.cta)p.push('קריאה לפעולה על המודעה: "'+S.cta+'".');
+    if(st)p.push('שפה חזותית: '+st.p);
+    if(chosen.some(a=>a.tag==='לוגו'))p.push('שים את הלוגו המצורף בפינה העליונה, נקי וקריא, בלי לעוות אותו ובלי לשנות צבעים.');
+    if(chosen.some(a=>a.tag!=='לוגו'))p.push('השתמש בתמונות המצורפות כנושא המרכזי של המודעה.');
+    p.push('כל הטקסט על המודעה בעברית תקינה מימין לשמאל, אותיות שלמות וברורות, בלי אותיות הפוכות, בלי אותיות חסרות ובלי מילים באנגלית מלבד שם המותג.');
+    if(S.extra&&S.extra.trim())p.push(S.extra.trim());
+    S.prompt=p.join(' ');
+    return;
+  }
+
+  p.push('מודעה לפרסום ברשתות החברתיות עבור '+who+'.');
+  if(S.promote)p.push('מה שמקדמים: '+S.promote+(S.promoteFree?' · '+S.promoteFree:'')+'.');
+  if(S.audience)p.push('קהל היעד: '+S.audience+'.');
+  if(S.tone)p.push('טון: '+S.tone+'.');
+  if(st)p.push(st.p);
+  if(chosen.some(a=>a.tag==='לוגו'))p.push('שלב את הלוגו המצורף בתמונה, נקי וקריא, בפינה אחת, בלי לעוות אותו ובלי לשנות את צבעיו.');
+  if(chosen.some(a=>a.tag!=='לוגו'))p.push('השתמש בתמונות הייחוס המצורפות כמקור לנראות של המוצר או המקום, ושמור על נאמנות להן.');
+  p.push('הרכב מקצועי ונקי, עם שטח נושם שבו הכיתוב יישב טוב.');
+  if(S.overlay===OVERLAY[1]){
+    p.push('בלי שום טקסט בתוך התמונה. השאר שטח שקט בפריים להוספת טקסט בהמשך.');
+  }else{
+    p.push('שלב בתמונה את הכותרת הזו בעברית, בדיוק כפי שהיא כתובה ובלי שום שינוי: "'+head+'".');
+    p.push('עברית תקינה מימין לשמאל, אותיות שלמות וברורות, בלי אותיות הפוכות, בלי אותיות חסרות ובלי סימנים מומצאים. טיפוגרפיה נקייה ומודרנית, גדולה וקריאה, ממוקמת בשטח הפנוי של הפריים ובניגודיות טובה מול הרקע. אל תוסיף שום טקסט אחר בתמונה.');
+  }
+  if(S.extra&&S.extra.trim())p.push(S.extra.trim());
+  S.prompt=p.join(' ');
 }
 
 function copyBrief(){
@@ -781,41 +845,52 @@ async function generate(){
     '<div>'+(LIVE.image?'כותבים את הקופי ומרכיבים את הקריאייטיב':'מנוע התמונות לא מחובר, אז מייצרים את הטקסט בלבד')+
     '</div><div class="clock" id="clock">0:00</div></div>';
   slideTo('sec-result');
-  const tick=setInterval(()=>{const el=$('#clock');if(!el)return clearInterval(tick);
+  let tick=setInterval(()=>{const el=$('#clock');if(!el)return clearInterval(tick);
     const s=Math.floor((Date.now()-t0)/1000);el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')},1000);
 
-  const refs=ASSETS.filter(a=>S.assets.includes(a.id)).map(a=>a.url);
+  /* try/finally, כדי ש-busy והכפתור ישתחררו גם אם משהו נופל באמצע.
+     בלי זה לחיצה אחת שנכשלת משתקת את הכפתור עד רענון. */
+  try{
+    const refs=ASSETS.filter(a=>S.assets.includes(a.id)).map(a=>a.url);
 
-  const askCopy = () => fetch(API_BASE+'/api/post',{method:'POST',headers:headers(),body:JSON.stringify(copyBrief())})
-    .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
-    .catch(e=>({_err:e.message||String(e)}));
-
-  const askImage = prompt => LIVE.image
-    ? fetch(API_BASE+'/api/generate',{method:'POST',headers:headers(),
-        body:JSON.stringify({kind:'image',prompt,format:S.format,images:refs})})
+    const askCopy = () => fetch(API_BASE+'/api/post',{method:'POST',headers:headers(),body:JSON.stringify(copyBrief())})
       .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
-      .catch(e=>({_err:e.message||String(e)}))
-    : Promise.resolve({_skipped:true});
+      .catch(e=>({_err:e.message||String(e)}));
 
-  const copyP=askCopy();
-  let copy, img;
+    const askImage = prompt => LIVE.image
+      ? fetch(API_BASE+'/api/generate',{method:'POST',headers:headers(),
+          body:JSON.stringify({kind:'image',prompt,format:S.format,images:refs,
+                               adFormat:layoutId(),adFormatName:S.layout})})
+        .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
+        .catch(e=>({_err:e.message||String(e)}))
+      : Promise.resolve({_skipped:true});
 
-  if(S.prompt.indexOf('{{כותרת}}')>=0){
-    /* הכותרת נצרבת בתמונה, ולכן צריך את הקופי לפני שמייצרים אותה */
-    copy=await copyP;
-    const head=headlineOf(copy && copy.text) || S.promoteFree || S.promote || BIZ.name;
-    img=await askImage(S.prompt.split('{{כותרת}}').join(head));
-    if(img&&img.url)img.headline=head;
-  }else{
-    const r=await Promise.all([copyP,askImage(S.prompt)]);
-    copy=r[0]; img=r[1];
+    const copyP=askCopy();
+    let copy={}, img={};
+
+    if(S.prompt.indexOf('{{כותרת}}')>=0){
+      /* הכותרת נצרבת בתמונה, ולכן צריך את הקופי לפני שמייצרים אותה */
+      copy=await copyP||{};
+      const head=headlineOf(copy&&copy.text)||S.overlayText.trim()||S.promoteFree||S.promote||BIZ.name;
+      img=await askImage(S.prompt.split('{{כותרת}}').join(head))||{};
+      if(img&&img.url)img.headline=head;
+    }else{
+      const r=await Promise.all([copyP,askImage(S.prompt)]);
+      copy=r[0]||{}; img=r[1]||{};
+    }
+
+    if((img._err||img._skipped)&&copy._err){
+      $('#result').innerHTML='<div class="notice err"><b>היצירה נכשלה.</b> '+esc(img._err||copy._err)+'</div>';
+      return;
+    }
+    showResult(img,copy);
+  }catch(e){
+    $('#result').innerHTML='<div class="notice err"><b>היצירה נכשלה.</b> '+esc(e&&e.message||e)+'</div>';
+  }finally{
+    clearInterval(tick);
+    busy=false;
+    const gb=$('#go'); if(gb)gb.disabled=false;
   }
-
-  if((img._err||img._skipped)&&copy._err){
-    $('#result').innerHTML='<div class="notice err"><b>היצירה נכשלה.</b> '+esc(img._err)+'</div>';
-    return;
-  }
-  showResult(img,copy);
 }
 
 function showResult(img,copy){
@@ -826,7 +901,7 @@ function showResult(img,copy){
     ${copy&&copy._err?'<div class="notice err">כתיבת הקופי נכשלה: '+esc(copy._err)+'</div>':''}
     ${img&&img._err?'<div class="notice err">יצירת התמונה נכשלה: '+esc(img._err)+'</div>':''}
     ${img&&img._skipped?'<div class="notice warn">התמונה לא נוצרה כי מנוע התמונות לא מחובר. הקופי למעלה אמיתי ומוכן לשימוש</div>':''}
-    ${img&&img.url?`<div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took!=null?' · '+img.took+' שניות':''}${img.refs?' · '+img.refs+' נכסי מותג שולבו':''}${img.headline?'<br>כותרת שנצרבה: '+esc(img.headline):''}</div>`:''}
+    ${img&&img.url?`<div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took!=null?' · '+img.took+' שניות':''}${img.refs?' · '+img.refs+' נכסי מותג שולבו':''}${img.adFormat?' · מבנה: '+esc(img.adFormat):''}${img.headline?'<br>כותרת שנצרבה: '+esc(img.headline):''}</div>`:''}
     <div class="result-actions">
       ${img&&img.url?`<a class="btn btn-primary btn-sm" href="${img.url}" download="morning-ad.webp">הורדת התמונה</a>`:''}
       <button class="btn btn-outline btn-sm" id="copyText">העתקת הקופי</button>
@@ -975,7 +1050,7 @@ function showTab(name){
 }
 $$('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
 $('#fab').onclick=()=>{
-  Object.assign(S,{promote:'',promoteFree:'',style:'',format:'1:1',audience:'',tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
+  Object.assign(S,{promote:'',promoteFree:'',style:'',layout:'תועלות',format:'1:1',audience:'',tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
   $('#audOther').value='';
   saveDraft();
   $$('.sec').forEach(x=>x.classList.remove('done'));
@@ -991,7 +1066,11 @@ function renderCost(){
   const bits=[];
   if(j.textLabel)bits.push('קופי: <b>'+esc(j.textLabel)+'</b>');
   if(j.imageLabel)bits.push('תמונה: <b>'+esc(j.imageLabel)+'</b>');
-  if(j.imageCost)bits.push('עלות: <b>'+j.imageCost+' קרדיט למודעה</b>');
+  if(j.imageCost){
+    const ad=usingAdEngine();
+    bits.push('עלות: <b>'+(ad?j.adCost:j.imageCost)+' קרדיט למודעה</b>');
+    if(ad)bits[bits.length-2]='מודעה: <b>מנוע המודעות של היגספילד</b>';
+  }
   if(!bits.length){el.style.display='none';return}
   el.innerHTML=bits.join(' · ');
   el.style.display='block';
@@ -1016,7 +1095,7 @@ $('#audAdd').onclick=addAudience;
 $('#audOther').onkeydown=e=>{ if(e['key']==='Enter'){ e.preventDefault(); addAudience() } };
 $('#ctaIn').oninput=()=>{S.cta=$('#ctaIn').value.trim();saveDraft()};
 $('#extraIn').oninput=()=>{S.extra=$('#extraIn').value;S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
-$('#promptIn').oninput=()=>{S.prompt=$('#promptIn').value;S.promptTouched=true;saveDraft()};
+$('#promptIn').oninput=()=>{S.prompt=$('#promptIn').value;S.promptTouched=true;saveDraft();renderPromptHint()};
 $('#resetPrompt').onclick=()=>{S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft();toast('הפרומפט אופס')};
 $('#go').onclick=generate;
 
