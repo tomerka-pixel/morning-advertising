@@ -38,6 +38,17 @@ const CODEX_BIN = (() => {
   if (fs.existsSync(bundled)) return bundled;
   return 'codex';
 })();
+/* מי כותב את הקופי. TEXT_ENGINE גובר על הכל: codex / claude / openai.
+   בלעדיו: מפתח OpenAI אם קיים, אחרת Codex על מנוי ChatGPT, אחרת Claude. */
+function textEngine() {
+  const want = (ENV.TEXT_ENGINE || '').toLowerCase();
+  if (want === 'openai' && openai && openai.hasKey()) return 'openai';
+  if (want === 'codex' && hasCodex()) return 'codex';
+  if (want === 'claude') return 'claude';
+  if (openai && openai.hasKey()) return 'openai';
+  return hasCodex() ? 'codex' : 'claude';
+}
+
 function hasCodex() { try { return fs.existsSync(CODEX_BIN) || CODEX_BIN === 'codex'; } catch (e) { return false; } }
 
 /* תיקייה נייטרלית ל-Codex. אם מריצים אותו בתוך המאגר הוא מתנהג כסוכן ומתחיל לסרוק קבצים,
@@ -518,8 +529,8 @@ http.createServer(async (req, res) => {
   }
   if (req.url === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
+    const text = textEngine();
     const key = !!(openai && openai.hasKey());
-    const text = key ? 'openai' : (hasCodex() ? 'codex' : 'claude');
     const image = key ? 'openai' : (hasHiggsfield() ? 'higgsfield' : null);
     return res.end(JSON.stringify({
       live: true,
@@ -530,7 +541,7 @@ http.createServer(async (req, res) => {
       imageCost: image === 'higgsfield' ? 1 : null,   /* קרדיטים לתמונה חופשית */
       adEngine: image === 'higgsfield',                /* מנוע המודעות הממותגות */
       adCost: image === 'higgsfield' ? 0.5 : null,
-      textLabel: text === 'codex' ? 'ChatGPT (המנוי שלך)' : (text === 'openai' ? 'OpenAI API' : 'Claude'),
+      textLabel: text === 'codex' ? 'ChatGPT (המנוי שלך)' : (text === 'openai' ? 'OpenAI API' : 'Claude (המנוי שלך)'),
       imageModel: key ? openai.IMAGE_MODEL : (image === 'higgsfield' ? HF_IMAGE_MODEL : null),
       openai: key,
       version: 'v9-codex'
@@ -545,8 +556,9 @@ http.createServer(async (req, res) => {
         const sys = brief.type === 'ad' ? SYSTEM_AD : SYSTEM;
         const user = buildPrompt(brief);
         let text;
-        if (openai && openai.hasKey()) text = await openai.generateText(sys, user);
-        else if (hasCodex()) text = await runCodex(sys, user);
+        const eng = textEngine();
+        if (eng === 'openai') text = await openai.generateText(sys, user);
+        else if (eng === 'codex') text = await runCodex(sys, user);
         else text = await runClaude(user, sys);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ text }));
