@@ -10,7 +10,9 @@ const TEXT_MODEL = ENV.OPENAI_TEXT_MODEL || 'gpt-5.6-terra';
 const IMAGE_QUALITY = ENV.OPENAI_IMAGE_QUALITY || 'medium';
 
 /* יחס מסך → מידה חוקית ב-Image API */
-const SIZES = { '1:1': '1024x1024', '9:16': '1024x1536', '16:9': '1536x1024' };
+/* מידות חוקיות ב-Image API, כל צלע כפולה של 16 */
+const SIZES = { '1:1': '1024x1024', '9:16': '1024x1536', '16:9': '1536x1024',
+                '4:5': '1024x1280', '3:4': '1056x1408' };
 
 function key() {
   const k = ENV.OPENAI_API_KEY;

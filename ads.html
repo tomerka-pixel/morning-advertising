@@ -93,7 +93,7 @@ a{color:inherit}
 .biz-head h3{font-size:17px}
 .biz-head .from{background:var(--surface);color:var(--muted);border-radius:4px;padding:2px 9px;font-size:12px;font-weight:500}
 .biz-sub{color:var(--muted);font-size:14px;margin:0 0 14px}
-.biz-fields{display:grid;grid-template-columns:1.3fr 1.3fr 1fr;gap:12px}
+.biz-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 
 /* ===== מקטע ===== */
 .sec{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:16px;scroll-margin-top:14px}
@@ -277,6 +277,7 @@ a{color:inherit}
             <p class="biz-sub">הפרטים נלקחים מהחשבון. אפשר לדייק אותם כאן לצורך המודעה</p>
             <div class="biz-fields">
               <label class="field" style="margin:0"><span>שם העסק</span><input id="b_name" placeholder="סטודיו מוב"></label>
+              <label class="field" style="margin:0"><span>השם באנגלית</span><input id="b_nameEn" placeholder="STUDIO MOVE"></label>
               <label class="field" style="margin:0"><span>תחום</span><input id="b_field" placeholder="סטודיו לפילאטיס"></label>
               <label class="field" style="margin:0"><span>עיר</span><input id="b_city" placeholder="תל אביב"></label>
             </div>
@@ -514,8 +515,10 @@ const STYLE = [
 ];
 
 const FORMAT = [
-  {v:'1:1', t:'ריבוע', d:'פוסט בפיד'},
-  {v:'9:16', t:'אנכי', d:'סטורי וריל'},
+  {v:'4:5', t:'פיד אנכי', d:'הכי טוב לפיד'},
+  {v:'1:1', t:'ריבוע', d:'פוסט קלאסי'},
+  {v:'3:4', t:'פורטרט', d:'מתאים ללייאאוטים'},
+  {v:'9:16', t:'סטורי', d:'סטורי וריל'},
   {v:'16:9', t:'רוחב', d:'באנר ויוטיוב'}
 ];
 const AUDIENCE = ['קהל רחב','נשים 25-40','נשים 40-60','גברים 25-45','הורים צעירים','בעלי עסקים','דור צעיר 18-28','גיל הזהב','תושבי האזור'];
@@ -542,10 +545,10 @@ const LAYOUTS = [
 ];
 
 /* =================== המצב =================== */
-const S = { promote:'', promoteFree:'', style:'', layout:'תועלות', format:'1:1', audience:'', tone:'', cta:'',
+const S = { promote:'', promoteFree:'', style:'', layout:'תועלות', format:'4:5', audience:'', tone:'', cta:'',
             overlay:'כותרת על התמונה', overlayText:'',
             extra:'', assets:[], prompt:'', promptTouched:false };
-const BIZ = { id:'biz', name:'', field:'', city:'' };
+const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'' };
 
 const DRAFT='morning_ads_draft';
 function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify(S)) }catch(e){} }
@@ -761,6 +764,8 @@ function syncPrompt(){
   if(layoutId()){
     /* מנוע המודעות מרכיב את הלייאאוט בעצמו, ולכן כאן כותבים בריף של מודעה ולא תיאור תמונה */
     p.push('מודעה שיווקית בעברית עבור '+who+'.');
+    if(BIZ.nameEn)p.push('אם מופיע שם המותג באותיות לטיניות, הוא נכתב בדיוק כך ובלי שום שינוי: '+BIZ.nameEn+'.');
+    else p.push('אל תכתוב את שם המותג באותיות לטיניות, רק בעברית, כדי לא להמציא תעתיק.');
     p.push('כותרת ראשית: "'+head+'".');
     if(S.promote)p.push('מה שמקדמים: '+S.promote+(S.promoteFree?'. פירוט: '+S.promoteFree:'')+'.');
     if(S.audience)p.push('קהל היעד: '+S.audience+'.');
@@ -768,7 +773,14 @@ function syncPrompt(){
     if(S.cta)p.push('קריאה לפעולה על המודעה: "'+S.cta+'".');
     if(st)p.push('שפה חזותית: '+st.p);
     if(chosen.some(a=>a.tag==='לוגו'))p.push('שים את הלוגו המצורף בפינה העליונה, נקי וקריא, בלי לעוות אותו ובלי לשנות צבעים.');
-    if(chosen.some(a=>a.tag!=='לוגו'))p.push('השתמש בתמונות המצורפות כנושא המרכזי של המודעה.');
+    if(chosen.some(a=>a.tag==='מוצר')){
+      p.push('השתמש בתמונות המוצר המצורפות כנושא המרכזי של המודעה, נאמן למקור.');
+    }else{
+      /* מנוע המודעות בנוי סביב מוצר פיזי, ובלי הנחיה הוא ממציא אובייקט ממותג
+         ודוחק את הנושא האמיתי לרקע מטושטש */
+      p.push('אין כאן מוצר פיזי למכירה. הנושא המרכזי של המודעה הוא האנשים והמקום עצמו, בחזית ובפוקוס מלא.');
+      p.push('אל תמציא מוצר, אריזה, בקבוק, קופסה או פריט ממותג כלשהו, ואל תשים אובייקט במרכז הפריים.');
+    }
     p.push('כל הטקסט על המודעה בעברית תקינה מימין לשמאל, אותיות שלמות וברורות, בלי אותיות הפוכות, בלי אותיות חסרות ובלי מילים באנגלית מלבד שם המותג.');
     if(S.extra&&S.extra.trim())p.push(S.extra.trim());
     S.prompt=p.join(' ');
@@ -1050,7 +1062,7 @@ function showTab(name){
 }
 $$('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
 $('#fab').onclick=()=>{
-  Object.assign(S,{promote:'',promoteFree:'',style:'',layout:'תועלות',format:'1:1',audience:'',tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
+  Object.assign(S,{promote:'',promoteFree:'',style:'',layout:'תועלות',format:'4:5',audience:'',tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
   $('#audOther').value='';
   saveDraft();
   $$('.sec').forEach(x=>x.classList.remove('done'));
@@ -1082,11 +1094,11 @@ function renderCounts(){
 }
 
 /* =================== שדות טקסט =================== */
-['b_name','b_field','b_city'].forEach(id=>{
+['b_name','b_nameEn','b_field','b_city'].forEach(id=>{
   $('#'+id).oninput=()=>{
     BIZ[id.slice(2)]=$('#'+id).value.trim();
     S.promptTouched=false; syncPrompt(); $('#promptIn').value=S.prompt;
-    clearTimeout(BIZ._t); BIZ._t=setTimeout(()=>DB.put('settings',{id:'biz',name:BIZ.name,field:BIZ.field,city:BIZ.city}),400);
+    clearTimeout(BIZ._t); BIZ._t=setTimeout(()=>DB.put('settings',{id:'biz',name:BIZ.name,nameEn:BIZ.nameEn,field:BIZ.field,city:BIZ.city}),400);
   };
 });
 $('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
@@ -1109,7 +1121,10 @@ $('#go').onclick=generate;
   }catch(e){ toast('האחסון המקומי לא זמין בדפדפן הזה') }
   loadDraft();
   S.assets=(S.assets||[]).filter(id=>ASSETS.some(a=>a.id===id));
-  $('#b_name').value=BIZ.name||''; $('#b_field').value=BIZ.field||''; $('#b_city').value=BIZ.city||'';
+  /* הלוגו נבחר לבד. הבקאנד של מנוע המודעות מתייחס לתמונה המצורפת כערכת המותג,
+     ובלעדיה הוא ממציא את שם המותג ואת הצבעים */
+  ASSETS.filter(a=>a.tag==='לוגו').forEach(a=>{ if(!S.assets.includes(a.id))S.assets.push(a.id) });
+  $('#b_name').value=BIZ.name||''; $('#b_nameEn').value=BIZ.nameEn||''; $('#b_field').value=BIZ.field||''; $('#b_city').value=BIZ.city||'';
   buildSections(); renderAssetPick(); applyState();
   renderCounts(); renderLib(); renderGallery();
 })();
