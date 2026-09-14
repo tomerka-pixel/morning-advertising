@@ -297,6 +297,8 @@ a{color:inherit}
             <p class="sec-sub">קהל היעד והטון של הפנייה</p>
             <div class="sec-body">
               <div class="grouplabel">קהל היעד</div><div class="chips" id="chipsAud"></div>
+              <label class="field hidden" id="audOtherWrap" style="margin-top:12px"><span>מי קהל היעד שלכם</span>
+                <input id="audOther" placeholder="לדוגמה: מנהלות משאבי אנוש בחברות הייטק"></label>
               <div class="grouplabel">הטון</div><div class="chips" id="chipsTone"></div>
               <label class="field" style="margin-top:18px"><span>קריאה לפעולה</span>
                 <input id="ctaIn" placeholder="קבעו שיעור היכרות"></label>
@@ -375,7 +377,7 @@ a{color:inherit}
 const API_BASE = /github\.io$/.test(location.hostname) ? 'https://REPLACE_WITH_VERCEL_URL' : '';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
-const LIVE = { on:false, info:null };
+const LIVE = { on:false, info:null, text:null, image:null };
 
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),3200)}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
@@ -415,9 +417,16 @@ fetch(API_BASE+'/api/health',{cache:'no-store'})
   .then(r=>r.ok?r.json():null)
   .then(j=>{
     if(!j) return offline('לא הצלחנו להגיע לשרת היצירה');
-    if(!j.openai) return offline('השרת עונה אבל אין מפתח OpenAI מוגדר');
-    LIVE.on=true;LIVE.info=j;
-    $('#statusSlot').innerHTML='<span class="live-badge"><i></i>מחובר ליצירה אמיתית</span>';
+    LIVE.info=j; LIVE.text=j.text||null; LIVE.image=j.image||null;
+    LIVE.on=!!(LIVE.text||LIVE.image);
+    if(!LIVE.on) return offline('השרת עונה אבל אין מנוע יצירה מחובר');
+    $('#statusSlot').innerHTML='<span class="live-badge"><i></i>'+
+      (LIVE.image?'מחובר ליצירה אמיתית':'הקופי מחובר · '+esc(j.textLabel||'טקסט'))+'</span>';
+    if(!LIVE.image){
+      $('#notice').innerHTML='<div class="notice warn"><b>התמונות עדיין לא מחוברות.</b> '+
+        'הקופי נכתב עכשיו דרך '+esc(j.textLabel||'מנוע הטקסט')+', בלי עלות נוספת. '+
+        'יצירת התמונה עצמה דורשת מפתח OpenAI, כי המנוי של ChatGPT לא נותן גישה למנוע התמונות דרך ה-API</div>';
+    }
   })
   .catch(()=>offline('לא הצלחנו להגיע לשרת היצירה'));
 
@@ -479,7 +488,7 @@ const AUDIENCE = ['קהל רחב','נשים 25-40','נשים 40-60','גברים 
 const TONE = ['ידידותי וחם','מקצועי ומהוקצע','אנרגטי ומניע','יוקרתי ורגוע','שובב וקליל'];
 
 /* =================== המצב =================== */
-const S = { promote:'', promoteFree:'', style:'', format:'1:1', audience:'', tone:'', cta:'',
+const S = { promote:'', promoteFree:'', style:'', format:'1:1', audience:'', audCustom:false, tone:'', cta:'',
             extra:'', assets:[], prompt:'', promptTouched:false };
 const BIZ = { id:'biz', name:'', field:'', city:'' };
 
@@ -519,7 +528,8 @@ function buildSections(){
   $('#optsPromote').innerHTML = PROMOTE.map(optCard).join('');
   $('#optsStyle').innerHTML   = STYLE.map(optCard).join('');
   $('#optsFormat').innerHTML  = FORMAT.map(optCard).join('');
-  $('#chipsAud').innerHTML    = AUDIENCE.map(a=>`<button class="chip" data-v="${attr(a)}">${esc(a)}</button>`).join('');
+  $('#chipsAud').innerHTML    = AUDIENCE.map(a=>`<button class="chip" data-v="${attr(a)}">${esc(a)}</button>`).join('')
+    + '<button class="chip" data-other="1">אחר, אני אכתוב</button>';
   $('#chipsTone').innerHTML   = TONE.map(t=>`<button class="chip" data-v="${attr(t)}">${esc(t)}</button>`).join('');
 
   wirePick('#optsPromote','promote','sec-promote','pick-promote','sec-style');
@@ -542,14 +552,32 @@ function wirePick(sel,key,secId,pickId,nextId,label){
 }
 
 function pickChip(e,key,sel){
-  const b=e.target.closest('[data-v]'); if(!b)return;
+  const other=e.target.closest('[data-other]');
+  const b=e.target.closest('[data-v]');
+  if(!other&&!b)return;
+
+  if(other){
+    /* קהל יעד משלהם: פותחים שדה חופשי ומחכים שיכתבו */
+    S.audCustom=true; S.audience=$('#audOther').value.trim();
+    $(sel).querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));
+    other.classList.add('on');
+    $('#audOtherWrap').classList.remove('hidden');
+    $('#audOther').focus();
+    refreshPrompt(); saveDraft(); afterAud(false);
+    return;
+  }
+  if(key==='audience'){ S.audCustom=false; $('#audOtherWrap').classList.add('hidden') }
   S[key]=b.dataset.v; S.promptTouched=false;
   $(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
+  refreshPrompt(); saveDraft(); afterAud(true);
+}
+
+/* מסמן את השלב כהושלם וממשיך הלאה, רק כששני החלקים מלאים */
+function afterAud(advance){
   if(S.audience&&S.tone){
     markDone('sec-aud','pick-aud',S.audience+' · '+S.tone);
-    setTimeout(()=>slideTo('sec-assets'),260);
+    if(advance)setTimeout(()=>slideTo('sec-assets'),260);
   }
-  refreshPrompt(); saveDraft();
 }
 
 function markDone(secId,pickId,text){
@@ -588,7 +616,11 @@ function applyState(){
   const set=(sel,val)=>{const g=$(sel).querySelector(`[data-v="${(val||'').replace(/"/g,'\\"')}"]`);
     if(g){$(sel).querySelectorAll('[data-v]').forEach(x=>x.classList.remove('on'));g.classList.add('on')}};
   set('#optsPromote',S.promote); set('#optsStyle',S.style); set('#optsFormat',S.format);
-  set('#chipsAud',S.audience);   set('#chipsTone',S.tone);
+  set('#chipsTone',S.tone);
+  if(S.audCustom){
+    const o=$('#chipsAud').querySelector('[data-other]'); if(o)o.classList.add('on');
+    $('#audOtherWrap').classList.remove('hidden'); $('#audOther').value=S.audience||'';
+  }else set('#chipsAud',S.audience);
   if(S.promote)markDone('sec-promote','pick-promote',S.promote);
   if(S.style)markDone('sec-style','pick-style',S.style);
   if(S.format)markDone('sec-format','pick-format',(FORMAT.find(f=>f.v===S.format)||{}).t||S.format);
@@ -642,6 +674,7 @@ let busy=false;
 async function generate(){
   if(busy)return;
   if(!LIVE.on){toast('אין חיבור לשרת היצירה');return}
+  if(!LIVE.image&&!LIVE.text){toast('אין מנוע יצירה מחובר');return}
   if(!BIZ.name){toast('מלאו את שם העסק למעלה');$('#b_name').focus();return}
   if(!S.promote){toast('בחרו מה מקדמים');slideTo('sec-promote');return}
   if(!S.style){toast('בחרו איך המודעה תיראה');slideTo('sec-style');return}
@@ -649,8 +682,10 @@ async function generate(){
   busy=true; $('#go').disabled=true;
   $('#sec-result').classList.remove('hidden');
   const t0=Date.now();
-  $('#result').innerHTML='<div class="loading"><div class="spinner"></div><b>מייצרים את המודעה</b>'+
-    '<div>כותבים את הקופי ומרכיבים את הקריאייטיב</div><div class="clock" id="clock">0:00</div></div>';
+  $('#result').innerHTML='<div class="loading"><div class="spinner"></div><b>'+
+    (LIVE.image?'מייצרים את המודעה':'כותבים את הקופי')+'</b>'+
+    '<div>'+(LIVE.image?'כותבים את הקופי ומרכיבים את הקריאייטיב':'מנוע התמונות לא מחובר, אז מייצרים את הטקסט בלבד')+
+    '</div><div class="clock" id="clock">0:00</div></div>';
   slideTo('sec-result');
   const tick=setInterval(()=>{const el=$('#clock');if(!el)return clearInterval(tick);
     const s=Math.floor((Date.now()-t0)/1000);el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')},1000);
@@ -659,15 +694,17 @@ async function generate(){
   const copyP=fetch(API_BASE+'/api/post',{method:'POST',headers:headers(),body:JSON.stringify(copyBrief())})
     .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
     .catch(e=>({_err:e.message||String(e)}));
-  const imgP=fetch(API_BASE+'/api/generate',{method:'POST',headers:headers(),
-      body:JSON.stringify({kind:'image',engine:'openai',prompt:S.prompt,format:S.format,images:refs})})
-    .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
-    .catch(e=>({_err:e.message||String(e)}));
+  const imgP = LIVE.image
+    ? fetch(API_BASE+'/api/generate',{method:'POST',headers:headers(),
+        body:JSON.stringify({kind:'image',engine:'openai',prompt:S.prompt,format:S.format,images:refs})})
+      .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
+      .catch(e=>({_err:e.message||String(e)}))
+    : Promise.resolve({_skipped:true});
 
   const [copy,img]=await Promise.all([copyP,imgP]);
   clearInterval(tick); busy=false; $('#go').disabled=false;
 
-  if(img._err&&copy._err){
+  if((img._err||img._skipped)&&copy._err){
     $('#result').innerHTML='<div class="notice err"><b>היצירה נכשלה.</b> '+esc(img._err)+'</div>';
     return;
   }
@@ -681,6 +718,7 @@ function showResult(img,copy){
     <label class="field" style="margin-top:16px"><span>הקופי למודעה</span><textarea id="resText" rows="6">${esc(text)}</textarea></label>
     ${copy&&copy._err?'<div class="notice err">כתיבת הקופי נכשלה: '+esc(copy._err)+'</div>':''}
     ${img&&img._err?'<div class="notice err">יצירת התמונה נכשלה: '+esc(img._err)+'</div>':''}
+    ${img&&img._skipped?'<div class="notice warn">התמונה לא נוצרה כי מנוע התמונות לא מחובר. הקופי למעלה אמיתי ומוכן לשימוש</div>':''}
     ${img&&img.url?`<div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took!=null?' · '+img.took+' שניות':''}${img.refs?' · '+img.refs+' נכסי מותג שולבו':''}</div>`:''}
     <div class="result-actions">
       ${img&&img.url?`<a class="btn btn-primary btn-sm" href="${img.url}" download="morning-ad.webp">הורדת התמונה</a>`:''}
@@ -830,7 +868,8 @@ function showTab(name){
 }
 $$('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
 $('#fab').onclick=()=>{
-  Object.assign(S,{promote:'',promoteFree:'',style:'',format:'1:1',audience:'',tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
+  Object.assign(S,{promote:'',promoteFree:'',style:'',format:'1:1',audience:'',audCustom:false,tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
+  $('#audOtherWrap').classList.add('hidden'); $('#audOther').value='';
   saveDraft();
   $$('.sec').forEach(x=>x.classList.remove('done'));
   $$('.opt,.chip').forEach(x=>x.classList.remove('on'));
@@ -852,6 +891,10 @@ function renderCounts(){
   };
 });
 $('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
+$('#audOther').oninput=()=>{
+  S.audience=$('#audOther').value.trim(); S.audCustom=true; S.promptTouched=false;
+  refreshPrompt(); saveDraft(); afterAud(false);
+};
 $('#ctaIn').oninput=()=>{S.cta=$('#ctaIn').value.trim();saveDraft()};
 $('#extraIn').oninput=()=>{S.extra=$('#extraIn').value;S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
 $('#promptIn').oninput=()=>{S.prompt=$('#promptIn').value;S.promptTouched=true;saveDraft()};

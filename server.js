@@ -12,6 +12,8 @@ const { spawn } = require('child_process');
 let sharp = null; try { sharp = require('sharp'); } catch (e) { /* כתוביות ידרשו sharp */ }
 let openai = null; try { openai = require('./api/_openai'); } catch (e) { /* מסלול OpenAI לא זמין */ }
 
+
+
 const ENV = process['env'] || {};
 const ROOT = __dirname;
 const PORT = ENV.PORT || 8787;
@@ -25,66 +27,46 @@ const HF_VIDEO_OMNI = ENV.HF_VIDEO_OMNI || 'gemini_omni_flash_1_1'; // דיבו�
 const HF_VIDEO_SEEDANCE = ENV.HF_VIDEO_SEEDANCE || 'seedance_2_0'; // קולנועי, עד 15ש׳
 const HF_VIDEO_RES_OMNI = ENV.HF_VIDEO_RES_OMNI || '360p';      // הנמוך ביותר ב-Omni (חסכוני לבדיקות)
 const HF_VIDEO_RES_SEEDANCE = ENV.HF_VIDEO_RES_SEEDANCE || '480p'; // הנמוך ביותר ב-Seedance
+/* ה-CLI של Codex מגיע בתוך אפליקציית ChatGPT ומחובר לחשבון ChatGPT של המשתמש.
+   זה מאפשר לכתוב את הקופי על המנוי, בלי מפתח API בתשלום. */
+const CODEX_BIN = (() => {
+  if (ENV.CODEX_BIN) return ENV.CODEX_BIN;
+  const bundled = '/Applications/ChatGPT.app/Contents/Resources/codex';
+  if (fs.existsSync(bundled)) return bundled;
+  return 'codex';
+})();
+function hasCodex() { try { return fs.existsSync(CODEX_BIN) || CODEX_BIN === 'codex'; } catch (e) { return false; } }
+
+/* תיקייה נייטרלית ל-Codex. אם מריצים אותו בתוך המאגר הוא מתנהג כסוכן ומתחיל לסרוק קבצים,
+   וכתיבת קופי אחת נמשכת דקות במקום שניות. */
+const CODEX_CWD = path.join(require('os').tmpdir(), 'morning-codex');
+try { if (!fs.existsSync(CODEX_CWD)) fs.mkdirSync(CODEX_CWD, { recursive: true }); } catch (e) {}
+
+/* הרצת Codex ללא אינטראקציה. ה-stdout מחזיר את התשובה נקייה, הכותרות יוצאות ל-stderr.
+   מנטרלים MCP ומורידים את עומק החשיבה, כי זו משימת כתיבה אחת ולא משימת סוכן. */
+function runCodex(system, user) {
+  return new Promise((resolve, reject) => {
+    const args = ['exec', '--skip-git-repo-check', '--sandbox', 'read-only',
+                  '-c', 'mcp_servers={}', '-c', 'model_reasoning_effort="low"',
+                  (system || '') + '\n\n' + (user || '')];
+    let child;
+    /* חשוב: stdin חייב להיות סגור. כשהוא צינור פתוח, Codex מחכה לקלט נוסף ותוקע את הבקשה */
+    try { child = spawn(CODEX_BIN, args, { cwd: CODEX_CWD, stdio: ['ignore', 'pipe', 'pipe'] }); }
+    catch (e) { return reject(e); }
+    let out = '', err = '';
+    child.stdout.on('data', d => out += d);
+    child.stderr.on('data', d => err += d);
+    child.on('error', e => reject(e));
+    child.on('close', code => code === 0 && out.trim()
+      ? resolve(out.trim())
+      : reject(new Error((err || 'codex exited ' + code).slice(0, 300))));
+  });
+}
+
 const MIME = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.svg':'image/svg+xml', '.json':'application/json; charset=utf-8', '.ico':'image/x-icon' };
 
-/* ה"סקיל": הנחיית המערכת של הקופירייטר. מבוסס מסגרות מוכחות (AIDA, בעיה-פתרון, סטוריטלינג). */
-const SYSTEM = `את/ה קופירייטר/ית בכיר/ה בעברית, מומחה/ית לכתיבת פוסטים שיווקיים לעסקים קטנים ובינוניים ברשתות החברתיות.
-המשימה: לכתוב פוסט אחד מוכן לפרסום, בעברית טבעית, חדה ויצירתית — כזה שעוצר את הגלילה ומניע לפעולה.
-
-עקרונות:
-- פתיחה (hook) חזקה בשורה הראשונה: שאלה, אמירה נועזת, כאב מזוהה או הבטחה — משהו שגורם לעצור.
-- בנה את הפוסט לפי מסגרת הכתיבה שנבחרה:
-  · AIDA = חשיפה, עניין, רצון, פעולה.
-  · בעיה-פתרון = הצגת כאב, החרפה קלה, ואז הפתרון שלכם.
-  · סטוריטלינג = רגע אנושי קטן שממחיש את הערך.
-- התאם את הטון והאורך לפלטפורמה: אינסטגרם/טיקטוק — קליל, קצבי ואישי; פייסבוק — זורם וחברותי; לינקדאין — מקצועי ומהוקצע.
-- אורך: קצר ≈ 40–60 מילים, בינוני ≈ 70–110, ארוך ≈ 120–180.
-- אימוג'י: "בלי" = אף אחד; "מדוד" = 2–3 במקומות נכונים; "הרבה" = אקספרסיבי אך לא מוגזם.
-- שלב את הקריאה לפעולה בצורה טבעית בסוף.
-- אם התבקשו האשטאגים: 3–5 רלוונטיים בשורה נפרדת בסוף.
-
-כללי איכות מחייבים:
-- עברית תקנית וזורמת, בגובה העיניים, בפנייה ישירה לקורא.
-- יצירתי ומקורי. אסור בתכלית קלישאות שיווקיות שחוקות ("הגיע הזמן ל...", "לא תאמינו", "במחיר שלא תראו בשום מקום") וניסוחים גנריים של בינה מלאכותית.
-- אין להשתמש במקף ארוך (—). במקומו פסיק, נקודה או שורה חדשה.
-- בלי מילים באנגלית מלבד שם המותג.
-- אין להמציא נתונים, אחוזים, המלצות לקוח או עובדות שלא נמסרו.
-- החזר אך ורק את טקסט הפוסט (כולל האשטאגים אם התבקשו). בלי כותרות, בלי הסברים, בלי מרכאות עוטפות.`;
-
-/* הנחיית מערכת ייעודית לטקסט של מודעה ממומנת (קצר, חד, מוכר) — נפרד מפוסט אורגני. */
-const SYSTEM_AD = `את/ה קופירייטר/ית בכיר/ה בעברית, מומחה/ית לכתיבת טקסטים למודעות ממומנות (פייסבוק, אינסטגרם, גוגל).
-המשימה: לכתוב טקסט קצר וחד למודעה, שמלווה קריאייטיב חזותי ומניע להמרה מיידית.
-
-מבנה נדרש (בדיוק כך, שורות נפרדות):
-- שורה 1: כותרת (Headline) קצרה ומגנטית, עד 6 מילים. זו האמירה שעוצרת את הגלילה.
-- 1 עד 2 שורות גוף קצרות: תועלת מרכזית וההצעה, בגובה העיניים.
-- שורה אחרונה: קריאה לפעולה חדה וברורה.
-
-כללים:
-- קצר ותכליתי. מודעה, לא מאמר. סה"כ עד ~40 מילים.
-- התאם לקהל היעד ולמה שרוצים לקדם.
-- אימוג'י לפי הבקשה: "בלי" = אף אחד; "מדוד" = 1–2; "הרבה" = מעט יותר, בטעם.
-- בלי האשטאגים (זו מודעה, לא פוסט).
-- עברית תקנית, יצירתית, בלי קלישאות שחוקות ובלי ניסוחים גנריים של בינה מלאכותית.
-- אין מקף ארוך (—). אין אנגלית מלבד שם המותג. אין להמציא נתונים או המלצות.
-- החזר אך ורק את טקסט המודעה (כותרת + גוף + קריאה לפעולה), בלי כותרות מטא, הסברים או מרכאות עוטפות.`;
-
-function buildPrompt(b) {
-  const biz = b.business || {};
-  const yn = v => v ? 'כן' : 'לא';
-  return `כתוב ${b.type === 'ad' ? 'טקסט למודעה' : 'פוסט'} לפי המאפיינים הבאים:
-- עסק: ${biz.name || ''} — ${biz.field || ''}, ${biz.city || ''}. אופי: ${biz.vibe || ''}. אתר: ${biz.website || ''}
-- מטרה: ${b.goal || 'לא צוין'}
-- טון: ${b.tone || 'לא צוין'}
-- מסגרת כתיבה: ${b.framework || 'AIDA'}
-- פלטפורמת יעד: ${b.platform || 'אינסטגרם'}
-- קהל יעד: ${b.audience || 'קהל רחב'}
-- הצעה / הטבה: ${b.offer || 'אין הצעה ספציפית'}
-- קריאה לפעולה: ${b.cta || 'קביעת שיעור היכרות'}
-- אורך: ${b.length || 'בינוני'}
-- כמות אימוג'י: ${b.emoji || 'מדוד'}${b.type === 'ad' ? '' : '\n- האשטאגים: ' + yn(b.hashtags)}
-- הנחיות נוספות: ${b.extra || 'אין'}`;
-}
+/* הנחיות המערכת ובניית הבריף יושבות ב-api/_shared.js, מקור אמת אחד לשני מצבי ההרצה */
+const { SYSTEM, SYSTEM_AD, buildPrompt } = require('./api/_shared');
 
 function runClaude(userPrompt, system) {
   return new Promise((resolve, reject) => {
@@ -434,7 +416,17 @@ http.createServer(async (req, res) => {
   }
   if (req.url === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ live: true, engine: 'claude', openai: !!(openai && openai.hasKey()), imageModel: openai ? openai.IMAGE_MODEL : null, textModel: openai ? openai.TEXT_MODEL : null, version: 'v8-openai' }));
+    const key = !!(openai && openai.hasKey());
+    const text = key ? 'openai' : (hasCodex() ? 'codex' : 'claude');
+    return res.end(JSON.stringify({
+      live: true,
+      text,                                   /* מי כותב את הקופי */
+      image: key ? 'openai' : null,           /* מי מייצר את התמונה */
+      textLabel: text === 'codex' ? 'ChatGPT (המנוי שלך)' : (text === 'openai' ? 'OpenAI API' : 'Claude'),
+      imageModel: key ? openai.IMAGE_MODEL : null,
+      openai: key,
+      version: 'v9-codex'
+    }));
   }
   if (req.url === '/api/post' && req.method === 'POST') {
     let body = '';
@@ -443,9 +435,11 @@ http.createServer(async (req, res) => {
       try {
         const brief = JSON.parse(body || '{}');
         const sys = brief.type === 'ad' ? SYSTEM_AD : SYSTEM;
-        const text = (brief.engine === 'openai' && openai && openai.hasKey())
-          ? await openai.generateText(sys, buildPrompt(brief))
-          : await runClaude(buildPrompt(brief), sys);
+        const user = buildPrompt(brief);
+        let text;
+        if (openai && openai.hasKey()) text = await openai.generateText(sys, user);
+        else if (hasCodex()) text = await runCodex(sys, user);
+        else text = await runClaude(user, sys);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ text }));
       } catch (e) {
