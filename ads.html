@@ -326,8 +326,9 @@ a{color:inherit}
                 <button class="btn btn-outline btn-sm" id="audAdd">הוספה</button>
               </div>
               <div class="grouplabel">הטון</div><div class="chips" id="chipsTone"></div>
-              <label class="field" style="margin-top:18px"><span>קריאה לפעולה</span>
+              <label class="field" style="margin-top:18px;margin-bottom:6px"><span>קריאה לפעולה</span>
                 <input id="ctaIn" placeholder="קבעו שיעור היכרות"></label>
+              <p class="chip-note" id="ctaNote" style="margin-top:0"></p>
             </div>
           </section>
 
@@ -519,6 +520,10 @@ const PROMOTE = [
    ic:'M4 7h16M4 12h10M4 17h7M17 14l4 4-4 4'}
 ];
 const GOALS = ['לידים ופניות','מכירות','הרשמות','חשיפה ומודעות'];
+/* בלי קריאה לפעולה אין רצועת פוטר במודעה, ולכן לכל מטרה יש ברירת מחדל */
+const CTA_BY_GOAL = {'לידים ופניות':'השאירו פרטים','מכירות':'לרכישה',
+                     'הרשמות':'להרשמה','חשיפה ומודעות':'לפרטים נוספים'};
+function ctaText(){ return (S.cta||'').trim() || CTA_BY_GOAL[S.goal] || 'לפרטים נוספים' }
 const PLATFORMS  = ['אינסטגרם','פייסבוק','לינקדאין','טיקטוק'];
 /* שמות בעברית פשוטה. ראשי תיבות באנגלית לא אומרים כלום לבעל עסק */
 const FRAMEWORKS = [
@@ -652,7 +657,7 @@ function buildSections(){
       S[key]=b.dataset.v; S.promptTouched=false;
       $(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
       markDone('sec-copy','pick-copy',S.platform+' · '+S.len);
-      refreshPrompt(); saveDraft();
+      renderCtaNote(); refreshPrompt(); saveDraft();
     };
   };
   simpleChips('#chipsPlatform',PLATFORMS,'platform');
@@ -810,7 +815,7 @@ function applyState(){
   $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S.goal));
   [['#chipsPlatform','platform'],['#chipsFramework','framework'],['#chipsLen','len'],['#chipsEmoji','emoji']]
     .forEach(([sel,k])=>$(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S[k])));
-  renderFrameworkNote();
+  renderFrameworkNote(); renderCtaNote();
   if(S.platform)markDone('sec-copy','pick-copy',S.platform+' · '+S.len);
   $('#ctaIn').value=S.cta||'';
   $('#extraIn').value=S.extra||'';
@@ -861,7 +866,9 @@ function syncPrompt(){
   const st=STYLE.find(x=>x.v===S.style);
   const chosen=ASSETS.filter(a=>S.assets.includes(a.id));
   const head=(S.overlayText||'').trim()||'{{כותרת}}';
-  const what=S.promote+(S.promoteFree?': '+S.promoteFree:'');
+  /* כשיש פירוט הוא מה שמעניין. "מבצע או הנחה" היא קטגוריה בממשק,
+     ואם שולחים אותה המנוע עלול להדפיס אותה מילה במילה על המודעה */
+  const what=(S.promoteFree||'').trim()||S.promote;
 
   /* משותף לשני המסלולים: מי, מה, למי ובאיזה אופי */
   const brief=()=>{
@@ -880,7 +887,7 @@ function syncPrompt(){
     /* מנוע המודעות מרכיב את הלייאאוט בעצמו */
     brief();
     p.push('כותרת ראשית: "'+head+'".');
-    if(S.cta)p.push('קריאה לפעולה על המודעה: "'+S.cta+'".');
+    p.push('קריאה לפעולה על המודעה: "'+ctaText()+'".');
   }else{
     /* עיצוב חופשי: מתארים את מבנה המודעה במפורש, אחרת מתקבלת תמונה יפה
        עם כותרת ולא מודעה שלמה. זה ההבדל מהדמו המקורי. */
@@ -891,7 +898,7 @@ function syncPrompt(){
     p.push('שורת משנה אחת קצרה שמסבירה למי זה מיועד.');
     p.push('שלוש נקודות תועלת קצרות, כל אחת עם אייקון עגול ועדין לצידה.');
     p.push('תג או עיגול מודגש עם ההצעה: '+what+'.');
-    if(S.cta)p.push('רצועת פוטר בתחתית עם כפתור קריאה לפעולה "'+S.cta+'"'+(BIZ.city?' ועם העיר '+BIZ.city:'')+'.');
+    p.push('רצועת פוטר בתחתית עם כפתור קריאה לפעולה "'+ctaText()+'"'+(BIZ.city?' ועם העיר '+BIZ.city:'')+'.');
     p.push('הטיפוגרפיה מקצועית ומדורגת, יש מרווחי נשימה, והצבעוניות אחידה לאורך כל המודעה.');
   }
 
@@ -913,7 +920,7 @@ function copyBrief(){
     goal:(S.goal||'')+'. קידום: '+S.promote+(S.promoteFree?' · '+S.promoteFree:''),
     tone:S.tone, framework:S.framework,
     platform:S.platform+(S.format==='9:16'?' · סטורי':''),
-    audience:S.audience, offer:S.promoteFree||S.promote, cta:S.cta,
+    audience:S.audience, offer:S.promoteFree||S.promote, cta:ctaText(),
     length:S.len, emoji:S.emoji, extra:S.extra
   };
 }
@@ -1178,6 +1185,12 @@ $('#fab').onclick=()=>{
 
 /* מה רץ ובכמה זה עולה, לפני שלוחצים */
 /* מסבירים מה המסגרת שנבחרה עושה, במקום להשאיר שם שצריך לנחש */
+/* אומרים למשתמש איזו קריאה לפעולה תיכנס אם הוא משאיר ריק */
+function renderCtaNote(){
+  const el=$('#ctaNote'); if(!el)return;
+  el.textContent=(S.cta||'').trim() ? '' : 'אם משאירים ריק, יופיע על המודעה: "'+ctaText()+'"';
+}
+
 function renderFrameworkNote(){
   const el=$('#frameworkNote'); if(!el)return;
   const f=FRAMEWORKS.find(x=>x.v===S.framework);
@@ -1217,7 +1230,7 @@ $('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.pr
 $('#overlayText').oninput=()=>{S.overlayText=$('#overlayText').value;S.promptTouched=false;refreshPrompt();saveDraft()};
 $('#audAdd').onclick=addAudience;
 $('#audOther').onkeydown=e=>{ if(e['key']==='Enter'){ e.preventDefault(); addAudience() } };
-$('#ctaIn').oninput=()=>{S.cta=$('#ctaIn').value.trim();saveDraft()};
+$('#ctaIn').oninput=()=>{S.cta=$('#ctaIn').value.trim();S.promptTouched=false;renderCtaNote();refreshPrompt();saveDraft()};
 $('#extraIn').oninput=()=>{S.extra=$('#extraIn').value;S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
 $('#promptIn').oninput=()=>{S.prompt=$('#promptIn').value;S.promptTouched=true;saveDraft();renderPromptHint()};
 $('#resetPrompt').onclick=()=>{S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft();toast('הפרומפט אופס')};
