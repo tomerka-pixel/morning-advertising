@@ -136,6 +136,7 @@ a{color:inherit}
 .chip .x{width:18px;height:18px;border-radius:50%;border:0;background:var(--surface);color:var(--muted);cursor:pointer;font-size:13px;line-height:1;display:grid;place-items:center;flex:0 0 18px}
 .chip.on .x{background:#fff}
 .chip .x:hover{background:var(--err);color:#fff}
+.chip-note{font-size:13.5px;color:var(--muted);margin:10px 0 0;line-height:1.6}
 .grouplabel{font-size:14px;color:var(--muted);font-weight:500;margin:18px 0 8px}
 .grouplabel:first-child{margin-top:0}
 
@@ -336,6 +337,7 @@ a{color:inherit}
             <div class="sec-body">
               <div class="grouplabel" style="margin-top:0">איפה מפרסמים</div><div class="chips" id="chipsPlatform"></div>
               <div class="grouplabel">מסגרת הכתיבה</div><div class="chips" id="chipsFramework"></div>
+              <p class="chip-note" id="frameworkNote"></p>
               <div class="grouplabel">אורך</div><div class="chips" id="chipsLen"></div>
               <div class="grouplabel">אימוג׳י</div><div class="chips" id="chipsEmoji"></div>
             </div>
@@ -518,7 +520,12 @@ const PROMOTE = [
 ];
 const GOALS = ['לידים ופניות','מכירות','הרשמות','חשיפה ומודעות'];
 const PLATFORMS  = ['אינסטגרם','פייסבוק','לינקדאין','טיקטוק'];
-const FRAMEWORKS = ['AIDA','בעיה-פתרון','סטוריטלינג'];
+/* שמות בעברית פשוטה. ראשי תיבות באנגלית לא אומרים כלום לבעל עסק */
+const FRAMEWORKS = [
+  {v:'מוביל לפעולה', d:'עוצר, מסקרן, גורם לרצות, ובסוף מבקש. הבחירה הבטוחה למודעה ממומנת'},
+  {v:'מהכאב לפתרון', d:'מתחיל בבעיה שהלקוח כבר מכיר, ואתם הפתרון. טוב כשיש כאב ברור'},
+  {v:'סיפור קצר',    d:'רגע אנושי אחד שממחיש את הערך, בלי למכור ישירות. טוב לחשיפה ולמותג'}
+];
 const LENGTHS    = ['קצר','בינוני','ארוך'];
 const EMOJIS     = ['בלי','מדוד','הרבה'];
 
@@ -588,7 +595,7 @@ const LAYOUTS = [
 /* =================== המצב =================== */
 const S = { promote:'', promoteFree:'', style:'מודעה טיפוגרפית', goal:'לידים ופניות', layout:'', format:'4:5', audience:'', tone:'', cta:'',
             overlay:'כותרת על התמונה', overlayText:'',
-            platform:'אינסטגרם', framework:'AIDA', len:'קצר', emoji:'מדוד',
+            platform:'אינסטגרם', framework:'מוביל לפעולה', len:'קצר', emoji:'מדוד',
             extra:'', assets:[], prompt:'', promptTouched:false };
 const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'', site:'' };
 
@@ -649,7 +656,15 @@ function buildSections(){
     };
   };
   simpleChips('#chipsPlatform',PLATFORMS,'platform');
-  simpleChips('#chipsFramework',FRAMEWORKS,'framework');
+  $('#chipsFramework').innerHTML=FRAMEWORKS.map(f=>`<button class="chip ${S.framework===f.v?'on':''}" data-v="${attr(f.v)}">${esc(f.v)}</button>`).join('');
+  $('#chipsFramework').onclick=e=>{
+    const b=e.target.closest('[data-v]'); if(!b)return;
+    S.framework=b.dataset.v; S.promptTouched=false;
+    $('#chipsFramework').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
+    renderFrameworkNote(); markDone('sec-copy','pick-copy',S.platform+' · '+S.len);
+    refreshPrompt(); saveDraft();
+  };
+  renderFrameworkNote();
   simpleChips('#chipsLen',LENGTHS,'len');
   simpleChips('#chipsEmoji',EMOJIS,'emoji');
 
@@ -795,6 +810,7 @@ function applyState(){
   $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S.goal));
   [['#chipsPlatform','platform'],['#chipsFramework','framework'],['#chipsLen','len'],['#chipsEmoji','emoji']]
     .forEach(([sel,k])=>$(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S[k])));
+  renderFrameworkNote();
   if(S.platform)markDone('sec-copy','pick-copy',S.platform+' · '+S.len);
   $('#ctaIn').value=S.cta||'';
   $('#extraIn').value=S.extra||'';
@@ -1151,7 +1167,7 @@ function showTab(name){
 }
 $$('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
 $('#fab').onclick=()=>{
-  Object.assign(S,{promote:'',promoteFree:'',style:'מודעה טיפוגרפית',goal:'לידים ופניות',layout:'',format:'4:5',audience:'',tone:'',cta:'',platform:'אינסטגרם',framework:'AIDA',len:'קצר',emoji:'מדוד',extra:'',assets:[],prompt:'',promptTouched:false});
+  Object.assign(S,{promote:'',promoteFree:'',style:'מודעה טיפוגרפית',goal:'לידים ופניות',layout:'',format:'4:5',audience:'',tone:'',cta:'',platform:'אינסטגרם',framework:'מוביל לפעולה',len:'קצר',emoji:'מדוד',extra:'',assets:[],prompt:'',promptTouched:false});
   $('#audOther').value='';
   saveDraft();
   $$('.sec').forEach(x=>x.classList.remove('done'));
@@ -1161,6 +1177,13 @@ $('#fab').onclick=()=>{
 };
 
 /* מה רץ ובכמה זה עולה, לפני שלוחצים */
+/* מסבירים מה המסגרת שנבחרה עושה, במקום להשאיר שם שצריך לנחש */
+function renderFrameworkNote(){
+  const el=$('#frameworkNote'); if(!el)return;
+  const f=FRAMEWORKS.find(x=>x.v===S.framework);
+  el.textContent=f?f.d:'';
+}
+
 function renderCost(){
   const el=$('#costline'); if(!el)return;
   const j=LIVE.info||{};
@@ -1227,6 +1250,9 @@ $('#go').onclick=generate;
   }catch(e){}
 
   loadDraft();
+  /* טיוטות שנשמרו עם השמות הישנים */
+  S.framework={'AIDA':'מוביל לפעולה','בעיה-פתרון':'מהכאב לפתרון','סטוריטלינג':'סיפור קצר'}[S.framework]||S.framework;
+  if(!FRAMEWORKS.some(f=>f.v===S.framework))S.framework='מוביל לפעולה';
   S.assets=(S.assets||[]).filter(id=>ASSETS.some(a=>a.id===id));
   /* הלוגו נבחר לבד. הבקאנד של מנוע המודעות מתייחס לתמונה המצורפת כערכת המותג,
      ובלעדיה הוא ממציא את שם המותג ואת הצבעים */
