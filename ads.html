@@ -93,7 +93,8 @@ a{color:inherit}
 .biz-head h3{font-size:17px}
 .biz-head .from{background:var(--surface);color:var(--muted);border-radius:4px;padding:2px 9px;font-size:12px;font-weight:500}
 .biz-sub{color:var(--muted);font-size:14px;margin:0 0 14px}
-.biz-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.biz-fields{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media(max-width:900px){.biz-fields{grid-template-columns:repeat(2,1fr)}}
 
 /* ===== מקטע ===== */
 .sec{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:16px;scroll-margin-top:14px}
@@ -280,6 +281,7 @@ a{color:inherit}
               <label class="field" style="margin:0"><span>השם באנגלית</span><input id="b_nameEn" placeholder="STUDIO MOVE"></label>
               <label class="field" style="margin:0"><span>תחום</span><input id="b_field" placeholder="סטודיו לפילאטיס"></label>
               <label class="field" style="margin:0"><span>עיר</span><input id="b_city" placeholder="תל אביב"></label>
+              <label class="field" style="margin:0"><span>אתר</span><input id="b_site" placeholder="studiomove.co.il"></label>
             </div>
           </div>
 
@@ -328,14 +330,25 @@ a{color:inherit}
             </div>
           </section>
 
+          <section class="sec" id="sec-copy">
+            <div class="sec-head"><span class="sec-num">6</span><h2>הקופי</h2><span class="sec-pick" id="pick-copy"></span></div>
+            <p class="sec-sub">איך נכתב הטקסט שמלווה את המודעה</p>
+            <div class="sec-body">
+              <div class="grouplabel" style="margin-top:0">איפה מפרסמים</div><div class="chips" id="chipsPlatform"></div>
+              <div class="grouplabel">מסגרת הכתיבה</div><div class="chips" id="chipsFramework"></div>
+              <div class="grouplabel">אורך</div><div class="chips" id="chipsLen"></div>
+              <div class="grouplabel">אימוג׳י</div><div class="chips" id="chipsEmoji"></div>
+            </div>
+          </section>
+
           <section class="sec" id="sec-assets">
-            <div class="sec-head"><span class="sec-num">6</span><h2>נכסי המותג</h2><span class="sec-pick" id="pick-assets"></span></div>
+            <div class="sec-head"><span class="sec-num">7</span><h2>נכסי המותג</h2><span class="sec-pick" id="pick-assets"></span></div>
             <p class="sec-sub">הלוגו ותמונות המוצר שתבחרו ישולבו במודעה עצמה</p>
             <div class="sec-body" id="assetPick"></div>
           </section>
 
           <section class="sec" id="sec-go">
-            <div class="sec-head"><span class="sec-num">7</span><h2>יצירה</h2></div>
+            <div class="sec-head"><span class="sec-num">8</span><h2>יצירה</h2></div>
             <p class="sec-sub">אפשר להוסיף הנחיות, או פשוט ליצור</p>
             <div class="sec-body">
               <div class="grouplabel" style="margin-top:0">כיתוב על המודעה</div>
@@ -504,6 +517,10 @@ const PROMOTE = [
    ic:'M4 7h16M4 12h10M4 17h7M17 14l4 4-4 4'}
 ];
 const GOALS = ['לידים ופניות','מכירות','הרשמות','חשיפה ומודעות'];
+const PLATFORMS  = ['אינסטגרם','פייסבוק','לינקדאין','טיקטוק'];
+const FRAMEWORKS = ['AIDA','בעיה-פתרון','סטוריטלינג'];
+const LENGTHS    = ['קצר','בינוני','ארוך'];
+const EMOJIS     = ['בלי','מדוד','הרבה'];
 
 /* לכל סגנון יש תצוגה מקדימה ומשפט שנכנס לפרומפט. כאן נקבע אופי הקריאייטיב. */
 /* סגנונות המודעה, מועברים מהדמו המקורי. לכל אחד תיאור שמוצג למשתמש
@@ -571,8 +588,9 @@ const LAYOUTS = [
 /* =================== המצב =================== */
 const S = { promote:'', promoteFree:'', style:'מודעה טיפוגרפית', goal:'לידים ופניות', layout:'', format:'4:5', audience:'', tone:'', cta:'',
             overlay:'כותרת על התמונה', overlayText:'',
+            platform:'אינסטגרם', framework:'AIDA', len:'קצר', emoji:'מדוד',
             extra:'', assets:[], prompt:'', promptTouched:false };
-const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'' };
+const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'', site:'' };
 
 const DRAFT='morning_ads_draft';
 function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify(S)) }catch(e){} }
@@ -620,6 +638,21 @@ function buildSections(){
     $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
     refreshPrompt(); saveDraft();
   };
+  const simpleChips=(sel,list,key)=>{
+    $(sel).innerHTML=list.map(v=>`<button class="chip ${S[key]===v?'on':''}" data-v="${attr(v)}">${esc(v)}</button>`).join('');
+    $(sel).onclick=e=>{
+      const b=e.target.closest('[data-v]'); if(!b)return;
+      S[key]=b.dataset.v; S.promptTouched=false;
+      $(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
+      markDone('sec-copy','pick-copy',S.platform+' · '+S.len);
+      refreshPrompt(); saveDraft();
+    };
+  };
+  simpleChips('#chipsPlatform',PLATFORMS,'platform');
+  simpleChips('#chipsFramework',FRAMEWORKS,'framework');
+  simpleChips('#chipsLen',LENGTHS,'len');
+  simpleChips('#chipsEmoji',EMOJIS,'emoji');
+
   $('#chipsOverlay').innerHTML= OVERLAY.map(o=>`<button class="chip ${S.overlay===o?'on':''}" data-v="${attr(o)}">${esc(o)}</button>`).join('');
   $('#chipsOverlay').onclick = e => {
     const b=e.target.closest('[data-v]'); if(!b)return;
@@ -699,7 +732,7 @@ function pickChip(e,key,sel){
 function afterAud(advance){
   if(S.audience&&S.tone){
     markDone('sec-aud','pick-aud',S.audience+' · '+S.tone);
-    if(advance)setTimeout(()=>slideTo('sec-assets'),260);
+    if(advance)setTimeout(()=>slideTo('sec-copy'),260);
   }
 }
 
@@ -760,6 +793,9 @@ function applyState(){
   $('#promoteFree').value=S.promoteFree||'';
   renderPromoteDetail();
   $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S.goal));
+  [['#chipsPlatform','platform'],['#chipsFramework','framework'],['#chipsLen','len'],['#chipsEmoji','emoji']]
+    .forEach(([sel,k])=>$(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S[k])));
+  if(S.platform)markDone('sec-copy','pick-copy',S.platform+' · '+S.len);
   $('#ctaIn').value=S.cta||'';
   $('#extraIn').value=S.extra||'';
   $('#overlayText').value=S.overlayText||'';
@@ -817,6 +853,7 @@ function syncPrompt(){
     if(BIZ.nameEn)p.push('שם המותג באותיות לטיניות נכתב בדיוק כך ובלי שינוי: '+BIZ.nameEn+'.');
     else p.push('אל תכתוב את שם המותג באותיות לטיניות, רק בעברית.');
     p.push('מה שמקדמים: '+what+'.');
+    if(BIZ.site)p.push('כתובת האתר שתופיע על המודעה, בדיוק כך: '+BIZ.site+'.');
     if(S.goal)p.push('מטרת המודעה: '+S.goal+'.');
     if(S.audience)p.push('קהל היעד: '+S.audience+'.');
     if(S.tone)p.push('טון: '+S.tone+'.');
@@ -856,12 +893,12 @@ function syncPrompt(){
 function copyBrief(){
   return {
     type:'ad', engine:'openai',
-    business:{name:BIZ.name,field:BIZ.field,city:BIZ.city,vibe:S.style,website:''},
+    business:{name:BIZ.name,field:BIZ.field,city:BIZ.city,vibe:S.style,website:BIZ.site||''},
     goal:(S.goal||'')+'. קידום: '+S.promote+(S.promoteFree?' · '+S.promoteFree:''),
-    tone:S.tone, framework:'AIDA',
-    platform:S.format==='9:16'?'אינסטגרם סטורי':'אינסטגרם',
+    tone:S.tone, framework:S.framework,
+    platform:S.platform+(S.format==='9:16'?' · סטורי':''),
     audience:S.audience, offer:S.promoteFree||S.promote, cta:S.cta,
-    length:'קצר', emoji:'מדוד', extra:S.extra
+    length:S.len, emoji:S.emoji, extra:S.extra
   };
 }
 
@@ -1114,7 +1151,7 @@ function showTab(name){
 }
 $$('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
 $('#fab').onclick=()=>{
-  Object.assign(S,{promote:'',promoteFree:'',style:'מודעה טיפוגרפית',goal:'לידים ופניות',layout:'',format:'4:5',audience:'',tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
+  Object.assign(S,{promote:'',promoteFree:'',style:'מודעה טיפוגרפית',goal:'לידים ופניות',layout:'',format:'4:5',audience:'',tone:'',cta:'',platform:'אינסטגרם',framework:'AIDA',len:'קצר',emoji:'מדוד',extra:'',assets:[],prompt:'',promptTouched:false});
   $('#audOther').value='';
   saveDraft();
   $$('.sec').forEach(x=>x.classList.remove('done'));
@@ -1146,11 +1183,11 @@ function renderCounts(){
 }
 
 /* =================== שדות טקסט =================== */
-['b_name','b_nameEn','b_field','b_city'].forEach(id=>{
+['b_name','b_nameEn','b_field','b_city','b_site'].forEach(id=>{
   $('#'+id).oninput=()=>{
     BIZ[id.slice(2)]=$('#'+id).value.trim();
     S.promptTouched=false; syncPrompt(); $('#promptIn').value=S.prompt;
-    clearTimeout(BIZ._t); BIZ._t=setTimeout(()=>DB.put('settings',{id:'biz',name:BIZ.name,nameEn:BIZ.nameEn,field:BIZ.field,city:BIZ.city}),400);
+    clearTimeout(BIZ._t); BIZ._t=setTimeout(()=>DB.put('settings',{id:'biz',name:BIZ.name,nameEn:BIZ.nameEn,field:BIZ.field,city:BIZ.city,site:BIZ.site}),400);
   };
 });
 $('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
@@ -1182,8 +1219,8 @@ $('#go').onclick=generate;
         ASSETS=await DB.all('assets');
       }
       if(!BIZ.name){
-        Object.assign(BIZ,{name:'סטודיו מוב',nameEn:'STUDIO MOVE',field:'סטודיו לפילאטיס מכשירים',city:'תל אביב'});
-        await DB.put('settings',{id:'biz',name:BIZ.name,nameEn:BIZ.nameEn,field:BIZ.field,city:BIZ.city});
+        Object.assign(BIZ,{name:'סטודיו מוב',nameEn:'STUDIO MOVE',field:'סטודיו לפילאטיס מכשירים',city:'תל אביב',site:'studiomove.co.il'});
+        await DB.put('settings',{id:'biz',name:BIZ.name,nameEn:BIZ.nameEn,field:BIZ.field,city:BIZ.city,site:BIZ.site});
       }
       await DB.put('settings',{id:'seeded',at:Date.now()});
     }
@@ -1194,7 +1231,7 @@ $('#go').onclick=generate;
   /* הלוגו נבחר לבד. הבקאנד של מנוע המודעות מתייחס לתמונה המצורפת כערכת המותג,
      ובלעדיה הוא ממציא את שם המותג ואת הצבעים */
   ASSETS.filter(a=>a.tag==='לוגו').forEach(a=>{ if(!S.assets.includes(a.id))S.assets.push(a.id) });
-  $('#b_name').value=BIZ.name||''; $('#b_nameEn').value=BIZ.nameEn||''; $('#b_field').value=BIZ.field||''; $('#b_city').value=BIZ.city||'';
+  $('#b_name').value=BIZ.name||''; $('#b_nameEn').value=BIZ.nameEn||''; $('#b_field').value=BIZ.field||''; $('#b_city').value=BIZ.city||''; $('#b_site').value=BIZ.site||'';
   buildSections(); renderAssetPick(); applyState();
   renderCounts(); renderLib(); renderGallery();
 })();
