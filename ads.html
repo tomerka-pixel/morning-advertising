@@ -287,8 +287,11 @@ a{color:inherit}
             <div class="sec-head"><span class="sec-num">1</span><h2>מה מקדמים</h2><span class="sec-pick" id="pick-promote"></span></div>
             <p class="sec-sub">בוחרים, והמסך ממשיך לשאלה הבאה</p>
             <div class="sec-body"><div class="opts" id="optsPromote"></div>
-              <label class="field" style="margin-top:16px"><span>רוצים לדייק? (לא חובה)</span>
-                <input id="promoteFree" placeholder="לדוגמה: שיעור היכרות ראשון ללא עלות"></label>
+              <label class="field" style="margin-top:16px" id="promoteDetailWrap">
+                <span id="promoteQ">רוצים לדייק?</span>
+                <input id="promoteFree" placeholder="בחרו קודם מה מקדמים"></label>
+              <div class="grouplabel">מטרת המודעה</div>
+              <div class="chips" id="chipsGoal"></div>
             </div>
           </section>
 
@@ -472,46 +475,67 @@ function offline(why){
 }
 
 /* =================== האפשרויות =================== */
+/* לכל אפשרות יש שדה פירוט. need=true אומר שאי אפשר ליצור בלעדיו,
+   אחרת המנוע ממציא מוצר או אירוע שלא קיימים */
 const PROMOTE = [
-  {v:'מבצע או הנחה', d:'הטבה לזמן מוגבל', ic:'M9 15 15 9M9.5 9.5h.01M14.5 14.5h.01M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Z'},
-  {v:'מוצר חדש', d:'השקה של משהו חדש', ic:'m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9Z'},
-  {v:'שירות', d:'שירות מקצועי שאתם נותנים', ic:'M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM4 21c1-5 15-5 16 0'},
-  {v:'אירוע', d:'סדנה, כנס או ערב לקוחות', ic:'M7 3v3M17 3v3M4 9h16M5 6h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z'},
-  {v:'פתיחת עסק', d:'הכרזה על פתיחה או סניף', ic:'M4 10h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9ZM3 10l2-5h14l2 5M12 10v11'},
-  {v:'גיוס לקוחות', d:'הגדלת פניות ולידים', ic:'M12 21s-7-4.3-7-9.5A4.5 4.5 0 0 1 12 8a4.5 4.5 0 0 1 7 3.5C19 16.7 12 21 12 21Z'},
-  {v:'תוכן מיתוגי', d:'חשיפה ובניית מותג', ic:'M4 7h16M4 12h10M4 17h7M17 14l4 4-4 4'},
-  {v:'גיוס עובדים', d:'דרושים לצוות', ic:'M16 21v-2a4 4 0 0 0-8 0v2M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM19 8v6M22 11h-6'}
+  {v:'מבצע או הנחה', d:'הטבה לזמן מוגבל', need:true,
+   q:'מה ההטבה בדיוק?', ph:'20% הנחה על מנוי שנתי, עד סוף החודש',
+   ic:'M9 15 15 9M9.5 9.5h.01M14.5 14.5h.01M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Z'},
+  {v:'מוצר חדש', d:'השקה של משהו חדש', need:true,
+   q:'איזה מוצר בדיוק?', ph:'רפורמר פרימיום, מכשיר פילאטיס חדש בסטודיו',
+   ic:'m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9Z'},
+  {v:'שירות', d:'שירות מקצועי שאתם נותנים', need:true,
+   q:'איזה שירות?', ph:'שיעורי פילאטיס מכשירים בקבוצות קטנות',
+   ic:'M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM4 21c1-5 15-5 16 0'},
+  {v:'אירוע', d:'סדנה, כנס או ערב לקוחות', need:true,
+   q:'איזה אירוע ומתי?', ph:'סדנת נשימה ותנועה, יום שישי ב-10:00',
+   ic:'M7 3v3M17 3v3M4 9h16M5 6h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z'},
+  {v:'גיוס עובדים', d:'דרושים לצוות', need:true,
+   q:'איזה תפקיד?', ph:'מדריכת פילאטיס מוסמכת, משרה חלקית',
+   ic:'M16 21v-2a4 4 0 0 0-8 0v2M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM19 8v6M22 11h-6'},
+  {v:'פתיחת עסק', d:'הכרזה על פתיחה או סניף', need:false,
+   q:'משהו לדייק? (לא חובה)', ph:'סניף חדש ברוטשילד, נפתח בראשון',
+   ic:'M4 10h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9ZM3 10l2-5h14l2 5M12 10v11'},
+  {v:'גיוס לקוחות', d:'הגדלת פניות ולידים', need:false,
+   q:'משהו לדייק? (לא חובה)', ph:'שיעור היכרות ראשון ללא עלות',
+   ic:'M12 21s-7-4.3-7-9.5A4.5 4.5 0 0 1 12 8a4.5 4.5 0 0 1 7 3.5C19 16.7 12 21 12 21Z'},
+  {v:'תוכן מיתוגי', d:'חשיפה ובניית מותג', need:false,
+   q:'משהו לדייק? (לא חובה)', ph:'הסיפור שמאחורי הסטודיו',
+   ic:'M4 7h16M4 12h10M4 17h7M17 14l4 4-4 4'}
 ];
+const GOALS = ['לידים ופניות','מכירות','הרשמות','חשיפה ומודעות'];
 
 /* לכל סגנון יש תצוגה מקדימה ומשפט שנכנס לפרומפט. כאן נקבע אופי הקריאייטיב. */
+/* סגנונות המודעה, מועברים מהדמו המקורי. לכל אחד תיאור שמוצג למשתמש
+   ומשפט שנכנס לפרומפט וקובע את אופי הקריאייטיב. */
 const STYLE = [
+  {v:'מודעה טיפוגרפית', d:'כותרת גדולה והיררכיה חזקה',
+   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#0E3F3A"/><rect x="14" y="12" width="72" height="11" rx="2" fill="#fff"/><rect x="26" y="28" width="48" height="6" rx="2" fill="#7FCBB4"/><rect x="34" y="39" width="32" height="5" rx="2.5" fill="#F0B8C4"/></svg>',
+   p:'מודעה טיפוגרפית: הכותרת היא הגיבורה, גדולה ובולטת, עם היררכיה ברורה בין כותרת, תת כותרת וקריאה לפעולה.'},
+  {v:'צילום מציאותי', d:'סצנה טבעית שנראית אמיתית',
+   sw:'<svg viewBox="0 0 100 52"><defs><linearGradient id="p1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#C9A27E"/><stop offset="1" stop-color="#8E6B4F"/></linearGradient></defs><rect width="100" height="52" fill="url(#p1)"/><circle cx="72" cy="15" r="8" fill="#FFF1D8" opacity=".7"/></svg>',
+   p:'צילום מציאותי ואותנטי, אנשים אמיתיים ברגע טבעי, אור רך, עומק שדה מצומצם, מראה של קמפיין ולא של תמונת סטוק.'},
+  {v:'איור מותגי', d:'איור נקי בצבעי העסק',
+   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#FDF3E7"/><circle cx="36" cy="26" r="14" fill="#F2B6A0" stroke="#2B2B2B" stroke-width="2.5"/><rect x="58" y="14" width="26" height="24" rx="6" fill="#9BD3C5" stroke="#2B2B2B" stroke-width="2.5"/></svg>',
+   p:'איור מותגי נקי, צורות מסוגננות וקווי מתאר עדינים, בצבעי המותג, בלי ריאליזם צילומי.'},
   {v:'איור קרטון', d:'דמויות מצוירות, קווי מתאר',
    sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#FFE08A"/><circle cx="34" cy="26" r="13" fill="#FFC24D" stroke="#2B2B2B" stroke-width="3"/><circle cx="29" cy="23" r="2.2" fill="#2B2B2B"/><circle cx="39" cy="23" r="2.2" fill="#2B2B2B"/><path d="M28 31q6 6 12 0" stroke="#2B2B2B" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="58" y="14" width="28" height="24" rx="5" fill="#4FC3F7" stroke="#2B2B2B" stroke-width="3"/></svg>',
-   p:'איור קרטון צבעוני ושמח, דמויות מסוגננות עם קווי מתאר נקיים ועבים, שטחי צבע שטוחים ובהירים, פרופורציות מוגזמות בטוב טעם, מראה של איור מודעה מצויר ולא של צילום.'},
-  {v:'קומיקס', d:'פאנל, קווים חדים, הדגשות',
+   p:'איור קרטון צבעוני ושמח, דמויות מסוגננות עם קווי מתאר נקיים ועבים, שטחי צבע שטוחים ובהירים, מראה של איור מודעה מצויר ולא של צילום.'},
+  {v:'מינימליסטי', d:'מעט אלמנטים, הרבה אוויר',
+   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#F2F4F5"/><circle cx="34" cy="26" r="13" fill="#0DAC81"/><rect x="58" y="20" width="28" height="5" rx="2.5" fill="#033841"/><rect x="58" y="30" width="18" height="4" rx="2" fill="#B2BEC6"/></svg>',
+   p:'עיצוב מינימליסטי, מעט מאוד אלמנטים, הרבה מרחב נשימה ומסר אחד חד.'},
+  {v:'מבצע בולט', d:'ההטבה במרכז המודעה',
+   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#F5515F"/><circle cx="50" cy="26" r="17" fill="#FFE14D"/><rect x="38" y="22" width="24" height="8" rx="2" fill="#B3121F"/></svg>',
+   p:'מודעת מבצע: ההטבה או המחיר במרכז הפריים בעיגול או בתג בולט, ניגודיות גבוהה וקריאה חזקה לפעולה.'},
+  {v:'לפני ואחרי', d:'השוואה חזותית ברורה',
+   sw:'<svg viewBox="0 0 100 52"><rect width="50" height="52" fill="#9AA5A8"/><rect x="50" width="50" height="52" fill="#0DAC81"/><rect x="48" width="4" height="52" fill="#fff"/></svg>',
+   p:'השוואת לפני ואחרי, פריים מחולק לשניים עם הבדל חזותי ברור בין שני הצדדים.'},
+  {v:'המלצת לקוח', d:'ציטוט לצד תמונה אנושית',
+   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#EFF1F6"/><circle cx="26" cy="26" r="13" fill="#C9A27E"/><rect x="46" y="17" width="40" height="5" rx="2.5" fill="#033841"/><rect x="46" y="26" width="34" height="4" rx="2" fill="#7B9096"/><path d="M46 36h10" stroke="#0DAC81" stroke-width="3" stroke-linecap="round"/></svg>',
+   p:'מודעת המלצה: ציטוט לקוח בולט לצד תמונה אנושית ואמינה, עם שם וכוכבים.'},
+  {v:'קומיקס', d:'קווי דיו חדים והדגשות',
    sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#F5515F"/><path d="M50 6 58 20l16-3-8 13 12 10-16 2-3 14-9-11-13 7 2-15-15-5 13-8-9-11 16 3Z" fill="#FFE14D" stroke="#1B1B1B" stroke-width="2.5"/></svg>',
-   p:'סגנון קומיקס נועז, קווי דיו שחורים חזקים, צללים גרפיים, נקודות הלפטון, צבעים רוויים וניגודיות גבוהה, כמו פאנל מתוך חוברת קומיקס.'},
-  {v:'ציור יד', d:'קווי עיפרון, מרקם נייר',
-   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#F6EFE2"/><path d="M12 40q14-26 30-12t26-14" stroke="#8A6F4E" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M16 44q16-22 32-9t28-16" stroke="#C0A57E" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="74" cy="16" r="7" fill="#E3A857" opacity=".75"/></svg>',
-   p:'איור מצויר ביד, קווי עיפרון ודיו עדינים, צבעי מים רכים, מרקם נייר, מראה חם ואישי של סקיצה מוקפדת.'},
-  {v:'מינימליסטי גרפי', d:'צורות ושטחי צבע',
-   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#033841"/><circle cx="32" cy="26" r="14" fill="#0DAC81"/><rect x="56" y="12" width="28" height="28" rx="6" fill="#F5F6FA"/></svg>',
-   p:'עיצוב גרפי מינימליסטי, צורות גיאומטריות גדולות, שטחי צבע נקיים, הרבה מרחב נשימה, בלי צילום ובלי פרטים מיותרים.'},
-  {v:'צילום אותנטי', d:'נראה אמיתי, לא סטוק',
-   sw:'<svg viewBox="0 0 100 52"><defs><linearGradient id="s5" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#C9A27E"/><stop offset="1" stop-color="#8E6B4F"/></linearGradient></defs><rect width="100" height="52" fill="url(#s5)"/><circle cx="70" cy="16" r="8" fill="#FFF1D8" opacity=".7"/></svg>',
-   p:'צילום אותנטי ואמיתי, אנשים ורגעים טבעיים, אור טבעי רך, עומק שדה מצומצם, מראה של קמפיין אמיתי ולא של תמונת סטוק.'},
-  {v:'סטודיו נקי', d:'רקע חלק, מוצר במרכז',
-   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#F2F4F5"/><ellipse cx="50" cy="42" rx="24" ry="5" fill="#CFD8D9"/><rect x="38" y="14" width="24" height="24" rx="4" fill="#fff" stroke="#CFD8D9" stroke-width="2"/></svg>',
-   p:'צילום סטודיו נקי, רקע חלק ואחיד, תאורה רכה ומדויקת, המוצר במרכז הפריים, צל עדין מתחתיו.'},
-  {v:'לייפסטייל חם', d:'אנשים, אור טבעי',
-   sw:'<svg viewBox="0 0 100 52"><defs><linearGradient id="s7" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F6C79B"/><stop offset="1" stop-color="#E2856B"/></linearGradient></defs><rect width="100" height="52" fill="url(#s7)"/><circle cx="26" cy="14" r="7" fill="#FFF3E2" opacity=".8"/></svg>',
-   p:'צילום לייפסטייל חם, אנשים בסיטואציה יומיומית, אור שעת זהב, גוונים חמימים, תחושת קרבה ונינוחות.'},
-  {v:'תלת מימד', d:'רינדור נקי ומודרני',
-   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#EEF1FE"/><path d="M50 10 70 21v20L50 52 30 41V21Z" fill="#8FA6F5"/><path d="M50 10 70 21 50 32 30 21Z" fill="#B6C6FA"/></svg>',
-   p:'רינדור תלת מימד נקי, חומרים מט ורכים, תאורת סטודיו רכה, צבעים פסטליים, מראה מודרני של איור תלת מימדי.'},
-  {v:'מודגש וצבעוני', d:'ניגודיות גבוהה',
-   sw:'<svg viewBox="0 0 100 52"><defs><linearGradient id="s9" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F5515F"/><stop offset="1" stop-color="#9F2BE0"/></linearGradient></defs><rect width="100" height="52" fill="url(#s9)"/><path d="M0 40h100v12H0z" fill="#FFE14D"/></svg>',
-   p:'קריאייטיב נועז וצבעוני, ניגודיות גבוהה, שטחי צבע חזקים, טיפוגרפיה גדולה, אנרגטי ובולט בפיד.'}
+   p:'סגנון קומיקס נועז, קווי דיו שחורים חזקים, צללים גרפיים, צבעים רוויים וניגודיות גבוהה.'}
 ];
 
 const FORMAT = [
@@ -529,6 +553,7 @@ const OVERLAY = ['כותרת על התמונה','בלי טקסט על התמונ
 /* תבניות מנוע המודעות של היגספילד. הבקאנד מרכיב מהן לייאאוט מלא:
    כותרת, תגית, נקודות תועלת, הצעה ורצועת פרטים. */
 const LAYOUTS = [
+  {id:'', v:'עיצוב חופשי', d:'המנוע מרכיב את המודעה לבד, כמו בדמו המקורי'},
   {id:'fd9b886c-8b4d-4e9a-aa4d-11b4a67456a5', v:'תועלות',        d:'כותרת ושלוש נקודות עם אייקונים'},
   {id:'c4c9ee3e-c161-4cc6-b401-77f122cd3c3c', v:'הצעה מיוחדת',   d:'מבצע או הנחה בולטים'},
   {id:'18e9f327-b667-40f1-84d1-f234c67a4929', v:'כותרת גדולה',   d:'אמירה אחת חזקה'},
@@ -541,11 +566,10 @@ const LAYOUTS = [
   {id:'cfb067f6-735a-46d8-a2f0-22e5a47b122e', v:'אמירה נועזת',   d:'משפט אחד על כל הפריים'},
   {id:'9f83c485-959d-4ea1-a2ff-7a4e7370dd62', v:'סגנון מגזין',   d:'עריכה מוקפדת כמו כתבה'},
   {id:'7200218e-d78e-492c-ae9b-a3a08af2b923', v:'פוסט אורגני',   d:'נראה כמו פוסט רגיל בפיד'},
-  {id:'', v:'בלי מבנה', d:'תמונה חופשית, בלי לייאאוט מודעה'}
 ];
 
 /* =================== המצב =================== */
-const S = { promote:'', promoteFree:'', style:'', layout:'תועלות', format:'4:5', audience:'', tone:'', cta:'',
+const S = { promote:'', promoteFree:'', style:'מודעה טיפוגרפית', goal:'לידים ופניות', layout:'', format:'4:5', audience:'', tone:'', cta:'',
             overlay:'כותרת על התמונה', overlayText:'',
             extra:'', assets:[], prompt:'', promptTouched:false };
 const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'' };
@@ -589,6 +613,13 @@ function buildSections(){
   $('#optsFormat').innerHTML  = FORMAT.map(optCard).join('');
   renderAudChips();
   $('#chipsTone').innerHTML   = TONE.map(t=>`<button class="chip" data-v="${attr(t)}">${esc(t)}</button>`).join('');
+  $('#chipsGoal').innerHTML   = GOALS.map(g=>`<button class="chip ${S.goal===g?'on':''}" data-v="${attr(g)}">${esc(g)}</button>`).join('');
+  $('#chipsGoal').onclick = e => {
+    const b=e.target.closest('[data-v]'); if(!b)return;
+    S.goal=b.dataset.v; S.promptTouched=false;
+    $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
+    refreshPrompt(); saveDraft();
+  };
   $('#chipsOverlay').innerHTML= OVERLAY.map(o=>`<button class="chip ${S.overlay===o?'on':''}" data-v="${attr(o)}">${esc(o)}</button>`).join('');
   $('#chipsOverlay').onclick = e => {
     const b=e.target.closest('[data-v]'); if(!b)return;
@@ -614,6 +645,12 @@ function wirePick(sel,key,secId,pickId,nextId,label){
     $(sel).querySelectorAll('.opt').forEach(x=>x.classList.toggle('on',x===b));
     markDone(secId,pickId,label?label(S[key]):S[key]);
     refreshPrompt(); saveDraft();
+    if(key==='promote'){
+      /* בלי לדעת מה המוצר או האירוע המנוע ימציא אותם, ולכן נעצרים כאן לשאלה */
+      renderPromoteDetail();
+      const m=promoteMeta();
+      if(m&&m.need&&!S.promoteFree){ $('#promoteFree').focus(); return }
+    }
     setTimeout(()=>slideTo(nextId),240);
   };
 }
@@ -666,6 +703,16 @@ function afterAud(advance){
   }
 }
 
+/* שדה הפירוט משתנה לפי מה שנבחר, וחלק מהאפשרויות לא יכולות לעבוד בלעדיו */
+function promoteMeta(){ return PROMOTE.find(x=>x.v===S.promote)||null }
+function renderPromoteDetail(){
+  const m=promoteMeta(), q=$('#promoteQ'), inp=$('#promoteFree');
+  if(!q||!inp)return;
+  if(!m){ q.textContent='רוצים לדייק?'; inp.placeholder='בחרו קודם מה מקדמים'; return }
+  q.innerHTML=esc(m.q)+(m.need?' <b style="color:var(--err)">*</b>':'');
+  inp.placeholder=m.ph;
+}
+
 function markDone(secId,pickId,text){
   const sec=document.getElementById(secId);
   if(sec)sec.classList.add('done');
@@ -711,6 +758,8 @@ function applyState(){
   if(S.audience&&S.tone)markDone('sec-aud','pick-aud',S.audience+' · '+S.tone);
   if(S.assets.length)markDone('sec-assets','pick-assets',S.assets.length+' נבחרו');
   $('#promoteFree').value=S.promoteFree||'';
+  renderPromoteDetail();
+  $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S.goal));
   $('#ctaIn').value=S.cta||'';
   $('#extraIn').value=S.extra||'';
   $('#overlayText').value=S.overlayText||'';
@@ -760,47 +809,46 @@ function syncPrompt(){
   const st=STYLE.find(x=>x.v===S.style);
   const chosen=ASSETS.filter(a=>S.assets.includes(a.id));
   const head=(S.overlayText||'').trim()||'{{כותרת}}';
+  const what=S.promote+(S.promoteFree?': '+S.promoteFree:'');
 
-  if(layoutId()){
-    /* מנוע המודעות מרכיב את הלייאאוט בעצמו, ולכן כאן כותבים בריף של מודעה ולא תיאור תמונה */
+  /* משותף לשני המסלולים: מי, מה, למי ובאיזה אופי */
+  const brief=()=>{
     p.push('מודעה שיווקית בעברית עבור '+who+'.');
-    if(BIZ.nameEn)p.push('אם מופיע שם המותג באותיות לטיניות, הוא נכתב בדיוק כך ובלי שום שינוי: '+BIZ.nameEn+'.');
-    else p.push('אל תכתוב את שם המותג באותיות לטיניות, רק בעברית, כדי לא להמציא תעתיק.');
-    p.push('כותרת ראשית: "'+head+'".');
-    if(S.promote)p.push('מה שמקדמים: '+S.promote+(S.promoteFree?'. פירוט: '+S.promoteFree:'')+'.');
+    if(BIZ.nameEn)p.push('שם המותג באותיות לטיניות נכתב בדיוק כך ובלי שינוי: '+BIZ.nameEn+'.');
+    else p.push('אל תכתוב את שם המותג באותיות לטיניות, רק בעברית.');
+    p.push('מה שמקדמים: '+what+'.');
+    if(S.goal)p.push('מטרת המודעה: '+S.goal+'.');
     if(S.audience)p.push('קהל היעד: '+S.audience+'.');
     if(S.tone)p.push('טון: '+S.tone+'.');
+    if(st)p.push(st.p);
+  };
+
+  if(layoutId()){
+    /* מנוע המודעות מרכיב את הלייאאוט בעצמו */
+    brief();
+    p.push('כותרת ראשית: "'+head+'".');
     if(S.cta)p.push('קריאה לפעולה על המודעה: "'+S.cta+'".');
-    if(st)p.push('שפה חזותית: '+st.p);
-    if(chosen.some(a=>a.tag==='לוגו'))p.push('שים את הלוגו המצורף בפינה העליונה, נקי וקריא, בלי לעוות אותו ובלי לשנות צבעים.');
-    if(chosen.some(a=>a.tag==='מוצר')){
-      p.push('השתמש בתמונות המוצר המצורפות כנושא המרכזי של המודעה, נאמן למקור.');
-    }else{
-      /* מנוע המודעות בנוי סביב מוצר פיזי, ובלי הנחיה הוא ממציא אובייקט ממותג
-         ודוחק את הנושא האמיתי לרקע מטושטש */
-      p.push('אין כאן מוצר פיזי למכירה. הנושא המרכזי של המודעה הוא האנשים והמקום עצמו, בחזית ובפוקוס מלא.');
-      p.push('אל תמציא מוצר, אריזה, בקבוק, קופסה או פריט ממותג כלשהו, ואל תשים אובייקט במרכז הפריים.');
-    }
-    p.push('כל הטקסט על המודעה בעברית תקינה מימין לשמאל, אותיות שלמות וברורות, בלי אותיות הפוכות, בלי אותיות חסרות ובלי מילים באנגלית מלבד שם המותג.');
-    if(S.extra&&S.extra.trim())p.push(S.extra.trim());
-    S.prompt=p.join(' ');
-    return;
+  }else{
+    /* עיצוב חופשי: מתארים את מבנה המודעה במפורש, אחרת מתקבלת תמונה יפה
+       עם כותרת ולא מודעה שלמה. זה ההבדל מהדמו המקורי. */
+    brief();
+    p.push('בנה מודעה שלמה ומעוצבת, לא תמונה עם כותרת. המודעה כוללת, מסודר בהיררכיה ברורה:');
+    p.push('לוקאפ לוגו נקי בראש המודעה עם שם העסק ותת שורה קצרה של התחום והעיר.');
+    p.push('כותרת ראשית גדולה ובולטת: "'+head+'".');
+    p.push('שורת משנה אחת קצרה שמסבירה למי זה מיועד.');
+    p.push('שלוש נקודות תועלת קצרות, כל אחת עם אייקון עגול ועדין לצידה.');
+    p.push('תג או עיגול מודגש עם ההצעה: '+what+'.');
+    if(S.cta)p.push('רצועת פוטר בתחתית עם כפתור קריאה לפעולה "'+S.cta+'"'+(BIZ.city?' ועם העיר '+BIZ.city:'')+'.');
+    p.push('הטיפוגרפיה מקצועית ומדורגת, יש מרווחי נשימה, והצבעוניות אחידה לאורך כל המודעה.');
   }
 
-  p.push('מודעה לפרסום ברשתות החברתיות עבור '+who+'.');
-  if(S.promote)p.push('מה שמקדמים: '+S.promote+(S.promoteFree?' · '+S.promoteFree:'')+'.');
-  if(S.audience)p.push('קהל היעד: '+S.audience+'.');
-  if(S.tone)p.push('טון: '+S.tone+'.');
-  if(st)p.push(st.p);
-  if(chosen.some(a=>a.tag==='לוגו'))p.push('שלב את הלוגו המצורף בתמונה, נקי וקריא, בפינה אחת, בלי לעוות אותו ובלי לשנות את צבעיו.');
-  if(chosen.some(a=>a.tag!=='לוגו'))p.push('השתמש בתמונות הייחוס המצורפות כמקור לנראות של המוצר או המקום, ושמור על נאמנות להן.');
-  p.push('הרכב מקצועי ונקי, עם שטח נושם שבו הכיתוב יישב טוב.');
-  if(S.overlay===OVERLAY[1]){
-    p.push('בלי שום טקסט בתוך התמונה. השאר שטח שקט בפריים להוספת טקסט בהמשך.');
-  }else{
-    p.push('שלב בתמונה את הכותרת הזו בעברית, בדיוק כפי שהיא כתובה ובלי שום שינוי: "'+head+'".');
-    p.push('עברית תקינה מימין לשמאל, אותיות שלמות וברורות, בלי אותיות הפוכות, בלי אותיות חסרות ובלי סימנים מומצאים. טיפוגרפיה נקייה ומודרנית, גדולה וקריאה, ממוקמת בשטח הפנוי של הפריים ובניגודיות טובה מול הרקע. אל תוסיף שום טקסט אחר בתמונה.');
+  if(chosen.some(a=>a.tag==='לוגו'))p.push('שלב את הלוגו המצורף כמו שהוא, נקי וקריא, בלי לעוות אותו ובלי לשנות את צבעיו.');
+  if(chosen.some(a=>a.tag==='מוצר'))p.push('השתמש בתמונות המוצר המצורפות כנושא המרכזי, נאמן למקור.');
+  else if(!chosen.some(a=>a.tag==='מוצר')&&!/מוצר/.test(S.promote)){
+    p.push('אין כאן מוצר פיזי למכירה. הנושא המרכזי הוא האנשים והמקום עצמו, בחזית ובפוקוס מלא.');
+    p.push('אל תמציא אריזה, בקבוק או פריט ממותג ואל תשים אובייקט מומצא במרכז הפריים.');
   }
+  p.push('כל הטקסט על המודעה בעברית תקינה מימין לשמאל, אותיות שלמות וברורות, בלי אותיות הפוכות, בלי אותיות חסרות, בלי מילים מומצאות ובלי אנגלית מלבד שם המותג.');
   if(S.extra&&S.extra.trim())p.push(S.extra.trim());
   S.prompt=p.join(' ');
 }
@@ -809,7 +857,7 @@ function copyBrief(){
   return {
     type:'ad', engine:'openai',
     business:{name:BIZ.name,field:BIZ.field,city:BIZ.city,vibe:S.style,website:''},
-    goal:'קידום: '+S.promote+(S.promoteFree?' · '+S.promoteFree:''),
+    goal:(S.goal||'')+'. קידום: '+S.promote+(S.promoteFree?' · '+S.promoteFree:''),
     tone:S.tone, framework:'AIDA',
     platform:S.format==='9:16'?'אינסטגרם סטורי':'אינסטגרם',
     audience:S.audience, offer:S.promoteFree||S.promote, cta:S.cta,
@@ -830,6 +878,10 @@ async function preflight(){
   }
   if(!BIZ.name)  return {msg:'חסר שם העסק', focus:'#b_name', go:null};
   if(!S.promote) return {msg:'לא נבחר מה מקדמים', go:'sec-promote'};
+  const pm=promoteMeta();
+  if(pm&&pm.need&&!S.promoteFree)
+    return {msg:pm.q.replace('?','')+' לא מולא. בלי זה המנוע ימציא פרטים שלא קיימים',
+            go:'sec-promote', focus:'#promoteFree'};
   if(!S.style)   return {msg:'לא נבחר איך המודעה תיראה', go:'sec-style'};
   return null;
 }
@@ -840,7 +892,7 @@ function showBlocked(p){
   $('#result').innerHTML='<div class="notice err" style="margin:0"><b>לא ניתן ליצור עדיין.</b> '+esc(p.msg)+
     (p.hint?'<br><code style="background:#fff;padding:2px 6px;border-radius:4px">'+esc(p.hint)+'</code>':'')+'</div>';
   toast(p.msg);
-  if(p.go)slideTo(p.go);
+  if(p.go){ slideTo(p.go); if(p.focus)setTimeout(()=>{const el=$(p.focus);if(el)el.focus()},450) }
   else if(p.focus){ slideTo('sec-go'); const el=$(p.focus); if(el)el.focus() }
 }
 
@@ -1062,7 +1114,7 @@ function showTab(name){
 }
 $$('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
 $('#fab').onclick=()=>{
-  Object.assign(S,{promote:'',promoteFree:'',style:'',layout:'תועלות',format:'4:5',audience:'',tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
+  Object.assign(S,{promote:'',promoteFree:'',style:'מודעה טיפוגרפית',goal:'לידים ופניות',layout:'',format:'4:5',audience:'',tone:'',cta:'',extra:'',assets:[],prompt:'',promptTouched:false});
   $('#audOther').value='';
   saveDraft();
   $$('.sec').forEach(x=>x.classList.remove('done'));
@@ -1119,6 +1171,24 @@ $('#go').onclick=generate;
     if(r[2])Object.assign(BIZ,r[2]);
     if(r[3]&&Array.isArray(r[3].list))MY_AUDIENCES=r[3].list;
   }catch(e){ toast('האחסון המקומי לא זמין בדפדפן הזה') }
+  /* מותג לדוגמה, מועבר מהדמו המקורי, כדי שאפשר יהיה ליצור מיד בלי הכנות */
+  try{
+    if(!ASSETS.length && !(await DB.get('settings','seeded'))){
+      const svg=await fetch('assets/studio-move-logo.svg').then(r=>r.ok?r.text():null);
+      if(svg){
+        const url=await shrink(new File([svg],'studio-move-logo.svg',{type:'image/svg+xml'}),512);
+        await DB.put('assets',{id:'seed-logo',name:'studio-move-logo',tag:'לוגו',url,
+                               date:new Date().toLocaleString('he-IL')});
+        ASSETS=await DB.all('assets');
+      }
+      if(!BIZ.name){
+        Object.assign(BIZ,{name:'סטודיו מוב',nameEn:'STUDIO MOVE',field:'סטודיו לפילאטיס מכשירים',city:'תל אביב'});
+        await DB.put('settings',{id:'biz',name:BIZ.name,nameEn:BIZ.nameEn,field:BIZ.field,city:BIZ.city});
+      }
+      await DB.put('settings',{id:'seeded',at:Date.now()});
+    }
+  }catch(e){}
+
   loadDraft();
   S.assets=(S.assets||[]).filter(id=>ASSETS.some(a=>a.id===id));
   /* הלוגו נבחר לבד. הבקאנד של מנוע המודעות מתייחס לתמונה המצורפת כערכת המותג,

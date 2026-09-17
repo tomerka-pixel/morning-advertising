@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200">
+  <defs>
+    <linearGradient id="mv" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ff4f78"/><stop offset="1" stop-color="#ff9f5a"/>
+    </linearGradient>
+  </defs>
+  <circle cx="160" cy="70" r="58" fill="#fff0f3"/>
+  <path d="M117 85c17-2 21-34 38-34 15 0 15 30 30 30 9 0 15-9 19-21"
+        fill="none" stroke="url(#mv)" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="128" cy="40" r="11" fill="#ff4f78"/>
+  <text x="160" y="164" text-anchor="middle" font-family="Helvetica,Arial,sans-serif"
+        font-size="34" letter-spacing="3" fill="#1f3b3d">STUDIO MOVE</text>
+  <text x="160" y="188" text-anchor="middle" font-family="Helvetica,Arial,sans-serif"
+        font-size="16" letter-spacing="9" fill="#7b8f91">PILATES</text>
+</svg>
