@@ -321,20 +321,15 @@ a{color:inherit}
             <div class="sec-body"><div class="opts gallery" id="optsStyle"></div></div>
           </section>
 
-          <section class="sec" id="sec-layout">
-            <div class="sec-head"><span class="sec-num">3</span><h2>מבנה המודעה</h2><span class="sec-pick" id="pick-layout"></span></div>
-            <p class="sec-sub">איך הטקסט מסודר על המודעה. זה מה שהופך תמונה למודעה שלמה</p>
-            <div class="sec-body"><div class="opts" id="optsLayout"></div></div>
-          </section>
 
           <section class="sec" id="sec-format">
-            <div class="sec-head"><span class="sec-num">4</span><h2>פורמט</h2><span class="sec-pick" id="pick-format"></span></div>
+            <div class="sec-head"><span class="sec-num">3</span><h2>פורמט</h2><span class="sec-pick" id="pick-format"></span></div>
             <p class="sec-sub">לאן המודעה הולכת</p>
             <div class="sec-body"><div class="opts wide" id="optsFormat"></div></div>
           </section>
 
           <section class="sec" id="sec-aud">
-            <div class="sec-head"><span class="sec-num">5</span><h2>למי מדברים</h2><span class="sec-pick" id="pick-aud"></span></div>
+            <div class="sec-head"><span class="sec-num">4</span><h2>למי מדברים</h2><span class="sec-pick" id="pick-aud"></span></div>
             <p class="sec-sub">קהל היעד והטון של הפנייה</p>
             <div class="sec-body">
               <div class="grouplabel">קהל היעד</div><div class="chips" id="chipsAud"></div>
@@ -350,7 +345,7 @@ a{color:inherit}
           </section>
 
           <section class="sec" id="sec-copy">
-            <div class="sec-head"><span class="sec-num">6</span><h2>הקופי</h2><span class="sec-pick" id="pick-copy"></span></div>
+            <div class="sec-head"><span class="sec-num">5</span><h2>הקופי</h2><span class="sec-pick" id="pick-copy"></span></div>
             <p class="sec-sub">איך נכתב הטקסט שמלווה את המודעה</p>
             <div class="sec-body">
               <div class="grouplabel" style="margin-top:0">איפה מפרסמים</div><div class="chips" id="chipsPlatform"></div>
@@ -362,13 +357,13 @@ a{color:inherit}
           </section>
 
           <section class="sec" id="sec-assets">
-            <div class="sec-head"><span class="sec-num">7</span><h2>נכסי המותג</h2><span class="sec-pick" id="pick-assets"></span></div>
+            <div class="sec-head"><span class="sec-num">6</span><h2>נכסי המותג</h2><span class="sec-pick" id="pick-assets"></span></div>
             <p class="sec-sub">הלוגו ותמונות המוצר שתבחרו ישולבו במודעה עצמה</p>
             <div class="sec-body" id="assetPick"></div>
           </section>
 
           <section class="sec" id="sec-go">
-            <div class="sec-head"><span class="sec-num">8</span><h2>יצירה</h2></div>
+            <div class="sec-head"><span class="sec-num">7</span><h2>יצירה</h2></div>
             <p class="sec-sub">אפשר להוסיף הנחיות, או פשוט ליצור</p>
             <div class="sec-body">
               <div class="grouplabel" style="margin-top:0">כיתוב על המודעה</div>
@@ -620,7 +615,7 @@ const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'', site:'' };
 
 const DRAFT='morning_ads_draft';
 function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify(S)) }catch(e){} }
-function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d); if(!STYLE.some(x=>x.v===S.style))S.style=STYLE[0].v }catch(e){} }
+function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d); if(!STYLE.some(x=>x.v===S.style))S.style=STYLE[0].v; S.layout='' }catch(e){} }
 
 /* =================== גלילה לשלב הבא =================== */
 /* כל בחירה מורידה את המשתמש למקטע הבא, שכבר נמצא שם על המסך */
@@ -662,7 +657,6 @@ function styleCard(o){
 function buildSections(){
   $('#optsPromote').innerHTML = PROMOTE.map(optCard).join('');
   $('#optsStyle').innerHTML   = STYLE.map(styleCard).join('');
-  $('#optsLayout').innerHTML  = LAYOUTS.map(optCard).join('');
   $('#optsFormat').innerHTML  = FORMAT.map(optCard).join('');
   renderAudChips();
   $('#chipsTone').innerHTML   = TONE.map(t=>`<button class="chip" data-v="${attr(t)}">${esc(t)}</button>`).join('');
@@ -706,8 +700,7 @@ function buildSections(){
   };
 
   wirePick('#optsPromote','promote','sec-promote','pick-promote','sec-style');
-  wirePick('#optsStyle','style','sec-style','pick-style','sec-layout');
-  wirePick('#optsLayout','layout','sec-layout','pick-layout','sec-format');
+  wirePick('#optsStyle','style','sec-style','pick-style','sec-format');
   wirePick('#optsFormat','format','sec-format','pick-format','sec-aud',v=>FORMAT.find(f=>f.v===v).t);
 
   $('#chipsAud').onclick  = e => pickChip(e,'audience','#chipsAud');
@@ -824,13 +817,12 @@ function renderAssetPick(){
 function applyState(){
   const set=(sel,val)=>{const g=$(sel).querySelector(`[data-v="${(val||'').replace(/"/g,'\\"')}"]`);
     if(g){$(sel).querySelectorAll('[data-v]').forEach(x=>x.classList.remove('on'));g.classList.add('on')}};
-  set('#optsPromote',S.promote); set('#optsStyle',S.style); set('#optsFormat',S.format); set('#optsLayout',S.layout);
+  set('#optsPromote',S.promote); set('#optsStyle',S.style); set('#optsFormat',S.format);
   set('#chipsTone',S.tone);
   renderAudChips();
   if(S.promote)markDone('sec-promote','pick-promote',S.promote);
   if(S.style)markDone('sec-style','pick-style',S.style);
   if(S.format)markDone('sec-format','pick-format',(FORMAT.find(f=>f.v===S.format)||{}).t||S.format);
-  if(S.layout)markDone('sec-layout','pick-layout',S.layout);
   if(S.audience&&S.tone)markDone('sec-aud','pick-aud',S.audience+' · '+S.tone);
   if(S.assets.length)markDone('sec-assets','pick-assets',S.assets.length+' נבחרו');
   $('#promoteFree').value=S.promoteFree||'';
