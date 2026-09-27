@@ -943,13 +943,15 @@ function syncPrompt(){
 
 function copyBrief(){
   return {
-    type:'ad', engine:'openai',
-    business:{name:BIZ.name,field:BIZ.field,city:BIZ.city,vibe:S.style,website:BIZ.site||''},
+    /* הטקסט שמלווה את המודעה נכתב עם הוראות הפוסט, כמו בדמו עם הסרטונים.
+       הוראות המודעה (כותרת ושתי שורות) הוציאו קופי דל מדי */
+    type:'post', hashtags:false, engine:'openai',
+    business:{name:BIZ.name,field:BIZ.field,city:BIZ.city,vibe:S.tone,website:BIZ.site||''},
     goal:(S.goal||'')+'. קידום: '+S.promote+(S.promoteFree?' · '+S.promoteFree:''),
     tone:S.tone, framework:S.framework,
     platform:S.platform+(S.format==='9:16'?' · סטורי':''),
     audience:S.audience, offer:S.promoteFree||S.promote, cta:ctaText(),
-    length:S.len, emoji:S.emoji, extra:S.extra
+    length:'בינוני', emoji:S.emoji, extra:S.extra
   };
 }
 
