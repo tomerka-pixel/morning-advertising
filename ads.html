@@ -344,35 +344,27 @@ a{color:inherit}
             </div>
           </section>
 
-          <section class="sec" id="sec-copy">
-            <div class="sec-head"><span class="sec-num">5</span><h2>הקופי</h2><span class="sec-pick" id="pick-copy"></span></div>
-            <p class="sec-sub">איך נכתב הטקסט שמלווה את המודעה</p>
-            <div class="sec-body">
-              <div class="grouplabel" style="margin-top:0">איפה מפרסמים</div><div class="chips" id="chipsPlatform"></div>
-              <div class="grouplabel">מסגרת הכתיבה</div><div class="chips" id="chipsFramework"></div>
-              <p class="chip-note" id="frameworkNote"></p>
-              <div class="grouplabel">אורך</div><div class="chips" id="chipsLen"></div>
-              <div class="grouplabel">אימוג׳י</div><div class="chips" id="chipsEmoji"></div>
-            </div>
-          </section>
 
           <section class="sec" id="sec-assets">
-            <div class="sec-head"><span class="sec-num">6</span><h2>נכסי המותג</h2><span class="sec-pick" id="pick-assets"></span></div>
+            <div class="sec-head"><span class="sec-num">5</span><h2>נכסי המותג</h2><span class="sec-pick" id="pick-assets"></span></div>
             <p class="sec-sub">הלוגו ותמונות המוצר שתבחרו ישולבו במודעה עצמה</p>
             <div class="sec-body" id="assetPick"></div>
           </section>
 
           <section class="sec" id="sec-go">
-            <div class="sec-head"><span class="sec-num">7</span><h2>יצירה</h2></div>
-            <p class="sec-sub">אפשר להוסיף הנחיות, או פשוט ליצור</p>
+            <div class="sec-head"><span class="sec-num">6</span><h2>יצירה</h2></div>
+            <p class="sec-sub">כאן יש מקום ליצירתיות. אפשר לכתוב רעיון, או פשוט ליצור</p>
             <div class="sec-body">
-              <div class="grouplabel" style="margin-top:0">כיתוב על המודעה</div>
+              <label class="field" style="margin-top:0"><span>יש לכם רעיון? כתבו אותו בחופשיות</span>
+                <textarea id="extraIn" rows="4" placeholder="לדוגמה: אמא ובת עושות פילאטיס יחד, עם חיוך. או: משחק מילים על 'לזוז'. כל כיוון, סצנה או משפט שאתם רוצים שיהיה במודעה"></textarea></label>
+              <div class="grouplabel">כיתוב על המודעה</div>
               <div class="chips" id="chipsOverlay"></div>
               <div class="addrow" id="overlayRow">
                 <input id="overlayText" placeholder="רוצים כותרת משלכם? כתבו אותה כאן. אחרת היא תיכתב אוטומטית">
               </div>
-              <label class="field" style="margin-top:18px"><span>הנחיות נוספות (לא חובה)</span>
-                <textarea id="extraIn" rows="2" placeholder="לדוגמה: אור בוקר רך, בלי אנשים בפריים, צבעי המותג ירוק ולבן"></textarea></label>
+              <div class="grouplabel">הטקסט שמלווה את המודעה</div>
+              <div class="chips" id="chipsPlatform"></div>
+              <div class="chips" id="chipsLen" style="margin-top:8px"></div>
               <div style="display:flex;justify-content:space-between;align-items:center">
                 <span style="font-size:14px;color:var(--muted);font-weight:500">הפרומפט שיישלח למנוע</span>
                 <button class="btn btn-ghost" id="resetPrompt">איפוס אוטומטי</button>
@@ -544,7 +536,6 @@ const FRAMEWORKS = [
   {v:'סיפור קצר',    d:'רגע אנושי אחד שממחיש את הערך, בלי למכור ישירות. טוב לחשיפה ולמותג'}
 ];
 const LENGTHS    = ['קצר','בינוני','ארוך'];
-const EMOJIS     = ['בלי','מדוד','הרבה'];
 
 /* לכל סגנון יש תצוגה מקדימה ומשפט שנכנס לפרומפט. כאן נקבע אופי הקריאייטיב. */
 /* סגנונות המודעה, מועברים מהדמו המקורי. לכל אחד תיאור שמוצג למשתמש
@@ -579,7 +570,6 @@ const STYLE = [
 const FORMAT = [
   {v:'4:5', t:'פיד אנכי', d:'הכי טוב לפיד'},
   {v:'1:1', t:'ריבוע', d:'פוסט קלאסי'},
-  {v:'3:4', t:'פורטרט', d:'מתאים ללייאאוטים'},
   {v:'9:16', t:'סטורי', d:'סטורי וריל'},
   {v:'16:9', t:'רוחב', d:'באנר ויוטיוב'}
 ];
@@ -615,7 +605,7 @@ const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'', site:'' };
 
 const DRAFT='morning_ads_draft';
 function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify(S)) }catch(e){} }
-function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d); if(!STYLE.some(x=>x.v===S.style))S.style=STYLE[0].v; S.layout='' }catch(e){} }
+function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d); if(!STYLE.some(x=>x.v===S.style))S.style=STYLE[0].v; S.layout=''; if(!FORMAT.some(x=>x.v===S.format))S.format='4:5' }catch(e){} }
 
 /* =================== גלילה לשלב הבא =================== */
 /* כל בחירה מורידה את המשתמש למקטע הבא, שכבר נמצא שם על המסך */
@@ -673,22 +663,11 @@ function buildSections(){
       const b=e.target.closest('[data-v]'); if(!b)return;
       S[key]=b.dataset.v; S.promptTouched=false;
       $(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
-      markDone('sec-copy','pick-copy',S.platform+' · '+S.len);
       renderCtaNote(); refreshPrompt(); saveDraft();
     };
   };
   simpleChips('#chipsPlatform',PLATFORMS,'platform');
-  $('#chipsFramework').innerHTML=FRAMEWORKS.map(f=>`<button class="chip ${S.framework===f.v?'on':''}" data-v="${attr(f.v)}">${esc(f.v)}</button>`).join('');
-  $('#chipsFramework').onclick=e=>{
-    const b=e.target.closest('[data-v]'); if(!b)return;
-    S.framework=b.dataset.v; S.promptTouched=false;
-    $('#chipsFramework').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
-    renderFrameworkNote(); markDone('sec-copy','pick-copy',S.platform+' · '+S.len);
-    refreshPrompt(); saveDraft();
-  };
-  renderFrameworkNote();
   simpleChips('#chipsLen',LENGTHS,'len');
-  simpleChips('#chipsEmoji',EMOJIS,'emoji');
 
   $('#chipsOverlay').innerHTML= OVERLAY.map(o=>`<button class="chip ${S.overlay===o?'on':''}" data-v="${attr(o)}">${esc(o)}</button>`).join('');
   $('#chipsOverlay').onclick = e => {
@@ -768,7 +747,7 @@ function pickChip(e,key,sel){
 function afterAud(advance){
   if(S.audience&&S.tone){
     markDone('sec-aud','pick-aud',S.audience+' · '+S.tone);
-    if(advance)setTimeout(()=>slideTo('sec-copy'),260);
+    if(advance)setTimeout(()=>slideTo('sec-assets'),260);
   }
 }
 
@@ -828,10 +807,9 @@ function applyState(){
   $('#promoteFree').value=S.promoteFree||'';
   renderPromoteDetail();
   $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S.goal));
-  [['#chipsPlatform','platform'],['#chipsFramework','framework'],['#chipsLen','len'],['#chipsEmoji','emoji']]
+  [['#chipsPlatform','platform'],['#chipsLen','len']]
     .forEach(([sel,k])=>$(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S[k])));
-  renderFrameworkNote(); renderCtaNote();
-  if(S.platform)markDone('sec-copy','pick-copy',S.platform+' · '+S.len);
+  renderCtaNote();
   $('#ctaIn').value=S.cta||'';
   $('#extraIn').value=S.extra||'';
   $('#overlayText').value=S.overlayText||'';
@@ -908,15 +886,19 @@ function syncPrompt(){
        כשמכתיבים מבנה יוצאת תמונה עם כותרת; כשנותנים חופש המודל מעצב מודעה שלמה */
     p.push('צרו מודעה חזותית בעברית עבור '+who+'.');
     if(BIZ.nameEn)p.push('שם המותג באותיות לטיניות: '+BIZ.nameEn+'.');
-    p.push('מה לקדם: '+what+'.');
+    if(what)p.push('מה לקדם: '+what+'.');
     if(S.goal)p.push('המטרה: '+S.goal+'.');
     if(S.audience)p.push('קהל יעד: '+S.audience+'.');
     if(S.tone)p.push('טון: '+S.tone+'.');
     p.push('סגנון: '+S.style+'.');
     p.push('פורמט: '+S.format+'.');
     if(BIZ.site)p.push('אתר: '+BIZ.site+'.');
-    if((S.overlayText||'').trim())p.push('כותרת: "'+S.overlayText.trim()+'".');
-    if((S.cta||'').trim())p.push('קריאה לפעולה: "'+S.cta.trim()+'".');
+    if(S.overlay===OVERLAY[1]){
+      p.push('בלי שום טקסט כתוב על התמונה: בלי כותרת, בלי מילים ובלי כפתור. רק התמונה עצמה.');
+    }else{
+      if((S.overlayText||'').trim())p.push('כותרת: "'+S.overlayText.trim()+'".');
+      if((S.cta||'').trim())p.push('קריאה לפעולה: "'+S.cta.trim()+'".');
+    }
     p.push('התאימו את המסר לקהל היעד.');
   }
 
@@ -926,8 +908,8 @@ function syncPrompt(){
     p.push('אין כאן מוצר פיזי למכירה. הנושא המרכזי הוא האנשים והמקום עצמו, בחזית ובפוקוס מלא.');
     p.push('אל תמציא אריזה, בקבוק או פריט ממותג ואל תשים אובייקט מומצא במרכז הפריים.');
   }
-  p.push('כל הטקסט על המודעה בעברית תקינה מימין לשמאל, אותיות שלמות וברורות, בלי אותיות הפוכות, בלי אותיות חסרות, בלי מילים מומצאות ובלי אנגלית מלבד שם המותג.');
-  if(S.extra&&S.extra.trim())p.push(S.extra.trim());
+  if(S.overlay!==OVERLAY[1])p.push('כל הטקסט על המודעה בעברית תקינה מימין לשמאל, אותיות שלמות וברורות, בלי אותיות הפוכות, בלי אותיות חסרות, בלי מילים מומצאות ובלי אנגלית מלבד שם המותג.');
+  if(S.extra&&S.extra.trim())p.push('הרעיון של בעל העסק למודעה: '+S.extra.trim());
   S.prompt=p.join(' ');
 }
 
@@ -1203,16 +1185,10 @@ $('#fab').onclick=()=>{
 
 /* מה רץ ובכמה זה עולה, לפני שלוחצים */
 /* מסבירים מה המסגרת שנבחרה עושה, במקום להשאיר שם שצריך לנחש */
-/* אומרים למשתמש איזו קריאה לפעולה תיכנס אם הוא משאיר ריק */
+/* בבריף החופשי שדה ריק לא נשלח, והמודל בוחר קריאה לפעולה בעצמו */
 function renderCtaNote(){
   const el=$('#ctaNote'); if(!el)return;
-  el.textContent=(S.cta||'').trim() ? '' : 'אם משאירים ריק, יופיע על המודעה: "'+ctaText()+'"';
-}
-
-function renderFrameworkNote(){
-  const el=$('#frameworkNote'); if(!el)return;
-  const f=FRAMEWORKS.find(x=>x.v===S.framework);
-  el.textContent=f?f.d:'';
+  el.textContent=(S.cta||'').trim() ? '' : 'אם משאירים ריק, נבחר קריאה לפעולה שמתאימה למודעה';
 }
 
 function renderCost(){
