@@ -109,6 +109,23 @@ a{color:inherit}
 
 /* ===== קלפי בחירה ===== */
 .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+/* סגנונות: כרטיסי דוגמה מלאים כמו גלריית הפריסטים של היגספילד, 4 על 2 */
+.opts.gallery{grid-template-columns:repeat(4,1fr);gap:14px}
+.opt.sopt{display:block;position:relative;border:0;padding:0;border-radius:16px;overflow:hidden;cursor:pointer;aspect-ratio:4/5;background:#0E3F3A;isolation:isolate;box-shadow:0 0 0 1px var(--line);transition:box-shadow .16s,transform .16s;text-align:right}
+.opt.sopt .bg{position:absolute;inset:0;z-index:-2}
+.opt.sopt .bg svg,.sopt .bg img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.opt.sopt .bg svg{transform:scale(1.25)}
+.opt.sopt::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,rgba(3,26,30,.88) 0%,rgba(3,26,30,.45) 34%,rgba(3,26,30,0) 60%)}
+.opt.sopt .cap{position:absolute;inset:auto 0 0 0;padding:14px 14px 13px;color:#fff;display:flex;flex-direction:column;gap:3px}
+.opt.sopt .cap b{font-size:16px;font-weight:700;line-height:1.25}
+.opt.sopt .cap small{font-size:12.5px;opacity:.82;line-height:1.35}
+.opt.sopt .tick{position:absolute;top:10px;left:10px;width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;opacity:0;transform:scale(.6);transition:.16s}
+.opt.sopt .tick svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.opt.sopt:hover{background:#0E3F3A;transform:translateY(-3px);box-shadow:0 0 0 1px var(--primary),0 14px 28px rgba(3,56,65,.16)}
+.opt.sopt:hover .bg img{transform:scale(1.06)}
+.opt.sopt.on{background:#0E3F3A;box-shadow:0 0 0 3px var(--primary),0 14px 28px rgba(13,172,129,.22)}
+.opt.sopt.on .tick{opacity:1;transform:none}
+@media (max-width:1100px){.opts.gallery{grid-template-columns:repeat(2,1fr)}}
 .opts.wide{grid-template-columns:repeat(auto-fill,minmax(168px,1fr))}
 .opt{border:1px solid var(--line);background:#fff;border-radius:14px;padding:16px 14px;cursor:pointer;text-align:center;transition:.14s;display:flex;flex-direction:column;align-items:center;gap:8px}
 .opt:hover{border-color:var(--primary);background:var(--surface);transform:translateY(-2px);box-shadow:0 8px 18px rgba(3,56,65,.07)}
@@ -301,7 +318,7 @@ a{color:inherit}
           <section class="sec" id="sec-style">
             <div class="sec-head"><span class="sec-num">2</span><h2>איך המודעה תיראה</h2><span class="sec-pick" id="pick-style"></span></div>
             <p class="sec-sub">צילום, איור מצויר, גרפיקה. זה קובע את כל אופי הקריאייטיב</p>
-            <div class="sec-body"><div class="opts" id="optsStyle"></div></div>
+            <div class="sec-body"><div class="opts gallery" id="optsStyle"></div></div>
           </section>
 
           <section class="sec" id="sec-layout">
@@ -538,33 +555,30 @@ const EMOJIS     = ['בלי','מדוד','הרבה'];
 /* סגנונות המודעה, מועברים מהדמו המקורי. לכל אחד תיאור שמוצג למשתמש
    ומשפט שנכנס לפרומפט וקובע את אופי הקריאייטיב. */
 const STYLE = [
-  {v:'מודעה טיפוגרפית', d:'כותרת גדולה והיררכיה חזקה',
+  {v:'מודעה טיפוגרפית', img:'assets/styles/typo.jpg', d:'כותרת גדולה והיררכיה חזקה',
    sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#0E3F3A"/><rect x="14" y="12" width="72" height="11" rx="2" fill="#fff"/><rect x="26" y="28" width="48" height="6" rx="2" fill="#7FCBB4"/><rect x="34" y="39" width="32" height="5" rx="2.5" fill="#F0B8C4"/></svg>',
    p:'מודעה טיפוגרפית: הכותרת היא הגיבורה, גדולה ובולטת, עם היררכיה ברורה בין כותרת, תת כותרת וקריאה לפעולה.'},
-  {v:'צילום מציאותי', d:'סצנה טבעית שנראית אמיתית',
+  {v:'צילום מציאותי', img:'assets/styles/photo.jpg', d:'סצנה טבעית שנראית אמיתית',
    sw:'<svg viewBox="0 0 100 52"><defs><linearGradient id="p1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#C9A27E"/><stop offset="1" stop-color="#8E6B4F"/></linearGradient></defs><rect width="100" height="52" fill="url(#p1)"/><circle cx="72" cy="15" r="8" fill="#FFF1D8" opacity=".7"/></svg>',
    p:'צילום מציאותי ואותנטי, אנשים אמיתיים ברגע טבעי, אור רך, עומק שדה מצומצם, מראה של קמפיין ולא של תמונת סטוק.'},
-  {v:'איור מותגי', d:'איור נקי בצבעי העסק',
+  {v:'איור מותגי', img:'assets/styles/brand.jpg', d:'איור נקי בצבעי העסק',
    sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#FDF3E7"/><circle cx="36" cy="26" r="14" fill="#F2B6A0" stroke="#2B2B2B" stroke-width="2.5"/><rect x="58" y="14" width="26" height="24" rx="6" fill="#9BD3C5" stroke="#2B2B2B" stroke-width="2.5"/></svg>',
    p:'איור מותגי נקי, צורות מסוגננות וקווי מתאר עדינים, בצבעי המותג, בלי ריאליזם צילומי.'},
-  {v:'איור קרטון', d:'דמויות מצוירות, קווי מתאר',
+  {v:'איור קרטון', img:'assets/styles/cartoon.jpg', d:'דמויות מצוירות, קווי מתאר',
    sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#FFE08A"/><circle cx="34" cy="26" r="13" fill="#FFC24D" stroke="#2B2B2B" stroke-width="3"/><circle cx="29" cy="23" r="2.2" fill="#2B2B2B"/><circle cx="39" cy="23" r="2.2" fill="#2B2B2B"/><path d="M28 31q6 6 12 0" stroke="#2B2B2B" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="58" y="14" width="28" height="24" rx="5" fill="#4FC3F7" stroke="#2B2B2B" stroke-width="3"/></svg>',
    p:'איור קרטון צבעוני ושמח, דמויות מסוגננות עם קווי מתאר נקיים ועבים, שטחי צבע שטוחים ובהירים, מראה של איור מודעה מצויר ולא של צילום.'},
-  {v:'מינימליסטי', d:'מעט אלמנטים, הרבה אוויר',
+  {v:'מינימליסטי', img:'assets/styles/minimal.jpg', d:'מעט אלמנטים, הרבה אוויר',
    sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#F2F4F5"/><circle cx="34" cy="26" r="13" fill="#0DAC81"/><rect x="58" y="20" width="28" height="5" rx="2.5" fill="#033841"/><rect x="58" y="30" width="18" height="4" rx="2" fill="#B2BEC6"/></svg>',
    p:'עיצוב מינימליסטי, מעט מאוד אלמנטים, הרבה מרחב נשימה ומסר אחד חד.'},
-  {v:'מבצע בולט', d:'ההטבה במרכז המודעה',
+  {v:'מבצע בולט', img:'assets/styles/sale.jpg', d:'ההטבה במרכז המודעה',
    sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#F5515F"/><circle cx="50" cy="26" r="17" fill="#FFE14D"/><rect x="38" y="22" width="24" height="8" rx="2" fill="#B3121F"/></svg>',
    p:'מודעת מבצע: ההטבה או המחיר במרכז הפריים בעיגול או בתג בולט, ניגודיות גבוהה וקריאה חזקה לפעולה.'},
-  {v:'לפני ואחרי', d:'השוואה חזותית ברורה',
+  {v:'לפני ואחרי', img:'assets/styles/before-after.jpg', d:'השוואה חזותית ברורה',
    sw:'<svg viewBox="0 0 100 52"><rect width="50" height="52" fill="#9AA5A8"/><rect x="50" width="50" height="52" fill="#0DAC81"/><rect x="48" width="4" height="52" fill="#fff"/></svg>',
    p:'השוואת לפני ואחרי, פריים מחולק לשניים עם הבדל חזותי ברור בין שני הצדדים.'},
-  {v:'המלצת לקוח', d:'ציטוט לצד תמונה אנושית',
+  {v:'המלצת לקוח', img:'assets/styles/testimonial.jpg', d:'ציטוט לצד תמונה אנושית',
    sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#EFF1F6"/><circle cx="26" cy="26" r="13" fill="#C9A27E"/><rect x="46" y="17" width="40" height="5" rx="2.5" fill="#033841"/><rect x="46" y="26" width="34" height="4" rx="2" fill="#7B9096"/><path d="M46 36h10" stroke="#0DAC81" stroke-width="3" stroke-linecap="round"/></svg>',
-   p:'מודעת המלצה: ציטוט לקוח בולט לצד תמונה אנושית ואמינה, עם שם וכוכבים.'},
-  {v:'קומיקס', d:'קווי דיו חדים והדגשות',
-   sw:'<svg viewBox="0 0 100 52"><rect width="100" height="52" fill="#F5515F"/><path d="M50 6 58 20l16-3-8 13 12 10-16 2-3 14-9-11-13 7 2-15-15-5 13-8-9-11 16 3Z" fill="#FFE14D" stroke="#1B1B1B" stroke-width="2.5"/></svg>',
-   p:'סגנון קומיקס נועז, קווי דיו שחורים חזקים, צללים גרפיים, צבעים רוויים וניגודיות גבוהה.'}
+   p:'מודעת המלצה: ציטוט לקוח בולט לצד תמונה אנושית ואמינה, עם שם וכוכבים.'}
 ];
 
 const FORMAT = [
@@ -606,7 +620,7 @@ const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'', site:'' };
 
 const DRAFT='morning_ads_draft';
 function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify(S)) }catch(e){} }
-function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d) }catch(e){} }
+function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d); if(!STYLE.some(x=>x.v===S.style))S.style=STYLE[0].v }catch(e){} }
 
 /* =================== גלילה לשלב הבא =================== */
 /* כל בחירה מורידה את המשתמש למקטע הבא, שכבר נמצא שם על המסך */
@@ -636,9 +650,18 @@ function optCard(o){
     <b>${esc(o.t||o.v)}</b>${o.d?`<small>${esc(o.d)}</small>`:''}</button>`;
 }
 
+/* כרטיס סגנון: דוגמה אמיתית על כל הכרטיס, והאיור הסכמטי נשאר מתחת עד שהתמונה נטענת */
+function styleCard(o){
+  return `<button class="opt sopt" data-v="${attr(o.v)}">
+    <span class="bg">${o.sw||''}</span>
+    ${o.img?`<span class="bg"><img src="${attr(o.img)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>`:''}
+    <span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+    <span class="cap"><b>${esc(o.v)}</b>${o.d?`<small>${esc(o.d)}</small>`:''}</span></button>`;
+}
+
 function buildSections(){
   $('#optsPromote').innerHTML = PROMOTE.map(optCard).join('');
-  $('#optsStyle').innerHTML   = STYLE.map(optCard).join('');
+  $('#optsStyle').innerHTML   = STYLE.map(styleCard).join('');
   $('#optsLayout').innerHTML  = LAYOUTS.map(optCard).join('');
   $('#optsFormat').innerHTML  = FORMAT.map(optCard).join('');
   renderAudChips();
