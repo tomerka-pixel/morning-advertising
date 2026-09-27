@@ -111,19 +111,19 @@ a{color:inherit}
 .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 /* סגנונות: כרטיסי דוגמה מלאים כמו גלריית הפריסטים של היגספילד, 4 על 2 */
 .opts.gallery{grid-template-columns:repeat(4,1fr);gap:14px}
-.opt.sopt{display:block;position:relative;border:0;padding:0;border-radius:16px;overflow:hidden;cursor:pointer;aspect-ratio:4/5;background:#0E3F3A;isolation:isolate;box-shadow:0 0 0 1px var(--line);transition:box-shadow .16s,transform .16s;text-align:right}
-.opt.sopt .bg{position:absolute;inset:0;z-index:-2}
-.opt.sopt .bg svg,.sopt .bg img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.opt.sopt{display:flex;flex-direction:column;align-items:stretch;gap:0;padding:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;text-align:right;transition:box-shadow .16s,transform .16s,border-color .16s}
+.opt.sopt .media{position:relative;aspect-ratio:4/5;background:#0E3F3A;overflow:hidden;isolation:isolate}
+.opt.sopt .bg{position:absolute;inset:0;z-index:-1}
+.opt.sopt .bg svg,.opt.sopt .bg img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
 .opt.sopt .bg svg{transform:scale(1.25)}
-.opt.sopt::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,rgba(3,26,30,.88) 0%,rgba(3,26,30,.45) 34%,rgba(3,26,30,0) 60%)}
-.opt.sopt .cap{position:absolute;inset:auto 0 0 0;padding:14px 14px 13px;color:#fff;display:flex;flex-direction:column;gap:3px}
-.opt.sopt .cap b{font-size:16px;font-weight:700;line-height:1.25}
-.opt.sopt .cap small{font-size:12.5px;opacity:.82;line-height:1.35}
-.opt.sopt .tick{position:absolute;top:10px;left:10px;width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;opacity:0;transform:scale(.6);transition:.16s}
+.opt.sopt .cap{padding:11px 13px 12px;display:flex;flex-direction:column;gap:2px}
+.opt.sopt .cap b{font-size:15px;font-weight:700;line-height:1.25;color:var(--ink)}
+.opt.sopt .cap small{font-size:12.5px;color:var(--muted);line-height:1.35}
+.opt.sopt .tick{position:absolute;top:10px;left:10px;width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;opacity:0;transform:scale(.6);transition:.16s;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .opt.sopt .tick svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
-.opt.sopt:hover{background:#0E3F3A;transform:translateY(-3px);box-shadow:0 0 0 1px var(--primary),0 14px 28px rgba(3,56,65,.16)}
-.opt.sopt:hover .bg img{transform:scale(1.06)}
-.opt.sopt.on{background:#0E3F3A;box-shadow:0 0 0 3px var(--primary),0 14px 28px rgba(13,172,129,.22)}
+.opt.sopt:hover{background:#fff;border-color:var(--primary);transform:translateY(-3px);box-shadow:0 14px 28px rgba(3,56,65,.14)}
+.opt.sopt:hover .bg img{transform:scale(1.05)}
+.opt.sopt.on{background:var(--ok-bg);border-color:var(--primary);box-shadow:0 0 0 2px var(--primary),0 14px 28px rgba(13,172,129,.2)}
 .opt.sopt.on .tick{opacity:1;transform:none}
 @media (max-width:1100px){.opts.gallery{grid-template-columns:repeat(2,1fr)}}
 .opts.wide{grid-template-columns:repeat(auto-fill,minmax(168px,1fr))}
@@ -650,12 +650,12 @@ function optCard(o){
     <b>${esc(o.t||o.v)}</b>${o.d?`<small>${esc(o.d)}</small>`:''}</button>`;
 }
 
-/* כרטיס סגנון: דוגמה אמיתית על כל הכרטיס, והאיור הסכמטי נשאר מתחת עד שהתמונה נטענת */
+/* כרטיס סגנון: מודעת דוגמה אמיתית בגודל מלא וכותרת מתחתיה, והאיור הסכמטי נשאר מתחת עד שהתמונה נטענת */
 function styleCard(o){
-  return `<button class="opt sopt" data-v="${attr(o.v)}">
+  return `<button class="opt sopt" data-v="${attr(o.v)}"><span class="media">
     <span class="bg">${o.sw||''}</span>
     ${o.img?`<span class="bg"><img src="${attr(o.img)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>`:''}
-    <span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+    <span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></span>
     <span class="cap"><b>${esc(o.v)}</b>${o.d?`<small>${esc(o.d)}</small>`:''}</span></button>`;
 }
 
