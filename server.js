@@ -18,7 +18,8 @@ const ENV = process['env'] || {};
 const ROOT = __dirname;
 const PORT = ENV.PORT || 8787;
 const CLAUDE_BIN = ENV.CLAUDE_BIN || 'claude';
-const CLAUDE_MODEL = ENV.CLAUDE_MODEL || '';
+/* Opus כותב עברית שיווקית טובה משמעותית מברירת המחדל, ועל המנוי זה לא עולה יותר */
+const CLAUDE_MODEL = ENV.CLAUDE_MODEL || 'opus';
 const HF_BIN = ENV.HF_BIN || 'higgsfield';
 const HF_IMAGE_MODEL = ENV.HF_IMAGE_MODEL || 'gpt_image_2_5';
 const HF_AD_FORMAT = ENV.HF_AD_FORMAT || 'fd9b886c-8b4d-4e9a-aa4d-11b4a67456a5'; // Benefits
@@ -94,11 +95,13 @@ const { SYSTEM, SYSTEM_AD, buildPrompt } = require('./api/_shared');
 
 function runClaude(userPrompt, system) {
   return new Promise((resolve, reject) => {
-    const args = ['-p', '--output-format', 'text', '--append-system-prompt', system || SYSTEM];
+    /* system-prompt מחליף את ההוראות של Claude Code במקום להוסיף עליהן, כך שהוא כותב
+       כקופירייטר ולא כסוכן קוד. רצים מתיקייה נייטרלית כדי שלא יקרא את קבצי המאגר */
+    const args = ['-p', '--output-format', 'text', '--system-prompt', system || SYSTEM];
     if (CLAUDE_MODEL) args.push('--model', CLAUDE_MODEL);
     args.push(userPrompt);
     let child;
-    try { child = spawn(CLAUDE_BIN, args, { cwd: ROOT }); }
+    try { fs.mkdirSync(CODEX_CWD, { recursive: true }); child = spawn(CLAUDE_BIN, args, { cwd: CODEX_CWD, stdio: ['ignore', 'pipe', 'pipe'] }); }
     catch (e) { return reject(e); }
     let out = '', err = '';
     child.stdout.on('data', d => out += d);
