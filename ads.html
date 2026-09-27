@@ -362,9 +362,8 @@ a{color:inherit}
               <div class="addrow" id="overlayRow">
                 <input id="overlayText" placeholder="רוצים כותרת משלכם? כתבו אותה כאן. אחרת היא תיכתב אוטומטית">
               </div>
-              <div class="grouplabel">הטקסט שמלווה את המודעה</div>
+              <div class="grouplabel">באיזו רשת מעלים את המודעה</div>
               <div class="chips" id="chipsPlatform"></div>
-              <div class="chips" id="chipsLen" style="margin-top:8px"></div>
               <div style="display:flex;justify-content:space-between;align-items:center">
                 <span style="font-size:14px;color:var(--muted);font-weight:500">הפרומפט שיישלח למנוע</span>
                 <button class="btn btn-ghost" id="resetPrompt">איפוס אוטומטי</button>
@@ -535,7 +534,6 @@ const FRAMEWORKS = [
   {v:'מהכאב לפתרון', d:'מתחיל בבעיה שהלקוח כבר מכיר, ואתם הפתרון. טוב כשיש כאב ברור'},
   {v:'סיפור קצר',    d:'רגע אנושי אחד שממחיש את הערך, בלי למכור ישירות. טוב לחשיפה ולמותג'}
 ];
-const LENGTHS    = ['קצר','בינוני','ארוך'];
 
 /* לכל סגנון יש תצוגה מקדימה ומשפט שנכנס לפרומפט. כאן נקבע אופי הקריאייטיב. */
 /* סגנונות המודעה, מועברים מהדמו המקורי. לכל אחד תיאור שמוצג למשתמש
@@ -667,7 +665,6 @@ function buildSections(){
     };
   };
   simpleChips('#chipsPlatform',PLATFORMS,'platform');
-  simpleChips('#chipsLen',LENGTHS,'len');
 
   $('#chipsOverlay').innerHTML= OVERLAY.map(o=>`<button class="chip ${S.overlay===o?'on':''}" data-v="${attr(o)}">${esc(o)}</button>`).join('');
   $('#chipsOverlay').onclick = e => {
@@ -807,7 +804,7 @@ function applyState(){
   $('#promoteFree').value=S.promoteFree||'';
   renderPromoteDetail();
   $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S.goal));
-  [['#chipsPlatform','platform'],['#chipsLen','len']]
+  [['#chipsPlatform','platform']]
     .forEach(([sel,k])=>$(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S[k])));
   renderCtaNote();
   $('#ctaIn').value=S.cta||'';
@@ -891,6 +888,7 @@ function syncPrompt(){
     if(S.audience)p.push('קהל יעד: '+S.audience+'.');
     if(S.tone)p.push('טון: '+S.tone+'.');
     p.push('סגנון: '+S.style+'.');
+    if(S.platform)p.push('המודעה עולה ל'+S.platform+'.');
     p.push('פורמט: '+S.format+'.');
     if(BIZ.site)p.push('אתר: '+BIZ.site+'.');
     if(S.overlay===OVERLAY[1]){
