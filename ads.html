@@ -946,7 +946,7 @@ function copyBrief(){
     /* הטקסט שמלווה את המודעה נכתב עם הוראות הפוסט, כמו בדמו עם הסרטונים.
        הוראות המודעה (כותרת ושתי שורות) הוציאו קופי דל מדי */
     type:'post', hashtags:false, engine:'openai',
-    business:{name:BIZ.name,field:BIZ.field,city:BIZ.city,vibe:S.tone,website:BIZ.site||''},
+    business:{name:BIZ.name,field:BIZ.field,city:BIZ.city,vibe:S.tone,website:''},  /* במודעה לוחצים על הכפתור, לא מקלידים כתובת */
     goal:(S.goal||'')+'. קידום: '+S.promote+(S.promoteFree?' · '+S.promoteFree:''),
     tone:S.tone, framework:S.framework,
     platform:S.platform+(S.format==='9:16'?' · סטורי':''),
