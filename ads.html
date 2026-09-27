@@ -668,6 +668,7 @@ function buildSections(){
     S.goal=b.dataset.v; S.promptTouched=false;
     $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
     refreshPrompt(); saveDraft();
+    setTimeout(()=>slideTo('sec-aud'),240);
   };
   const simpleChips=(sel,list,key)=>{
     $(sel).innerHTML=list.map(v=>`<button class="chip ${S[key]===v?'on':''}" data-v="${attr(v)}">${esc(v)}</button>`).join('');
@@ -719,9 +720,10 @@ function wirePick(sel,key,secId,pickId,nextId,label){
     refreshPrompt(); saveDraft();
     if(key==='promote'){
       /* בלי לדעת מה המוצר או האירוע המנוע ימציא אותם, ולכן נעצרים כאן לשאלה */
+      /* תמיד נעצרים לשדה הדיוק ולמטרה. ממשיכים הלאה בבחירת מטרה או ב-Enter */
       renderPromoteDetail();
-      const m=promoteMeta();
-      if(m&&m.need&&!S.promoteFree){ $('#promoteFree').focus(); return }
+      $('#promoteFree').focus({preventScroll:true});
+      return;
     }
     setTimeout(()=>slideTo(nextId),240);
   };
@@ -1246,6 +1248,7 @@ function renderCounts(){
     clearTimeout(BIZ._t); BIZ._t=setTimeout(()=>DB.put('settings',{id:'biz',name:BIZ.name,nameEn:BIZ.nameEn,field:BIZ.field,city:BIZ.city,site:BIZ.site}),400);
   };
 });
+$('#promoteFree').onkeydown=e=>{ if(e.code==='Enter'||e.code==='NumpadEnter'){ e.preventDefault(); slideTo('sec-aud') } };
 $('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
 $('#overlayText').oninput=()=>{S.overlayText=$('#overlayText').value;S.promptTouched=false;refreshPrompt();saveDraft()};
 $('#audAdd').onclick=addAudience;
