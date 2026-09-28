@@ -215,6 +215,24 @@ a{color:inherit}
 .g-body{padding:11px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
 .g-text{font-size:13px;line-height:1.5;color:var(--ink);white-space:pre-wrap;flex:1;max-height:74px;overflow:hidden}
 .g-foot{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--placeholder);gap:6px}
+.g-card{cursor:pointer;transition:transform .14s,box-shadow .14s}
+.g-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(3,56,65,.1)}
+.g-thumb{cursor:pointer}
+/* תצוגת מודעה מוגדלת: תמונה וקופי זה לצד זה, עם כל הפעולות */
+.adview{position:fixed;inset:0;z-index:100;background:rgba(3,26,26,.72);display:grid;place-items:center;padding:24px}
+.adview .box{background:#fff;border-radius:18px;width:min(1080px,100%);max-height:calc(100vh - 48px);display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.adview .pic{background:#0E3F3A;display:grid;place-items:center;min-height:0}
+.adview .pic img{max-width:100%;max-height:calc(100vh - 48px);display:block;object-fit:contain}
+.adview .side{display:flex;flex-direction:column;min-height:0;padding:22px 24px 20px;gap:14px}
+.adview .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.adview .top h3{font-size:18px;margin:0;color:var(--ink)}
+.adview .top small{display:block;color:var(--muted);font-size:12.5px;margin-top:3px}
+.adview .x{border:0;background:var(--surface);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;color:var(--ink);flex:0 0 34px}
+.adview .copy{flex:1;overflow:auto;white-space:pre-wrap;font-size:15px;line-height:1.7;color:var(--ink);background:var(--surface);border-radius:12px;padding:14px 16px}
+.adview .acts{display:flex;flex-wrap:wrap;gap:8px}
+.adview .nav{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.92);cursor:pointer;font-size:22px;color:var(--ink);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.adview .nav.prev{right:14px}.adview .nav.next{left:14px}
+@media (max-width:760px){.adview{padding:0}.adview .box{grid-template-columns:1fr;border-radius:0;max-height:100vh;height:100vh;overflow:auto}.adview .pic img{max-height:60vh}.adview .nav{top:auto;bottom:14px;transform:none}}
 .g-empty{color:var(--muted);padding:30px;text-align:center;background:#fff;border:1px dashed #c4ced3;border-radius:14px}
 
 /* ===== כללי ===== */
@@ -1174,26 +1192,80 @@ function renderGallery(){
   const arr=ADS.slice().reverse();
   if(!arr.length){$('#gal').innerHTML='<div class="g-empty">עדיין לא נוצרו מודעות. המודעות שתיצרו יישמרו כאן</div>';return}
   $('#gal').innerHTML='<div class="gallery-grid">'+arr.map(c=>`
-    <div class="g-card">
-      <div class="g-thumb" data-zoom="${attr(c.id)}"><img src="${c.url}" alt=""></div>
+    <div class="g-card" data-open="${attr(c.id)}">
+      <div class="g-thumb"><img src="${c.url}" alt=""></div>
       <div class="g-body">
         <div class="g-text">${esc((c.text||'').slice(0,140))}</div>
         <div class="g-foot"><span>${esc(c.promote||'')}</span><span>${esc(c.style||'')}</span></div>
         <div class="g-foot">
           <button class="btn btn-ghost" data-copy="${attr(c.id)}" style="padding:2px 0">העתקה</button>
-          <a class="btn btn-ghost" href="${c.url}" download="morning-ad.webp" style="padding:2px 0;text-decoration:none">הורדה</a>
+          <button class="btn btn-ghost" data-dl="${attr(c.id)}" style="padding:2px 0">הורדה</button>
           <button class="btn btn-ghost" data-del="${attr(c.id)}" style="padding:2px 0;color:var(--err)">מחיקה</button>
         </div>
       </div>
     </div>`).join('')+'</div>';
-  $$('#gal [data-zoom]').forEach(el=>el.onclick=()=>{const c=ADS.find(x=>x.id===el.dataset.zoom);if(c)lightbox(c.url)});
-  $$('#gal [data-copy]').forEach(b=>b.onclick=()=>{
-    const c=ADS.find(x=>x.id===b.dataset.copy);
-    if(c&&navigator.clipboard){navigator.clipboard.writeText(c.text||'');toast('הקופי הועתק')}
-  });
-  $$('#gal [data-del]').forEach(b=>b.onclick=async()=>{
-    await DB.del('ads',b.dataset.del); ADS=await DB.all('ads'); renderGallery(); renderCounts();
-  });
+  $$('#gal [data-open]').forEach(el=>el.onclick=()=>openAd(el.dataset.open));
+  $$('#gal [data-copy]').forEach(b=>b.onclick=e=>{e.stopPropagation();copyAd(ADS.find(x=>x.id===b.dataset.copy))});
+  $$('#gal [data-dl]').forEach(b=>b.onclick=e=>{e.stopPropagation();downloadAd(ADS.find(x=>x.id===b.dataset.dl))});
+  $$('#gal [data-del]').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteAd(b.dataset.del)});
+}
+
+function copyAd(c){
+  if(!c)return;
+  try{ navigator.clipboard.writeText(c.text||''); toast('הקופי הועתק') }catch(e){ toast('ההעתקה נכשלה') }
+}
+/* התמונות יושבות על דומיין אחר, ושם download לא עובד. מורידים כ-blob ושומרים */
+async function downloadAd(c){
+  if(!c)return;
+  try{
+    const b=await (await fetch(c.url)).blob();
+    const ext=(b.type.split('/')[1]||'png').replace('jpeg','jpg');
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+    a.download=((c.biz||'morning')+'-'+(c.format||'').replace(':','x')+'.'+ext).replace(/\s+/g,'-');
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  }catch(e){ window.open(c.url,'_blank','noopener') }
+}
+async function deleteAd(id){
+  if(!confirm('למחוק את המודעה?'))return false;
+  await DB.del('ads',id); ADS=await DB.all('ads'); renderGallery(); renderCounts(); return true;
+}
+
+/* תצוגה מוגדלת של מודעה: התמונה, הקופי המלא והפעולות. חיצים עוברים בין מודעות */
+function openAd(id){
+  const list=ADS.slice().reverse(); let i=list.findIndex(x=>x.id===id); if(i<0)return;
+  $$('.adview').forEach(x=>x.remove());
+  const v=document.createElement('div'); v.className='adview';
+  const close=()=>{ v.remove(); document.removeEventListener('keydown',onKey) };
+  const draw=()=>{
+    const c=list[i];
+    v.innerHTML=`<div class="box">
+      <div class="pic"><img src="${c.url}" alt=""></div>
+      <div class="side">
+        <div class="top"><div><h3>${esc(c.biz||'המודעה')}</h3>
+          <small>${[c.style,c.promote,(FORMAT.find(f=>f.v===c.format)||{}).t,c.date].filter(Boolean).map(esc).join(' · ')}</small></div>
+          <button class="x" data-a="close" aria-label="סגירה">✕</button></div>
+        <div class="copy">${esc(c.text||'')}</div>
+        <div class="acts">
+          <button class="btn btn-primary" data-a="dl">הורדת התמונה</button>
+          <button class="btn btn-outline" data-a="copy">העתקת הקופי</button>
+          <button class="btn btn-ghost" data-a="del" style="color:var(--err)">מחיקה</button>
+        </div>
+      </div></div>
+      ${list.length>1?'<button class="nav prev" data-a="prev" aria-label="הקודמת">›</button><button class="nav next" data-a="next" aria-label="הבאה">‹</button>':''}`;
+  };
+  v.onclick=async e=>{
+    const a=e.target.closest('[data-a]')?.dataset.a;
+    if(e.target===v||a==='close')return close();
+    const c=list[i];
+    if(a==='dl')downloadAd(c);
+    if(a==='copy')copyAd(c);
+    if(a==='prev'){ i=(i-1+list.length)%list.length; draw() }
+    if(a==='next'){ i=(i+1)%list.length; draw() }
+    if(a==='del'&&await deleteAd(c.id)){ list.splice(i,1); if(!list.length)return close(); i=Math.min(i,list.length-1); draw() }
+  };
+  const onKey=e=>{ if(e.code==='Escape')close(); if(e.code==='ArrowLeft'){i=(i+1)%list.length;draw()} if(e.code==='ArrowRight'){i=(i-1+list.length)%list.length;draw()} };
+  document.addEventListener('keydown',onKey);
+  draw(); document.body.appendChild(v);
 }
 $('#clearGal').onclick=async()=>{if(confirm('למחוק את כל המודעות השמורות?')){await DB.clear('ads');ADS=[];renderGallery();renderCounts()}};
 
