@@ -91,7 +91,7 @@ function runCodex(system, user) {
 const MIME = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.svg':'image/svg+xml', '.json':'application/json; charset=utf-8', '.ico':'image/x-icon' };
 
 /* הנחיות המערכת ובניית הבריף יושבות ב-api/_shared.js, מקור אמת אחד לשני מצבי ההרצה */
-const { SYSTEM, SYSTEM_AD, buildPrompt } = require('./api/_shared');
+const { SYSTEM, SYSTEM_AD, SYSTEM_PROOF, buildPrompt } = require('./api/_shared');
 
 function runClaude(userPrompt, system) {
   return new Promise((resolve, reject) => {
@@ -573,6 +573,11 @@ http.createServer(async (req, res) => {
         if (eng === 'openai') text = await openai.generateText(sys, user);
         else if (eng === 'codex') text = await runCodex(sys, user);
         else text = await runClaude(user, sys);
+        /* הגהה: שגיאות לשון ופרטים שהומצאו. אם נכשלת, נשארים עם הטקסט המקורי */
+        if (eng === 'claude') {
+          try { text = await runClaude('הבריף:\n' + user + '\n\nהטקסט:\n' + text, SYSTEM_PROOF); }
+          catch (e) { console.error('[proof] skipped:', e.message); }
+        }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ text }));
       } catch (e) {
