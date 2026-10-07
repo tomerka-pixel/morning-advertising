@@ -148,7 +148,7 @@ function monogram(name,nameEn){
 }
 
 /* עיגול הלוגו: הלוגו של העסק על רקע לבן (או הרקע שלו), תמונה, או מונוגרם בצבע הראשי */
-function disc(ctx,o,p,cx,cy,r,photo){
+function disc(ctx,o,p,cx,cy,r,photo,around){
   ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.closePath();
   if(photo&&o.img){ ctx.clip(); cover(ctx,o.img,cx-r,cy-r,r*2,r*2); ctx.restore(); return }
   const L=o.logo&&o.logo.img?o.logo:null;
@@ -160,10 +160,12 @@ function disc(ctx,o,p,cx,cy,r,photo){
     ctx.drawImage(L.img,cx-iw*s/2,cy-ih*s/2,iw*s,ih*s);
     ctx.restore(); return;
   }
-  const c=contrast(p.primary,WHITE)>=3?p.primary:p.deep;
+  /* מונוגרם בצבע הראשי. על רקע באותו צבע (סולידי) העיגול לבן והאותיות בצבע הראשי */
+  let c=contrast(p.primary,WHITE)>=3?p.primary:p.deep, t=textOn(c);
+  if(around&&contrast(c,around)<1.6){ t=contrast(p.primary,WHITE)>=3?p.primary:p.deep; c=WHITE }
   ctx.fillStyle=c; ctx.fill(); ctx.restore();
   if(o.schematic)return;
-  ctx.font=css(MONO,r*0.875); ctx.fillStyle=textOn(c); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.direction='ltr';
+  ctx.font=css(MONO,r*0.875); ctx.fillStyle=t; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.direction='ltr';
   ctx.fillText(monogram(o.name,o.nameEn),cx,cy+r*0.04);
 }
 
@@ -271,14 +273,14 @@ function frame(ctx,W,H,o,p,F,lim){
   button(ctx,o,F,W/2,y,'center',btn);
 }
 
-/* סולידי: כותרת ענקית (56) על הצבע הראשי, עיגול לוגו 100 (בסטורי 140) למעלה, קו מפריד וכפתור למטה */
+/* סולידי: כותרת ענקית (56) על הצבע הראשי, עיגול לוגו 100 (בסטורי 140) למעלה משמאל, קו מפריד וכפתור למטה */
 function type(ctx,W,H,o,p,F,lim){
   const {story,land,T,B}=zones(W,H), P=40, sf=p.bg||p.primary, fg=p.bg?p.ink(sf):textOn(sf);
   ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
   const btn=p.bg?p.btn(sf):{bg:fg,fg:sf};
   const d=story?140:100, top=T||P, by=H-(B||P)-49;
   if(land){
-    const r=H*0.27; disc(ctx,o,p,W-P-r,H/2,r,true);
+    const r=H*0.27; disc(ctx,o,p,W-P-r,H/2,r,false,sf);
     const tw=W-P*3-r*2, x=W-P*2-r*2;
     const hd=layout(ctx,o.headline,F.head,56,tw,lim.hl,1.1), sb=layout(ctx,o.sub,F.body,24,tw,lim.sl,1.25);
     let y=(by-20-(hd.h+14+sb.h))/2+10;
@@ -288,7 +290,8 @@ function type(ctx,W,H,o,p,F,lim){
     button(ctx,o,F,P,by,'left',btn);
     return;
   }
-  disc(ctx,o,p,P+d/2,top+d/2,d/2,true);
+  /* בעיגול תמיד הלוגו של העסק (ובלי לוגו, מונוגרם), לא תמונה */
+  disc(ctx,o,p,P+d/2,top+d/2,d/2,false,sf);
   const tw=W-P*2;
   const hd=layout(ctx,o.headline,F.head,56,tw,lim.hl,1.1), sb=layout(ctx,o.sub,F.body,24,tw,lim.sl,1.25);
   /* justify-between: ההודעה במרכז הרווח שבין העיגול לפוטר */

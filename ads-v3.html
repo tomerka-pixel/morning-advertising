@@ -1000,7 +1000,7 @@ function renderOwn(){
   $('#imgName').textContent=a?a.name:'בחירת תמונה מהמחשב';
   $('#imgClear').classList.toggle('hidden',!a);
   const w=$('#ownWrap'); if(!w)return;
-  const ok=!!(S.template&&ownPhoto());
+  const ok=!!(S.template&&S.template!=='type'&&ownPhoto());  /* בסולידי אין תמונה, רק לוגו */
   w.classList.toggle('hidden',!ok);
   $('#useOwn').checked=ok&&!!S.useOwn;
 }
@@ -1647,8 +1647,8 @@ async function generate(){
 
     if(tpl){
       /* תבנית: הקופי, ארבעת השדות והצילום רצים במקביל, והמודעה מורכבת מהם בדפדפן.
-         עם תמונה משלכם לא מייצרים תמונה. בסולידי אין צילום בכלל: בעיגול הלוגו או התמונה שהעליתם */
-      const own=(usingOwn()||tpl.v==='type')&&ownPhoto();
+         עם תמונה משלכם לא מייצרים תמונה. בסולידי אין תמונה בכלל: בעיגול הלוגו (או מונוגרם) */
+      const own=tpl.v!=='type'&&usingOwn()&&ownPhoto();
       const imgP=own?{url:own.url,model:'התמונה שלכם',took:0}:tpl.v==='type'?{url:'',model:'בלי תמונה',took:0}:askImage(S.prompt);
       const r=await Promise.all([copyP,askFields(tpl.v),imgP]);
       copy=r[0]||{}; const fields=r[1]||{}; img=r[2]||{};
