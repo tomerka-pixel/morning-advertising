@@ -360,6 +360,9 @@ a{color:inherit}
 .fmt-grid .opt{align-items:flex-start;justify-content:center;text-align:right;gap:8px;padding:12px;border:1px solid #EFF1F6;border-radius:8px;background:#fff;min-height:110px}
 .fmt-grid .opt:hover{transform:none;box-shadow:none;border-color:#B2BEC6;background:#fff}
 .fmt-grid .opt.on{border-color:#0DAC81;box-shadow:0 0 0 1px #0DAC81;background:#fff}
+.fmt-grid .opt{position:relative}
+.fmt-grid .nets{position:absolute;top:12px;left:12px;display:flex;gap:6px}
+.fmt-grid .nets svg{width:18px;height:18px;display:block}
 .fmt-grid .shape{height:36px;max-width:48px;border:1.5px solid #B2BEC6;background:#F5F6FA;border-radius:3px;display:block}
 .fmt-grid .opt.on .shape{background:#E6FBF4;border-color:#0DAC81}
 .fmt-grid b{font-size:16px;font-weight:500;color:#033841;line-height:22px}
@@ -466,7 +469,7 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
 .pro-grid .chk{display:none}
 .ufield{display:block;margin-top:16px}
 .ufield>span{display:flex;align-items:center;gap:8px;font-size:14px;color:#033841;font-weight:500;margin-bottom:4px}
-.ufield input,.ufield textarea{width:100%;border:0;border-bottom:1px solid #B2BEC6;border-radius:0;padding:8px 0;font-size:16px;background:transparent;outline:0;font-family:inherit;color:var(--ink);resize:vertical}
+.ufield input,.ufield textarea{width:100%;border:0;border-bottom:1px solid #B2BEC6;border-radius:0;padding:8px 0;font-size:16px;line-height:24px;background:transparent;outline:0;font-family:inherit;color:var(--ink);resize:none;overflow:hidden;display:block}
 .ufield input:focus,.ufield textarea:focus{border-bottom-color:#0DAC81}
 .fbox-row{display:flex;gap:8px;align-items:center}
 .fbox{flex:1;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #B2BEC6;border-radius:8px;padding:10px 14px;cursor:pointer;background:#fff;min-width:0}
@@ -598,6 +601,10 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
                 <input id="promoteFree" placeholder="בחרו קודם מה מקדמים"></label>
               <div class="flabel">מטרת המודעה</div>
               <div class="chips" id="chipsGoal"></div>
+              <div class="addrow">
+                <input id="goalOther" placeholder="מטרה אחרת? כתבו אותה כאן, למשל: הזמנת שולחן לחג">
+                <button class="btn btn-outline btn-sm" id="goalAdd">הוספה</button>
+              </div>
 
               <div class="flabel">הוספת תמונה <span class="q" title="צילום של המקום, של מוצר או של הצוות. בלי תמונה, המנוע ייצור צילום שמתאים למודעה">?</span> <span class="opt-tag">לא חובה</span></div>
               <div class="fbox-row">
@@ -619,7 +626,7 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
               <p class="fhint" id="colorNote"></p>
 
               <label class="ufield"><span>יש לכם רעיון או בקשה? <span class="opt-tag">לא חובה</span></span>
-                <textarea id="extraIn" rows="2" placeholder="לדוגמה: אמא ובת עושות פילאטיס יחד, עם חיוך"></textarea></label>
+                <textarea id="extraIn" rows="1" placeholder="לדוגמה: אמא ובת עושות פילאטיס יחד, עם חיוך"></textarea></label>
             </div>
           </section>
 
@@ -798,6 +805,7 @@ const PROMOTE = [
    ic:'M7 3v3M17 3v3M4 9h16M5 6h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z'}
 ];
 const GOALS = ['לידים ופניות','מכירות','הרשמות','חשיפה ומודעות'];
+let MY_GOALS = [];   /* מטרות שהמשתמש הוסיף, נשמרות ונשארות לבחירה */
 /* בלי קריאה לפעולה אין רצועת פוטר במודעה, ולכן לכל מטרה יש ברירת מחדל */
 const CTA_BY_GOAL = {'לידים ופניות':'השאירו פרטים','מכירות':'לרכישה',
                      'הרשמות':'להרשמה','חשיפה ומודעות':'לפרטים נוספים'};
@@ -849,12 +857,12 @@ function colorLabel(){
 
 /* v3: פורמט לפי מקום הפרסום, כמו בעיצוב. הרשת נגזרת מהפורמט (לקופי) */
 const FORMAT = [
-  {v:'4:5',   t:'אינסטגרם לאורך', px:'1080×1350', w:1080, h:1350, plat:'אינסטגרם', fmt:true},
-  {v:'1:1',   t:'פוסט בפיד',      px:'1080×1080', w:1080, h:1080, plat:'אינסטגרם', fmt:true},
-  {v:'9:16',  t:'סטורי',          px:'1080×1920', w:1080, h:1920, plat:'אינסטגרם', story:true, fmt:true},
-  {v:'fb',    t:'מודעת פייסבוק',  px:'1200×628',  w:1200, h:628,  plat:'פייסבוק', fmt:true},
-  {v:'li',    t:'פוסט בלינקדאין', px:'1200×627',  w:1200, h:627,  plat:'לינקדאין', fmt:true},
-  {v:'reels', t:'Reels / TikTok', px:'1080×1920', w:1080, h:1920, plat:'טיקטוק', story:true, fmt:true}
+  {v:'4:5',   t:'אינסטגרם לאורך', px:'1080×1350', w:1080, h:1350, plat:'אינסטגרם', nets:['אינסטגרם'], fmt:true},
+  {v:'1:1',   t:'פוסט בפיד',      px:'1080×1080', w:1080, h:1080, plat:'אינסטגרם', nets:['אינסטגרם','פייסבוק'], fmt:true},
+  {v:'9:16',  t:'סטורי',          px:'1080×1920', w:1080, h:1920, plat:'אינסטגרם', story:true, nets:['אינסטגרם','פייסבוק'], fmt:true},
+  {v:'fb',    t:'מודעת פייסבוק',  px:'1200×628',  w:1200, h:628,  plat:'פייסבוק', nets:['פייסבוק'], fmt:true},
+  {v:'li',    t:'פוסט בלינקדאין', px:'1200×627',  w:1200, h:627,  plat:'לינקדאין', nets:['לינקדאין'], fmt:true},
+  {v:'reels', t:'Reels / TikTok', px:'1080×1920', w:1080, h:1920, plat:'טיקטוק', story:true, nets:['אינסטגרם','טיקטוק'], fmt:true}
 ];
 function formatMeta(){ return FORMAT.find(f=>f.v===S.format)||FORMAT[0] }
 /* היחס שנשלח למנוע התמונות (הוא מכיר רק כמה יחסים קבועים) */
@@ -937,7 +945,9 @@ function optCard(o){
   if(o.fmt){
     /* צורה ביחס הפורמט, בגובה 36 ועד רוחב 48, כמו בעיצוב */
     const w=Math.min(48,Math.round(36*o.w/o.h*10)/10);
-    return `<button class="opt" data-v="${attr(o.v)}"><i class="shape" style="width:${w}px"></i>
+    /* הלוגואים של הרשתות שהפורמט מתאים להן, בפינה השמאלית העליונה */
+    const nets=(o.nets||[]).map(n=>{const i=PLATFORM_ICON[n];return i?`<svg viewBox="0 0 24 24" aria-label="${attr(n)}"><title>${esc(n)}</title><path fill="${i.c}" d="${i.d}"/></svg>`:''}).join('');
+    return `<button class="opt" data-v="${attr(o.v)}"><span class="nets">${nets}</span><i class="shape" style="width:${w}px"></i>
       <b>${esc(o.t)}</b><small><bdi dir="ltr">${esc(o.px)}</bdi></small></button>`;
   }
   return `<button class="opt" data-v="${attr(o.v)}">
@@ -1166,8 +1176,10 @@ function buildSections(){
   $('#optsFormat').innerHTML  = FORMAT.map(optCard).join('');
   renderAud();
   $('#chipsTone').innerHTML   = TONE.map(t=>`<button class="chip" data-v="${attr(t)}">${esc(t)}</button>`).join('');
-  $('#chipsGoal').innerHTML   = GOALS.map(g=>`<button class="chip ${S.goal===g?'on':''}" data-v="${attr(g)}">${esc(g)}</button>`).join('');
+  renderGoals();
   $('#chipsGoal').onclick = e => {
+    const rm=e.target.closest('[data-rm]');
+    if(rm){ e.stopPropagation(); removeGoal(rm.dataset.rm); return }
     const b=e.target.closest('[data-v]'); if(!b)return;
     S.goal=b.dataset.v; S.promptTouched=false;
     $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
@@ -1237,6 +1249,31 @@ function toggleAud(key,v){
   S[key]=S[key].includes(v)?S[key].filter(x=>x!==v):S[key].concat(v);
   S.audience=audienceText(); S.promptTouched=false;
   renderAud(); refreshPrompt(); saveDraft(); updateAudPick();
+}
+
+/* v3: מטרה משלהם, בדיוק כמו קהל משלהם: נשמרת, הופכת לשבב ונבחרת */
+function renderGoals(){
+  $('#chipsGoal').innerHTML=
+    GOALS.map(g=>`<button class="chip ${S.goal===g?'on':''}" data-v="${attr(g)}">${esc(g)}</button>`).join('')+
+    MY_GOALS.map(g=>`<button class="chip custom ${S.goal===g?'on':''}" data-v="${attr(g)}">${esc(g)}<span class="x" data-rm="${attr(g)}" title="הסרה">×</span></button>`).join('');
+}
+async function addGoal(){
+  const v=$('#goalOther').value.trim();
+  if(!v){toast('כתבו את מטרת המודעה');$('#goalOther').focus();return}
+  if(!MY_GOALS.includes(v)&&!GOALS.includes(v)){
+    MY_GOALS.push(v);
+    try{ await DB.put('settings',{id:'goals',list:MY_GOALS}) }catch(e){}
+  }
+  S.goal=v; S.promptTouched=false;
+  $('#goalOther').value='';
+  renderGoals(); refreshPrompt(); saveDraft();
+  toast('המטרה נוספה');
+}
+async function removeGoal(v){
+  MY_GOALS=MY_GOALS.filter(x=>x!==v);
+  try{ await DB.put('settings',{id:'goals',list:MY_GOALS}) }catch(e){}
+  if(S.goal===v)S.goal=GOALS[0];
+  renderGoals(); refreshPrompt(); saveDraft();
 }
 
 /* הוספת קהל יעד משלהם: נשמר, הופך לשבב, ונבחר מיד */
@@ -1352,7 +1389,7 @@ function applyState(){
   renderPromoteDetail();
   $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S.goal));
   renderCtaNote();
-  $('#extraIn').value=S.extra||'';
+  $('#extraIn').value=S.extra||''; setTimeout(growExtra,0);
   refreshPrompt();
 }
 
@@ -1968,8 +2005,12 @@ function renderCounts(){
 $('#promoteFree').onkeydown=e=>{ if(e.code==='Enter'||e.code==='NumpadEnter'){ e.preventDefault(); if(S.promoteFree)closeSoon('sec-promote') } };
 $('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;renderTplPreview();updateContentPick();saveDraft()};
 $('#audAdd').onclick=addAudience;
+$('#goalAdd').onclick=addGoal;
+$('#goalOther').onkeydown=e=>{ if(e['key']==='Enter'){ e.preventDefault(); addGoal() } };
 $('#audOther').onkeydown=e=>{ if(e['key']==='Enter'){ e.preventDefault(); addAudience() } };
-$('#extraIn').oninput=()=>{S.extra=$('#extraIn').value;S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
+/* שדה הרעיון מתחיל בשורה אחת וגדל לפי הטקסט */
+function growExtra(){ const t=$('#extraIn'); t.style.height='auto'; if(t.scrollHeight)t.style.height=t.scrollHeight+'px'; else t.style.height='' }  /* בכרטיס סגור אין גובה למדוד */
+$('#extraIn').oninput=()=>{growExtra();S.extra=$('#extraIn').value;S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
 $('#promptIn').oninput=()=>{S.prompt=$('#promptIn').value;S.promptTouched=true;saveDraft();renderPromptHint()};
 $('#resetPrompt').onclick=()=>{S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft();toast('הפרומפט אופס')};
 $('#go').onclick=generate;
@@ -1990,10 +2031,11 @@ $('#useOwn').onchange=e=>{ S.useOwn=e.target.checked; saveDraft() };
 /* =================== התחלה =================== */
 (async()=>{
   try{
-    const r=await Promise.all([DB.all('assets'),DB.all('ads'),DB.get('settings','biz'),DB.get('settings','audiences')]);
+    const r=await Promise.all([DB.all('assets'),DB.all('ads'),DB.get('settings','biz'),DB.get('settings','audiences'),DB.get('settings','goals')]);
     ASSETS=r[0]; ADS=r[1];
     if(r[2])Object.assign(BIZ,r[2]);
     if(r[3]&&Array.isArray(r[3].list))MY_AUDIENCES=r[3].list;
+    if(r[4]&&Array.isArray(r[4].list))MY_GOALS=r[4].list;
   }catch(e){ toast('האחסון המקומי לא זמין בדפדפן הזה') }
   /* מותג לדוגמה, מועבר מהדמו המקורי, כדי שאפשר יהיה ליצור מיד בלי הכנות */
   try{
