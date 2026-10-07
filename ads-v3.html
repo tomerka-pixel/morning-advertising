@@ -427,8 +427,9 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
 .sec.col .sec-pick{display:inline-block!important;margin-inline-start:auto;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#F5F6FA;color:#607684;border-radius:100px;padding:4px 12px;font-size:14px;font-weight:500}
 .sec.col .sec-pick:empty{display:none!important}
 .sec.col.done .sec-pick{background:#E6FBF4;color:#033841}
-.sec.col .sec-toggle{display:grid!important;order:0;width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:#F5F6FA;color:#033841}
-.sec.col .sec-pick:empty+.sec-toggle{margin-inline-start:auto}
+/* החץ בצד ימין, צמוד לכותרת (כמו ב-v2), והתקציר בצד שמאל */
+.sec.col .sec-toggle{display:grid!important;order:-1;width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:#F5F6FA;color:#033841}
+
 .sec.col.open .sec-toggle svg{transform:rotate(180deg)}
 
 /* v3.3: הבר העליון לפי פיגמה, והכותרת הכפולה ירדה */
