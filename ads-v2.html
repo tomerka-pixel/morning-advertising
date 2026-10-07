@@ -6,6 +6,8 @@
 <title>morning · יוצר המודעות v2</title>
 <link rel="stylesheet" href="https://static.greeninvoice.co.il/fonts/ploni.min.css">
 <link rel="icon" href="assets/morning-mark.svg">
+<!-- הפונטים של המודעות עצמן (לא של הממשק): עבריים וחופשיים לשימוש מסחרי -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;800&family=Rubik:wght@400;700&family=Secular+One&family=Frank+Ruhl+Libre:wght@700&family=Assistant:wght@400;600&family=Karantina:wght@700&display=swap">
 <style>
 :root{
   /* הטוקנים נלקחו מגיליון הסגנון של המערכת עצמה (app.css) */
@@ -161,6 +163,14 @@ a{color:inherit}
 .list .opt .ic{width:38px;height:38px;flex:0 0 38px;border-radius:10px}
 .list .opt .thumb{width:38px;height:48px;flex:0 0 38px;border-radius:6px;overflow:hidden;border:1px solid rgba(3,56,65,.12)}
 .list .opt .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+/* תבניות: ממוזערת שמצוירת בקוד, בצבע ובפורמט שנבחרו */
+.list .opt .thumb.tpl{width:52px;height:64px;flex:0 0 52px;background:var(--surface);border:0;border-radius:6px}
+.list .opt .thumb.tpl canvas{width:100%;height:100%;object-fit:contain;display:block}
+.list .opt .fsample{font-size:26px;line-height:1;width:52px;flex:0 0 52px;text-align:center;color:var(--ink)}
+.tpl-prev{display:flex;gap:16px;align-items:flex-start;margin-top:18px;padding:14px;background:var(--surface);border-radius:14px}
+.tpl-prev canvas{width:200px;height:auto;border-radius:6px;box-shadow:0 6px 18px rgba(3,56,65,.14);flex:0 0 auto}
+.tpl-prev p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.6}
+@media (max-width:560px){.tpl-prev{flex-direction:column}.tpl-prev canvas{width:100%}}
 .list .opt .ratio{width:38px;height:38px;flex:0 0 38px}
 .list .opt .dot{width:28px;height:28px;flex:0 0 28px;border-radius:50%;border:1px solid rgba(3,56,65,.18);display:block}
 .list .opt .dot.auto{background:conic-gradient(#E8505B,#F2B33D,#2F9E7A,#1D58E3,#6B4FA0,#E8505B)}
@@ -268,6 +278,14 @@ a{color:inherit}
 /* ===== תוצאה ===== */
 .stage{background:var(--surface);border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:center;min-height:240px}
 .stage img{max-width:100%;max-height:520px;border-radius:10px;box-shadow:0 8px 26px rgba(3,56,65,.14);display:block;cursor:zoom-in}
+.stage canvas{max-width:100%;max-height:560px;width:auto;height:auto;border-radius:6px;box-shadow:0 8px 26px rgba(3,56,65,.14);display:block;cursor:zoom-in}
+.ed-grid{display:grid;grid-template-columns:2fr 1.4fr 1fr;gap:12px;margin-top:16px}
+.ed-grid .field{margin-bottom:0}
+@media (max-width:760px){.ed-grid{grid-template-columns:1fr}}
+.ed-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.ed-row .lbl{font-size:13.5px;color:var(--muted);margin-inline-end:4px;min-width:52px}
+.ed-row .chip{padding:6px 14px;font-size:14px}
+.ed-row .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .meta{font-size:13px;color:var(--deep);background:var(--ok-bg);border-radius:10px;padding:9px 12px;margin-top:12px}
 .result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 .result-actions a{text-decoration:none;display:inline-block}
@@ -406,13 +424,19 @@ a{color:inherit}
 
           <section class="sec col" id="sec-style">
             <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><span class="sec-num">2</span><h2>איך המודעה תיראה</h2><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="sec-pick" id="pick-style">טרם נבחר</span></div>
-            <p class="sec-sub">בוחרים תבנית וצבע. התבנית מצורפת ליצירה כרפרנס, והמודעה נבנית בסגנון שלה</p>
+            <p class="sec-sub">בוחרים תבנית, צבע ופונט. בתבנית, המנוע מייצר רק את התמונה, והכותרת, הלוגו והכפתור מונחים עליה בעברית מדויקת</p>
             <div class="sec-body">
               <div class="grouplabel" style="margin-top:0">תבנית</div>
               <div class="list" id="optsStyle"></div>
               <div class="grouplabel">צבע המודעה</div>
               <p class="chip-note" style="margin:-4px 0 10px">באוטומטי הצבע נקבע לפי הלוגו והתבנית</p>
               <div class="list" id="optsColor"></div>
+              <div id="fontWrap" class="hidden">
+                <div class="grouplabel">פונט</div>
+                <div class="list" id="optsFont"></div>
+                <div class="tpl-prev"><canvas id="tplPrev"></canvas>
+                  <p><b>תצוגה מקדימה.</b><br>התמונה האפורה תוחלף בתמונה שתיווצר, והכותרת תיכתב לפי מה שמקדמים. אחרי היצירה אפשר לשנות את הטקסט, התבנית והפונט בלי לייצר מחדש</p></div>
+              </div>
             </div>
           </section>
 
@@ -504,6 +528,7 @@ a{color:inherit}
 <button class="chat-fab" title="לעזרה במערכת, אני כאן"><svg viewBox="0 0 28 32"><path d="M28 32s-4.714-1.855-8.527-3.34H3.437C1.54 28.66 0 27.026 0 25.013V3.644C0 1.633 1.54 0 3.437 0h21.125c1.898 0 3.437 1.632 3.437 3.645v18.404H28V32z"/></svg></button>
 <div class="toast" id="toast"></div>
 
+<script src="assets/compose.js"></script>
 <script>
 /* ===================================================================
    יוצר המודעות של morning
@@ -631,21 +656,16 @@ const FRAMEWORKS = [
   {v:'סיפור קצר',    d:'רגע אנושי אחד שממחיש את הערך, בלי למכור ישירות. טוב לחשיפה ולמותג'}
 ];
 
-/* v2: תבניות במקום סגנונות. התבנית שנבחרה מצורפת ליצירה כתמונה ראשונה, והפרומפט אומר
-   למנוע להתייחס אליה כרפרנס לסגנון. כרגע אלה ריבועי צבע זמניים עד שיוחלט מה התבניות.
-   לכל תבנית: img = קובץ הרפרנס, p = משפט סגנון ייעודי (ריק עד שיוחלט), font = פונטים משלה (לא חובה) */
-const TEMPLATES = [
-  {v:'tpl1', t:'תבנית 1', d:'טיוטה, תוחלף בתבנית אמיתית', c:'#1E3A5F', img:'assets/templates/template-1.png', p:'', font:null},
-  {v:'tpl2', t:'תבנית 2', d:'טיוטה, תוחלף בתבנית אמיתית', c:'#E8505B', img:'assets/templates/template-2.png', p:'', font:null},
-  {v:'tpl3', t:'תבנית 3', d:'טיוטה, תוחלף בתבנית אמיתית', c:'#F2E3C9', img:'assets/templates/template-3.png', p:'', font:null},
-  {v:'tpl4', t:'תבנית 4', d:'טיוטה, תוחלף בתבנית אמיתית', c:'#6B4FA0', img:'assets/templates/template-4.png', p:'', font:null}
-];
+/* v2: ארבע תבניות שנבנות בקוד (assets/compose.js). המנוע מייצר רק את התמונה, בלי טקסט,
+   והכותרת, הכפתור, הלוגו והצבע מונחים עליה בקנבס. כך העברית תמיד מדויקת והמודעה
+   בזהות של העסק של הלקוח, ולא נראית כמו מודעה שבינה מלאכותית עיצבה */
+const TEMPLATES = AdCompose.TEMPLATES;
 function templateMeta(){ return TEMPLATES.find(x=>x.v===S.template)||null }
 
-/* הפונטים שהפרומפט ממליץ עליהם. טיוטה: עדיין צריך להחליט על הפונטים הסופיים (ראו V2-TODO.md).
-   תבנית עם font משלה גוברת על ברירת המחדל */
-const FONTS_DEFAULT = { head:'Heebo ExtraBold', body:'Assistant' };
-function fontsFor(){ const t=templateMeta(); return (t&&t.font)||FONTS_DEFAULT }
+/* הפונט של המודעה. '' = לפי הטון שנבחר */
+function fontId(){ return S.font || AdCompose.fontForTone(S.tone) }
+/* צבע המודעה בפועל: הנבחר, ובאוטומטי צבע המותג מהלוגו */
+function adColor(){ const L=chosenLogoInfo(); return colorHex() || (L&&L.brand) || '#1F3A5F' }
 
 /* צבע המודעה. '' = אוטומטי, 'logo' = הצבע העיקרי של הלוגו, אחרת קוד צבע */
 const AD_COLORS = [
@@ -697,7 +717,7 @@ const LAYOUTS = [
 ];
 
 /* =================== המצב =================== */
-const S = { promote:'', promoteFree:'', template:'', color:'', goal:'לידים ופניות', layout:'', format:'4:5', audience:'', tone:'', cta:'',
+const S = { promote:'', promoteFree:'', template:'', color:'', font:'', goal:'לידים ופניות', layout:'', format:'4:5', audience:'', tone:'', cta:'',
             overlay:'כותרת על התמונה', overlayText:'',
             platform:'אינסטגרם', framework:'מוביל לפעולה', len:'קצר', emoji:'מדוד',
             extra:'', assets:[], prompt:'', promptTouched:false };
@@ -705,7 +725,7 @@ const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'', site:'' };
 
 const DRAFT='morning_ads_draft_v2';  /* טיוטה נפרדת מ-v1, כי השדות שונים */
 function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify(S)) }catch(e){} }
-function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d); if(!TEMPLATES.some(x=>x.v===S.template))S.template=''; S.overlay='כותרת על התמונה'; S.overlayText=''; S.cta=''; if(!TONE.includes(S.tone))S.tone=''; if(!PROMOTE.some(x=>x.v===S.promote)){S.promote='';S.promoteFree=''} S.layout=''; if(!FORMAT.some(x=>x.v===S.format))S.format='4:5' }catch(e){} }
+function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d); if(!TEMPLATES.some(x=>x.v===S.template))S.template=''; if(S.font&&!AdCompose.FONT_SETS.some(x=>x.v===S.font))S.font=''; S.overlay='כותרת על התמונה'; S.overlayText=''; S.cta=''; if(!TONE.includes(S.tone))S.tone=''; if(!PROMOTE.some(x=>x.v===S.promote)){S.promote='';S.promoteFree=''} S.layout=''; if(!FORMAT.some(x=>x.v===S.format))S.format='4:5' }catch(e){} }
 
 /* =================== גלילה לשלב הבא =================== */
 /* כל בחירה מורידה את המשתמש למקטע הבא, שכבר נמצא שם על המסך */
@@ -741,11 +761,53 @@ function optCard(o){
     <span class="txt"><b>${esc(o.t||o.v)}</b>${o.d?`<small>${esc(o.d)}</small>`:''}</span><span class="chk"></span></button>`;
 }
 
-/* כרטיס סגנון: מודעת דוגמה אמיתית בגודל מלא וכותרת מתחתיה, והאיור הסכמטי נשאר מתחת עד שהתמונה נטענת */
+/* כרטיס תבנית: ממוזערת סכמטית שמצוירת בקוד, בצבע ובפורמט שנבחרו */
 function styleCard(o){
-  return `<button class="opt" data-v="${attr(o.v)}"><span class="thumb" style="background:${attr(o.c)}">
-    ${o.img?`<img src="${attr(o.img)}" alt="" loading="lazy" onerror="this.remove()">`:''}</span>
+  return `<button class="opt" data-v="${attr(o.v)}"><span class="thumb tpl"><canvas data-tpl="${attr(o.v)}"></canvas></span>
     <span class="txt"><b>${esc(o.t)}</b>${o.d?`<small>${esc(o.d)}</small>`:''}</span><span class="chk"></span></button>`;
+}
+function drawThumbs(){
+  $$('#optsStyle canvas[data-tpl]').forEach(c=>AdCompose.render(c,{tpl:c.dataset.tpl,format:S.format,schematic:true,scale:0.2,
+    headline:'כותרת ראשית של המודעה',sub:'שורה משנית קצרה',cta:'לפרטים',name:'',color:adColor(),font:fontId()}));
+}
+
+/* =================== v2: פונט ותצוגה מקדימה =================== */
+function renderFonts(){
+  $('#optsFont').innerHTML=
+    `<button class="opt ${!S.font?'on':''}" data-f=""><span class="fsample" style="font-family:'Heebo'">א</span><span class="txt"><b>לפי הטון</b><small>${esc(AdCompose.fontSet(AdCompose.fontForTone(S.tone)).t)}${S.tone?'':', עד שייבחר טון'}</small></span><span class="chk"></span></button>`+
+    AdCompose.FONT_SETS.map(f=>`<button class="opt ${S.font===f.v?'on':''}" data-f="${attr(f.v)}"><span class="fsample" style="font-family:'${f.head.f}';font-weight:${f.head.w}">אבג</span><span class="txt"><b>${esc(f.t)}</b><small>${esc(f.head.f)}</small></span><span class="chk"></span></button>`).join('');
+  $('#optsFont').onclick=e=>{
+    const b=e.target.closest('[data-f]'); if(!b)return;
+    S.font=b.dataset.f; renderFonts(); saveDraft(); renderTplPreview();
+  };
+}
+/* תמונות שכבר נטענו (לוגו), כדי שהתצוגה המקדימה לא תטען אותן שוב בכל שינוי */
+const IMG_CACHE={};
+async function assetImg(a){
+  if(!a)return null;
+  if(!IMG_CACHE[a.id])IMG_CACHE[a.id]=AdCompose.loadImage(a.url).catch(()=>null);
+  return IMG_CACHE[a.id];
+}
+async function logoForAd(){
+  const a=ASSETS.find(x=>x.tag==='לוגו'&&S.assets.includes(x.id));
+  const img=await assetImg(a);
+  return img?{img,info:LOGO_INFO[a.id]||null}:null;
+}
+let prevSeq=0;
+async function renderTplPreview(){
+  const wrap=$('#fontWrap'); if(!wrap)return;
+  wrap.classList.toggle('hidden',!S.template);
+  drawThumbs();
+  if(!S.template)return;
+  renderFonts();
+  const seq=++prevSeq;
+  const [logo]=await Promise.all([logoForAd(),AdCompose.ensureFonts(fontId())]);
+  if(seq!==prevSeq)return;
+  AdCompose.render($('#tplPrev'),{tpl:S.template,format:S.format,img:null,scale:0.5,
+    headline:(S.promoteFree||'').trim()||'כאן תופיע הכותרת של המודעה',
+    sub:[BIZ.field,BIZ.city].filter(Boolean).join(' · '),cta:ctaText(),
+    name:BIZ.name,site:BIZ.site,logo,color:adColor(),font:fontId()});
+  drawThumbs();
 }
 
 /* =================== v2: מקטעים מתקפלים =================== */
@@ -1099,6 +1161,7 @@ function refreshPrompt(){
   const el=$('#promptIn');
   if(el&&!S.promptTouched)el.value=S.prompt;
   renderPromptHint();
+  renderTplPreview();
 }
 
 /* הסבר על הסמן, אחרת נראה כאילו המילה {{כותרת}} תיכתב על המודעה */
@@ -1138,6 +1201,12 @@ function syncPrompt(){
     if(S.tone)p.push('טון: '+S.tone+'.');
   };
 
+  if(tpl){
+    /* תבנית: המנוע מייצר רק את הצילום. הטקסט, הלוגו והכפתור מונחים עליו בקוד אחר כך */
+    S.prompt=photoPrompt(who,what,tpl,chosen.filter(a=>a.tag!=='לוגו'));
+    return;
+  }
+
   if(layoutId()){
     /* מנוע המודעות מרכיב את הלייאאוט בעצמו */
     brief();
@@ -1166,24 +1235,17 @@ function syncPrompt(){
     p.push('התאימו את המסר לקהל היעד.');
   }
 
-  /* v2: התבנית מצורפת כתמונה הראשונה ומשמשת רפרנס לסגנון בלבד */
-  if(tpl){
-    p.push('התמונה המצורפת הראשונה היא תבנית הסגנון של המודעה. היא רפרנס בלבד לאיך המודעה צריכה להיראות: הקומפוזיציה, פריסת הטקסט, הצבעוניות, הטיפוגרפיה והאווירה. בנו מודעה חדשה באותו סגנון בדיוק, עם התוכן של העסק הזה. אל תעתיקו ממנה טקסטים, לוגואים, אנשים או מוצרים.');
-    if(tpl.p)p.push(tpl.p);
-  }
-  /* v2: מה כל תמונה מצורפת, לפי הסדר שבו היא נשלחת (התבנית ראשונה, אחריה הנכסים) */
   if(chosen.length){
     const what={'לוגו':'הלוגו','מוצר':'תמונת מוצר','רקע':'תמונת רקע או נוף','אחר':'תמונה נוספת'};
-    const list=chosen.map((a,i)=>'תמונה '+(i+1+(tpl?1:0))+': '+(what[a.tag]||'תמונה נוספת'));
-    p.push('התמונות המצורפות לפי הסדר: '+(tpl?'תמונה 1: תבנית הסגנון. ':'')+list.join('. ')+'.');
+    p.push('התמונות המצורפות לפי הסדר: '+chosen.map((a,i)=>'תמונה '+(i+1)+': '+(what[a.tag]||'תמונה נוספת')).join('. ')+'.');
   }
   /* v2: צבע המודעה. גובר על הצבעוניות של התבנית */
   const hexC=colorHex();
-  if(hexC)p.push('צבע המודעה: '+hexC+'. זה הצבע הדומיננטי של המודעה, ברקע או במשטחים הגדולים, ואפשר לשלב גוונים בהירים וכהים שלו. בלי צבעים חזקים נוספים מלבד צבעי הלוגו.'+(tpl?' הצבע הזה גובר על הצבעים של התבנית.':''));
+  if(hexC)p.push('צבע המודעה: '+hexC+'. זה הצבע הדומיננטי של המודעה, ברקע או במשטחים הגדולים, ואפשר לשלב גוונים בהירים וכהים שלו. בלי צבעים חזקים נוספים מלבד צבעי הלוגו.');
   /* v2: המלצת פונטים (טיוטה, ראו V2-TODO.md) */
   if(S.overlay!==OVERLAY[1]){
-    const f=fontsFor();
-    p.push('טיפוגרפיה: הכותרת בפונט עברי '+f.head+' או בפונט דומה לו מאוד, והטקסט המשני ב-'+f.body+'. לא יותר משני פונטים במודעה.');
+    const f=AdCompose.fontSet(fontId());
+    p.push('טיפוגרפיה: הכותרת בפונט עברי '+f.head.f+' או בפונט דומה לו מאוד, והטקסט המשני ב-'+f.body.f+'. לא יותר משני פונטים במודעה.');
   }
   if(chosen.some(a=>a.tag==='לוגו'))logoSentences().forEach(x=>p.push(x));
   if(chosen.some(a=>a.tag==='רקע'))p.push('השתמש בתמונת הרקע או הנוף המצורפת כרקע או כסצנה של המודעה, נאמנה למקור. אפשר לחתוך אותה ולהכהות או להבהיר אותה כדי שהטקסט יהיה קריא, אבל לא להחליף אותה בסצנה אחרת.');
@@ -1195,6 +1257,39 @@ function syncPrompt(){
   }
   if(S.overlay!==OVERLAY[1])p.push('כל הטקסט על המודעה בעברית תקינה מימין לשמאל, אותיות שלמות וברורות, בלי אותיות הפוכות, בלי אותיות חסרות, בלי מילים מומצאות ובלי אנגלית מלבד שם המותג.');
   S.prompt=p.join(' ');
+}
+
+/* הפרומפט של מסלול התבניות: צילום בלבד. איפה ייכנס הטקסט תלוי בתבנית,
+   ולכן כל תבנית אומרת למנוע איפה לשים את הנושא ואיזה אזור להשאיר רגוע */
+const PHOTO_COMPOSITION={
+  split:'הנושא המרכזי באמצע הפריים עם מעט אוויר מסביב. השוליים של התמונה עשויים להיחתך מעט.',
+  overlay:'הכותרת תונח על השליש התחתון של התמונה, ולכן הנושא המרכזי בשני השלישים העליונים, והשליש התחתון רגוע, כהה יחסית ופשוט, בלי פרטים חשובים.',
+  frame:'הנושא המרכזי באמצע הפריים, קומפוזיציה נקייה ומאוזנת.',
+  type:'התמונה תיחתך לעיגול קטן, ולכן נושא אחד ברור וקרוב, באמצע הפריים, על רקע פשוט.'
+};
+function photoPrompt(who,what,tpl,refs){
+  const p=[];
+  p.push('צילום פרסומי עבור '+who+'.');
+  if(S.extra&&S.extra.trim())p.push('בקשה מפורשת של בעל העסק, חובה לבצע: '+S.extra.trim()+'.');
+  if(what)p.push('מה שמקדמים: '+what+'.');
+  if(S.audience)p.push('קהל היעד: '+S.audience+'.');
+  if(S.tone)p.push('האווירה: '+S.tone+'.');
+  p.push('זו רק התמונה של המודעה. בלי שום טקסט, בלי אותיות, בלי מספרים, בלי לוגו, בלי כפתורים, בלי שלטים קריאים ובלי מסגרות. הכותרת והלוגו יתווספו אחר כך.');
+  p.push(PHOTO_COMPOSITION[tpl.v]||PHOTO_COMPOSITION.frame);
+  p.push('צילום אמיתי וטבעי, אור רך, צבעים טבעיים. לא נראה כמו תמונת סטוק ולא כמו הדמיה ממוחשבת.');
+  p.push('אפשר לשלב בסצנה נגיעות עדינות בצבע '+adColor()+', כדי שהתמונה תתחבר לעיצוב המודעה.');
+  if(refs.length){
+    const kind={'מוצר':'תמונת מוצר','רקע':'תמונת רקע או נוף','אחר':'תמונה נוספת'};
+    p.push('התמונות המצורפות לפי הסדר: '+refs.map((a,i)=>'תמונה '+(i+1)+': '+(kind[a.tag]||'תמונה נוספת')).join('. ')+'.');
+  }
+  if(refs.some(a=>a.tag==='רקע'))p.push('השתמש בתמונת הרקע או הנוף המצורפת כסצנה, נאמנה למקור. אפשר לחתוך אותה, אבל לא להחליף אותה בסצנה אחרת.');
+  if(refs.some(a=>a.tag==='אחר'))p.push('שלב בתמונה את התמונות הנוספות המצורפות, נאמנות למקור.');
+  if(refs.some(a=>a.tag==='מוצר'))p.push('תמונות המוצר המצורפות הן הנושא המרכזי, נאמנות למקור.');
+  else if(!/מוצר/.test(S.promote)){
+    p.push('אין כאן מוצר פיזי למכירה. הנושא המרכזי הוא האנשים והמקום עצמו, בחזית ובפוקוס מלא.');
+    p.push('אל תמציא אריזה, בקבוק או פריט ממותג ואל תשים אובייקט מומצא במרכז הפריים.');
+  }
+  return p.join(' ');
 }
 
 function copyBrief(){
@@ -1261,13 +1356,9 @@ async function generate(){
   /* try/finally, כדי ש-busy והכפתור ישתחררו גם אם משהו נופל באמצע.
      בלי זה לחיצה אחת שנכשלת משתקת את הכפתור עד רענון. */
   try{
-    const refs=ASSETS.filter(a=>S.assets.includes(a.id)).map(a=>a.url);
-    /* v2: התבנית נשלחת ראשונה, כי הפרומפט מתייחס אליה כ"תמונה המצורפת הראשונה" */
     const tpl=templateMeta();
-    if(tpl&&tpl.img){
-      const b=await fetch(tpl.img).then(r=>{if(!r.ok)throw new Error('קובץ התבנית לא נמצא');return r.blob()});
-      refs.unshift(await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(b)}));
-    }
+    /* בתבנית הלוגו מונח בקוד, ולכן הוא לא נשלח למנוע */
+    const refs=ASSETS.filter(a=>S.assets.includes(a.id)&&!(tpl&&a.tag==='לוגו')).map(a=>a.url);
 
     const askCopy = () => fetch(API_BASE+'/api/post',{method:'POST',headers:headers(),body:JSON.stringify(copyBrief())})
       .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
@@ -1275,7 +1366,7 @@ async function generate(){
 
     const askImage = prompt => LIVE.image
       ? fetch(API_BASE+'/api/generate',{method:'POST',headers:headers(),
-          body:JSON.stringify({kind:'image',prompt,format:S.format,images:refs,
+          body:JSON.stringify({kind:'image',prompt,format:tpl?AdCompose.slotFormat(tpl.v,S.format):S.format,images:refs,
                                adFormat:layoutId(),adFormatName:S.layout})})
         .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
         .catch(e=>({_err:e.message||String(e)}))
@@ -1283,6 +1374,15 @@ async function generate(){
 
     const copyP=askCopy();
     let copy={}, img={};
+
+    if(tpl){
+      /* תבנית: הקופי והצילום רצים במקביל, והמודעה מורכבת מהם בדפדפן */
+      const r=await Promise.all([copyP,askImage(S.prompt)]);
+      copy=r[0]||{}; img=r[1]||{};
+      if(img._err||img._skipped){ showResult(img,copy); return }
+      await showComposed(img,copy);
+      return;
+    }
 
     if(S.prompt.indexOf('{{כותרת}}')>=0){
       /* הכותרת נצרבת בתמונה, ולכן צריך את הקופי לפני שמייצרים אותה */
@@ -1328,6 +1428,71 @@ function showResult(img,copy){
   $('#copyText').onclick=()=>{if(navigator.clipboard)navigator.clipboard.writeText($('#resText').value);toast('הקופי הועתק')};
   $('#again').onclick=()=>generate();
   if(img&&img.url)saveAd(img,text);
+}
+
+/* =================== v2: מודעה מורכבת מתבנית =================== */
+/* התמונה שהמנוע החזיר נטענת לקנבס. תמונה מדומיין אחר עוברת דרך השרת, אחרת הקנבס ננעל */
+async function loadAdPhoto(url){
+  if(/^(data|blob):/.test(url))return AdCompose.loadImage(url);
+  return AdCompose.loadImage(URL.createObjectURL(await fetchImage(url)));
+}
+function composedSub(head){
+  const sub=(S.promoteFree||'').trim();
+  if(sub&&sub!==head)return sub;
+  return [BIZ.field,BIZ.city].filter(Boolean).join(' · ');
+}
+async function showComposed(img,copy){
+  const text=(copy&&copy.text)?copy.text.trim():'';
+  const photo=await loadAdPhoto(img.url);
+  const logo=await logoForAd();
+  const head=headlineOf(text)||(S.promoteFree||'').trim()||S.promote||BIZ.name;
+  /* כל מה שצריך כדי לצייר את המודעה מחדש. נשמר עם המודעה */
+  const D={tpl:S.template,font:fontId(),color:adColor(),format:S.format,
+           headline:head,sub:composedSub(head),cta:ctaText(),name:BIZ.name,site:BIZ.site};
+  await AdCompose.ensureFonts(D.font);
+
+  const chips=(list,key)=>list.map(x=>`<button class="chip ${D[key]===x.v?'on':''}" data-k="${key}" data-v="${attr(x.v)}">${esc(x.t)}</button>`).join('');
+  $('#result').innerHTML=`
+    <div class="stage"><canvas id="resCanvas"></canvas></div>
+    <div class="ed-grid">
+      <label class="field"><span>כותרת</span><input id="edHead" value="${attr(D.headline)}"></label>
+      <label class="field"><span>שורה משנית</span><input id="edSub" value="${attr(D.sub)}"></label>
+      <label class="field"><span>כפתור</span><input id="edCta" value="${attr(D.cta)}"></label>
+    </div>
+    <div class="ed-row"><span class="lbl">תבנית</span>${chips(TEMPLATES,'tpl')}</div>
+    <div class="ed-row"><span class="lbl">פונט</span>${chips(AdCompose.FONT_SETS,'font')}</div>
+    <p class="chip-note">שינויים בטקסט, בתבנית ובפונט מתעדכנים במודעה מיד, בלי יצירה חדשה ובלי עלות</p>
+    <label class="field" style="margin-top:16px"><span>הקופי למודעה</span><textarea id="resText" rows="6">${esc(text)}</textarea></label>
+    ${copy&&copy._err?'<div class="notice err">כתיבת הקופי נכשלה: '+esc(copy._err)+'</div>':''}
+    <div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took!=null?' · '+img.took+' שניות':''} · התמונה מהמנוע, הטקסט והלוגו מונחים בקוד</div>
+    <div class="result-actions">
+      <button class="btn btn-primary btn-sm" id="dlImg">הורדת המודעה</button>
+      <button class="btn btn-outline btn-sm" id="copyText">העתקת הקופי</button>
+      <button class="btn btn-outline btn-sm" id="again">יצירה נוספת</button>
+    </div>`;
+
+  const cv=$('#resCanvas');
+  const rec={id:'ad'+Date.now(),url:'',text,biz:BIZ.name,format:S.format,promote:S.promote,
+             date:new Date().toLocaleString('he-IL'),photo:img.url,compose:D};
+  const draw=()=>{ AdCompose.render(cv,Object.assign({img:photo,logo},D)); rec.url=cv.toDataURL('image/jpeg',0.93);
+                   rec.template=(TEMPLATES.find(x=>x.v===D.tpl)||{}).t||'' };
+  let saveT=null;
+  const save=()=>{ clearTimeout(saveT); saveT=setTimeout(async()=>{ rec.text=$('#resText').value; await DB.put('ads',rec); ADS=await DB.all('ads'); renderGallery(); renderCounts() },500) };
+  draw(); save();
+
+  [['#edHead','headline'],['#edSub','sub'],['#edCta','cta']].forEach(([sel,k])=>$(sel).oninput=e=>{ D[k]=e.target.value; draw(); save() });
+  $('#resText').oninput=save;
+  $$('#result .ed-row').forEach(row=>row.onclick=async e=>{
+    const b=e.target.closest('[data-k]'); if(!b)return;
+    D[b.dataset.k]=b.dataset.v;
+    row.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
+    if(b.dataset.k==='font')await AdCompose.ensureFonts(D.font);
+    draw(); save();
+  });
+  cv.onclick=()=>lightbox(rec.url);
+  $('#dlImg').onclick=()=>downloadAd({url:rec.url,biz:BIZ.name,format:S.format});
+  $('#copyText').onclick=()=>{if(navigator.clipboard)navigator.clipboard.writeText($('#resText').value);toast('הקופי הועתק')};
+  $('#again').onclick=()=>generate();
 }
 
 function lightbox(url){
@@ -1536,7 +1701,7 @@ function showTab(name){
 }
 $$('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
 $('#fab').onclick=()=>{
-  Object.assign(S,{promote:'',promoteFree:'',template:'',color:'',goal:'לידים ופניות',layout:'',format:'4:5',audience:'',tone:'',cta:'',platform:'אינסטגרם',framework:'מוביל לפעולה',len:'קצר',emoji:'מדוד',extra:'',assets:[],prompt:'',promptTouched:false});
+  Object.assign(S,{promote:'',promoteFree:'',template:'',color:'',font:'',goal:'לידים ופניות',layout:'',format:'4:5',audience:'',tone:'',cta:'',platform:'אינסטגרם',framework:'מוביל לפעולה',len:'קצר',emoji:'מדוד',extra:'',assets:[],prompt:'',promptTouched:false});
   $('#audOther').value='';
   saveDraft();
   $$('.sec').forEach(x=>x.classList.remove('done','open'));
@@ -1580,12 +1745,12 @@ function renderCounts(){
 ['b_name','b_nameEn','b_field','b_city','b_site'].forEach(id=>{
   $('#'+id).oninput=()=>{
     BIZ[id.slice(2)]=$('#'+id).value.trim();
-    S.promptTouched=false; syncPrompt(); $('#promptIn').value=S.prompt;
+    S.promptTouched=false; syncPrompt(); $('#promptIn').value=S.prompt; renderTplPreview();
     clearTimeout(BIZ._t); BIZ._t=setTimeout(()=>DB.put('settings',{id:'biz',name:BIZ.name,nameEn:BIZ.nameEn,field:BIZ.field,city:BIZ.city,site:BIZ.site}),400);
   };
 });
 $('#promoteFree').onkeydown=e=>{ if(e.code==='Enter'||e.code==='NumpadEnter'){ e.preventDefault(); if(S.promoteFree)closeSoon('sec-promote') } };
-$('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
+$('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;renderTplPreview();saveDraft()};
 $('#audAdd').onclick=addAudience;
 $('#audOther').onkeydown=e=>{ if(e['key']==='Enter'){ e.preventDefault(); addAudience() } };
 $('#extraIn').oninput=()=>{S.extra=$('#extraIn').value;S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
