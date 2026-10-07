@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://static.greeninvoice.co.il/fonts/ploni.min.css">
 <link rel="icon" href="assets/morning-mark.svg">
 <!-- הפונטים של המודעות עצמן (לא של הממשק): עבריים וחופשיים לשימוש מסחרי -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;800&family=Rubik:wght@400;700&family=Secular+One&family=Frank+Ruhl+Libre:wght@700&family=Assistant:wght@400;600&family=Karantina:wght@700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;800&family=Rubik:wght@400;500;600;700&family=Secular+One&family=Frank+Ruhl+Libre:wght@700&family=Assistant:wght@400;600&family=Karantina:wght@700&display=swap">
 <style>
 :root{
   /* הטוקנים נלקחו מגיליון הסגנון של המערכת עצמה (app.css) */
@@ -281,6 +281,8 @@ a{color:inherit}
 .stage canvas{max-width:100%;max-height:560px;width:auto;height:auto;border-radius:6px;box-shadow:0 8px 26px rgba(3,56,65,.14);display:block;cursor:zoom-in}
 .ed-grid{display:grid;grid-template-columns:2fr 1.4fr 1fr;gap:12px;margin-top:16px}
 .ed-grid .field{margin-bottom:0}
+.ed-grid .cnt{font-style:normal;font-size:12px;color:#607684;margin-inline-start:6px}
+.ed-grid .cnt.over{color:var(--err);font-weight:600}
 @media (max-width:760px){.ed-grid{grid-template-columns:1fr}}
 .ed-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
 .ed-row .lbl{font-size:13.5px;color:var(--muted);margin-inline-end:4px;min-width:52px}
@@ -698,7 +700,7 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
 <button class="chat-fab" title="לעזרה במערכת, אני כאן"><svg viewBox="0 0 28 32"><path d="M28 32s-4.714-1.855-8.527-3.34H3.437C1.54 28.66 0 27.026 0 25.013V3.644C0 1.633 1.54 0 3.437 0h21.125c1.898 0 3.437 1.632 3.437 3.645v18.404H28V32z"/></svg></button>
 <div class="toast" id="toast"></div>
 
-<script src="assets/compose.js"></script>
+<script src="assets/compose-v3.js"></script>
 <script>
 /* ===================================================================
    יוצר המודעות של morning
@@ -826,7 +828,7 @@ const FRAMEWORKS = [
   {v:'סיפור קצר',    d:'רגע אנושי אחד שממחיש את הערך, בלי למכור ישירות. טוב לחשיפה ולמותג'}
 ];
 
-/* v2: ארבע תבניות שנבנות בקוד (assets/compose.js). המנוע מייצר רק את התמונה, בלי טקסט,
+/* v3: ארבע תבניות שנבנות בקוד (assets/compose-v3.js), לפי Ad Template של המעצב. המנוע מייצר רק את התמונה, בלי טקסט,
    והכותרת, הכפתור, הלוגו והצבע מונחים עליה בקנבס. כך העברית תמיד מדויקת והמודעה
    בזהות של העסק של הלקוח, ולא נראית כמו מודעה שבינה מלאכותית עיצבה */
 const TEMPLATES = AdCompose.TEMPLATES;
@@ -962,7 +964,7 @@ function styleCard(o){
 }
 function drawThumbs(){
   $$('#optsStyle canvas[data-tpl]').forEach(c=>AdCompose.render(c,{tpl:c.dataset.tpl,format:S.format,schematic:true,scale:0.24,
-    headline:'כותרת ראשית של המודעה',sub:'שורה משנית קצרה',cta:'לפרטים',name:'',color:adColor(),bg:S.bg,font:fontId()}));
+    headline:'כותרת ראשית של המודעה',sub:'שורה משנית קצרה של המודעה',cta:'לפרטים',name:'שם העסק',color:adColor(),bg:S.bg,font:fontId()}));
 }
 
 /* =================== v2: פונט ותצוגה מקדימה =================== */
@@ -1626,14 +1628,32 @@ async function generate(){
     const copyP=askCopy();
     let copy={}, img={};
 
+    /* v3: ארבעת השדות לתבנית, במגבלות התווים של המעצב. חריגה = עוד ניסיון אחד, קצר יותר */
+    const askFields = async tv => {
+      const lim=AdCompose.LIMITS[tv];
+      const ask=retry=>fetch(API_BASE+'/api/post',{method:'POST',headers:headers(),
+          body:JSON.stringify(Object.assign(copyBrief(),{type:'fields',limits:lim,retry}))})
+        .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
+        .then(j=>{ const m=String(j.text||'').match(/\{[\s\S]*\}/); return m?JSON.parse(m[0]):{} });
+      const over=f=>[['headline',lim.h,'הכותרת'],['subline',lim.s,'שורת המשנה'],['cta',lim.c,'הכפתור']]
+        .filter(([k,n])=>String(f[k]||'').length>n);
+      try{
+        let f=await ask('');
+        const bad=over(f);
+        if(bad.length) f=await ask('בניסיון הקודם חרגו: '+bad.map(([k,n,t])=>t+' "'+f[k]+'" ('+String(f[k]).length+' תווים, המגבלה '+n+')').join(', ')+'. כתוב קצר יותר, בתוך המגבלה.');
+        return f;
+      }catch(e){ return {_err:e.message||String(e)} }
+    };
+
     if(tpl){
-      /* תבנית: הקופי והצילום רצים במקביל, והמודעה מורכבת מהם בדפדפן.
-         עם תמונה משלכם לא מייצרים תמונה בכלל */
-      const own=usingOwn()&&ownPhoto();
-      const r=await Promise.all([copyP,own?{url:own.url,model:'התמונה שלכם',took:0}:askImage(S.prompt)]);
-      copy=r[0]||{}; img=r[1]||{};
+      /* תבנית: הקופי, ארבעת השדות והצילום רצים במקביל, והמודעה מורכבת מהם בדפדפן.
+         עם תמונה משלכם לא מייצרים תמונה. בסולידי אין צילום בכלל: בעיגול הלוגו או התמונה שהעליתם */
+      const own=(usingOwn()||tpl.v==='type')&&ownPhoto();
+      const imgP=own?{url:own.url,model:'התמונה שלכם',took:0}:tpl.v==='type'?{url:'',model:'בלי תמונה',took:0}:askImage(S.prompt);
+      const r=await Promise.all([copyP,askFields(tpl.v),imgP]);
+      copy=r[0]||{}; const fields=r[1]||{}; img=r[2]||{};
       if(img._err||img._skipped){ showResult(img,copy); return }
-      await showComposed(img,copy);
+      await showComposed(img,copy,fields);
       return;
     }
 
@@ -1694,30 +1714,33 @@ function composedSub(head){
   if(sub&&sub!==head)return sub;
   return [BIZ.field,BIZ.city].filter(Boolean).join(' · ');
 }
-async function showComposed(img,copy){
+async function showComposed(img,copy,fields){
   const text=(copy&&copy.text)?copy.text.trim():'';
-  const photo=await loadAdPhoto(img.url);
+  const photo=img.url?await loadAdPhoto(img.url):null;
   const logo=await logoForAd();
-  const head=headlineOf(text)||(S.promoteFree||'').trim()||S.promote||BIZ.name;
+  const f=fields&&!fields._err?fields:{};
+  const head=(f.headline||'').trim()||headlineOf(text)||(S.promoteFree||'').trim()||S.promote||BIZ.name;
   /* כל מה שצריך כדי לצייר את המודעה מחדש. נשמר עם המודעה */
   const D={tpl:S.template,font:fontId(),color:adColor(),bg:S.bg,format:S.format,
-           headline:head,sub:composedSub(head),cta:ctaText(),name:BIZ.name,site:BIZ.site};
+           headline:head,sub:(f.subline||'').trim()||composedSub(head),cta:(f.cta||'').trim()||ctaText(),
+           name:BIZ.name,nameEn:BIZ.nameEn,site:BIZ.site};
   await AdCompose.ensureFonts(D.font);
 
   const chips=(list,key)=>list.map(x=>`<button class="chip ${D[key]===x.v?'on':''}" data-k="${key}" data-v="${attr(x.v)}">${esc(x.t)}</button>`).join('');
   $('#result').innerHTML=`
     <div class="stage"><canvas id="resCanvas"></canvas></div>
     <div class="ed-grid">
-      <label class="field"><span>כותרת</span><input id="edHead" value="${attr(D.headline)}"></label>
-      <label class="field"><span>שורה משנית</span><input id="edSub" value="${attr(D.sub)}"></label>
-      <label class="field"><span>כפתור</span><input id="edCta" value="${attr(D.cta)}"></label>
+      <label class="field"><span>כותרת <em class="cnt" id="cntHead"></em></span><input id="edHead" value="${attr(D.headline)}"></label>
+      <label class="field"><span>שורה משנית <em class="cnt" id="cntSub"></em></span><input id="edSub" value="${attr(D.sub)}"></label>
+      <label class="field"><span>כפתור <em class="cnt" id="cntCta"></em></span><input id="edCta" value="${attr(D.cta)}"></label>
     </div>
     <div class="ed-row"><span class="lbl">תבנית</span>${chips(TEMPLATES,'tpl')}</div>
     <div class="ed-row"><span class="lbl">פונט</span>${chips(AdCompose.FONT_SETS,'font')}</div>
     <p class="chip-note">שינויים בטקסט, בתבנית ובפונט מתעדכנים במודעה מיד, בלי יצירה חדשה ובלי עלות</p>
     <label class="field" style="margin-top:16px"><span>הקופי למודעה</span><textarea id="resText" rows="6">${esc(text)}</textarea></label>
     ${copy&&copy._err?'<div class="notice err">כתיבת הקופי נכשלה: '+esc(copy._err)+'</div>':''}
-    <div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took!=null?' · '+img.took+' שניות':''} · התמונה מהמנוע, הטקסט והלוגו מונחים בקוד</div>
+    ${fields&&fields._err?'<div class="notice warn">כתיבת שדות המודעה נכשלה, ולכן הכותרת נלקחה מהקופי: '+esc(fields._err)+'</div>':''}
+    <div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took?' · '+img.took+' שניות':''} · הטקסט והלוגו מונחים בקוד, לפי חוקי התבנית</div>
     <div class="result-actions">
       <button class="btn btn-primary btn-sm" id="dlImg">הורדת המודעה</button>
       <button class="btn btn-outline btn-sm" id="copyText">העתקת הקופי</button>
@@ -1727,8 +1750,12 @@ async function showComposed(img,copy){
   const cv=$('#resCanvas');
   const rec={id:'ad'+Date.now(),url:'',text,biz:BIZ.name,format:S.format,promote:S.promote,
              date:new Date().toLocaleString('he-IL'),photo:img.url,compose:D};
+  /* מונה תווים לפי המגבלות של התבנית. חריגה לא מקטינה את הטקסט, היא נחתכת בשלוש נקודות */
+  const counters=()=>{ const L=AdCompose.LIMITS[D.tpl];
+    [['#cntHead',D.headline,L.h],['#cntSub',D.sub,L.s],['#cntCta',D.cta,L.c]].forEach(([sel,v,n])=>{
+      const el=$(sel); el.textContent=String(v||'').length+'/'+n; el.classList.toggle('over',String(v||'').length>n) }) };
   const draw=()=>{ AdCompose.render(cv,Object.assign({img:photo,logo},D)); rec.url=cv.toDataURL('image/jpeg',0.93);
-                   rec.template=(TEMPLATES.find(x=>x.v===D.tpl)||{}).t||'' };
+                   rec.template=(TEMPLATES.find(x=>x.v===D.tpl)||{}).t||''; counters() };
   let saveT=null;
   const save=()=>{ clearTimeout(saveT); saveT=setTimeout(async()=>{ rec.text=$('#resText').value; await DB.put('ads',rec); ADS=await DB.all('ads'); renderGallery(); renderCounts() },500) };
   draw(); save();
