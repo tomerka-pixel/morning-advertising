@@ -350,7 +350,7 @@ a{color:inherit}
 .sec{padding:0;border:1px solid #EFF1F6;border-radius:12px;margin-bottom:16px;overflow:hidden}
 .sec-head{padding:18px 24px;margin:0;border-bottom:1px solid #EFF1F6;gap:10px}
 .sec-head h2{font-size:18px;font-weight:700;color:var(--ink)}
-.sec-num,.sec-toggle,.sec-pick{display:none!important}
+.sec-num{display:none!important}
 .sec-sub{padding:16px 24px 0;margin:0}
 .sec-body{padding:18px 24px 22px}
 .opt-tag{font-size:13px;color:#607684;background:#F5F6FA;border-radius:100px;padding:3px 10px}
@@ -396,6 +396,40 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
   .tpl-grid{grid-template-columns:repeat(2,1fr)}
   .sec-head,.sec-body{padding-left:16px;padding-right:16px}.sec-sub{padding:14px 16px 0}
 }
+
+/* v3.2: הסרגל לפי פיגמה */
+.rail.frail{width:64px;flex:0 0 64px;background:#033841;padding:17px 8px;gap:0;justify-content:space-between;align-items:center}
+.fr-top{position:relative;width:40px;height:460px}
+.fr-i{position:absolute;left:0;width:40px;height:40px;margin-top:-8px;display:grid;place-items:center;border-radius:6px;cursor:pointer}
+.fr-i:hover{background:#2B585F}
+.fr-ic{position:relative;width:24px;height:24px;display:block;box-sizing:border-box}
+.fr-ic>img{width:100%;height:100%;display:block}
+.fr-in{position:absolute;display:block}
+.fr-in img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.fr-line{position:absolute;left:8px;width:24px;height:1px;background:#2B585F;display:block}
+.fr-bottom{position:relative;width:48px;height:111px}
+.fr-acct{position:absolute;top:0;left:0;width:48px;height:48px;border-radius:7.2px;background:#2B585F}
+.fr-av{position:absolute;left:6px;top:8px;width:36px;height:36px;display:grid;place-items:center}
+.fr-av img{position:absolute;inset:0;width:100%;height:100%}
+.fr-av b{position:relative;font-size:18px;font-weight:500;color:#033841;line-height:1}
+.fr-dot{position:absolute;left:37px;top:3px;width:8px;height:8px}
+.fr-dot img{width:100%;height:100%;display:block}
+.fr-collapse{position:absolute;left:13px;top:87px;width:24px;height:24px;padding:0;border:0;background:none;cursor:pointer}
+.fr-collapse img{width:100%;height:100%;display:block}
+@media (max-width:900px){.rail.frail{width:64px;flex-basis:64px}}
+/* v3.2: כל כרטיס מתקפל. סגור = רק הכותרת ומה שנבחר */
+.sec.col{padding:0;margin-bottom:16px}
+.sec.col:not(.open){padding:0;margin-bottom:12px}
+.sec.col .sec-head{padding:18px 24px;margin:0;border-radius:0;cursor:pointer;gap:10px}
+.sec.col .sec-head:hover{background:#FAFBFC}
+.sec.col:not(.open) .sec-head{border-bottom:0}
+.sec.col:not(.open) .sec-head h2{font-size:18px}
+.sec.col .sec-pick{display:inline-block!important;margin-inline-start:auto;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#F5F6FA;color:#607684;border-radius:100px;padding:4px 12px;font-size:14px;font-weight:500}
+.sec.col .sec-pick:empty{display:none!important}
+.sec.col.done .sec-pick{background:#E6FBF4;color:#033841}
+.sec.col .sec-toggle{display:grid!important;order:0;width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:#F5F6FA;color:#033841}
+.sec.col .sec-pick:empty+.sec-toggle{margin-inline-start:auto}
+.sec.col.open .sec-toggle svg{transform:rotate(180deg)}
 
 /* v3.1: לפי המסכים המלאים של המעצב */
 .page-head{margin:6px 0 22px}
@@ -458,21 +492,27 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
 <body>
 <div class="app">
 
-  <aside class="rail">
-    <img class="mark" src="assets/morning-mark.svg" alt="morning" style="filter:brightness(0) invert(1)">
-    <button class="rail-btn" title="מועדפים"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg></button>
-    <div class="rail-sep"></div>
-    <button class="rail-btn" title="הכנסות"><svg viewBox="0 0 24 24"><path d="M4 19V12m6 7V8m6 11V5m4 14H2M4 8l5-4 5 2 6-4"/></svg></button>
-    <button class="rail-btn" title="ניהול שוטף"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5"/></svg></button>
-    <button class="rail-btn" title="הוצאות"><svg viewBox="0 0 24 24"><path d="M3 7h15a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H3zM3 7l3-4h9l3 4M16 13h5"/></svg></button>
-    <button class="rail-btn" title="מכירות ולידים"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg></button>
-    <button class="rail-btn" title="רשות המיסים"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M14.5 8.5c-1-1-5-.7-5 1.5 0 3 5 1 5 4 0 2-4 2.5-5 .8M12 7v10"/></svg></button>
-    <button class="rail-btn" title="ניהול פיננסי"><svg viewBox="0 0 24 24"><path d="M4 18V6h16v12zM7 15l3-3 3 2 4-5"/></svg></button>
-    <button class="rail-btn active" title="ניהול פרסום"><span class="dot"></span><svg viewBox="0 0 24 24"><path d="M4 14V9l12-4v13L4 14Zm0 0 2 6h4l-2-5M19 8l2-2M19 15l2 2M20 11h3"/></svg></button>
-    <button class="rail-btn" title="תוספים לעסק"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM16.5 13.5v6M13.5 16.5h6"/></svg></button>
-    <div class="rail-bottom">
-      <div class="rail-avatar"><img src="assets/morning-mark.svg" alt=""></div>
-      <button class="rail-collapse" title="כיווץ"><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button>
+  <!-- הסרגל לפי העיצוב בפיגמה (Sidebar, node 22450:19394). האייקונים יוצאו משם ל-assets/rail -->
+  <aside class="rail frail">
+    <div class="fr-top">
+      <a class="fr-i" style="top:0" title="מורנינג"><span class="fr-ic" style="padding:3px"><img src="assets/rail/morning.svg" alt=""></span></a>
+      <a class="fr-i" style="top:52px" title="מועדפים"><span class="fr-ic"><img src="assets/rail/star.svg" alt=""></span></a>
+      <i class="fr-line" style="top:100px"></i>
+      <a class="fr-i" style="top:123px" title="הכנסות"><span class="fr-ic"><span class="fr-in" style="inset:16.67% 16.24%"><img src="assets/rail/income.svg" alt=""></span></span></a>
+      <a class="fr-i" style="top:176px" title="מסמכים"><span class="fr-ic"><span class="fr-in" style="inset:13.4% 16.67%"><img src="assets/rail/docs.svg" alt=""></span></span></a>
+      <a class="fr-i" style="top:228px" title="הוצאות"><span class="fr-ic">
+        <span class="fr-in" style="inset:25.52% 15.01% 16.67% 15.01%"><img src="assets/rail/expenses-a.svg" alt=""></span>
+        <span class="fr-in" style="inset:42.18% 15.01% 37.49% 57.66%"><img src="assets/rail/expenses-b.svg" alt=""></span>
+        <span class="fr-in" style="inset:12.5% 29.34% 70.15% 24.68%"><img src="assets/rail/expenses-c.svg" alt=""></span></span></a>
+      <a class="fr-i" style="top:280px" title="תשלומים"><span class="fr-ic" style="padding:2px"><img src="assets/rail/nis.svg" alt=""></span></a>
+      <a class="fr-i" style="top:332px" title="בנקאות"><span class="fr-ic"><img src="assets/rail/banking.svg" alt=""></span></a>
+      <a class="fr-i" style="top:384px" title="רשויות"><span class="fr-ic"><span class="fr-in" style="inset:17.35% 22.6% 25.68% 22.6%"><img src="assets/rail/gov.svg" alt=""></span></span></a>
+      <a class="fr-i" style="top:436px" title="תוספים"><span class="fr-ic"><img src="assets/rail/plugins.svg" alt=""></span></a>
+    </div>
+    <div class="fr-bottom">
+      <div class="fr-acct"><span class="fr-av"><img src="assets/rail/avatar.svg" alt=""><b id="railInitials">לפ</b></span><span class="fr-dot"><img src="assets/rail/dot.svg" alt=""></span></div>
+      <i class="fr-line" style="top:75px;left:13px"></i>
+      <button class="fr-collapse" title="כיווץ"><img src="assets/rail/collapse.svg" alt=""></button>
     </div>
   </aside>
 
@@ -491,7 +531,7 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
         <section class="hello">
           <div class="hello-disc"><img src="assets/morning-logo.svg" alt="morning"></div>
           <div>
-            <h1>יוצר המודעות <span style="font-size:14px;font-weight:600;background:var(--ink);color:#fff;border-radius:100px;padding:3px 11px;vertical-align:middle">v2</span></h1>
+            <h1>יוצר המודעות <span style="font-size:14px;font-weight:600;background:var(--ink);color:#fff;border-radius:100px;padding:3px 11px;vertical-align:middle">v3</span></h1>
             <p>עונים על כמה שאלות, ומקבלים מודעה מוכנה לפרסום לעסק שלכם</p>
             <div style="margin-top:10px" id="statusSlot"></div>
           </div>
@@ -525,13 +565,13 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
             </div>
           </div>
 
-          <section class="sec" id="sec-format">
-            <div class="sec-head"><h2>פורמט</h2></div>
+          <section class="sec col" id="sec-format">
+            <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><h2>פורמט</h2><span class="sec-pick" id="pick-format"></span><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
             <div class="sec-body"><div class="fmt-grid" id="optsFormat"></div></div>
           </section>
 
-          <section class="sec" id="sec-style">
-            <div class="sec-head"><h2>תבנית</h2></div>
+          <section class="sec col" id="sec-style">
+            <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><h2>תבנית</h2><span class="sec-pick" id="pick-style"></span><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
             <div class="sec-body">
               <div class="tpl-grid" id="optsStyle"></div>
               <div class="style-row">
@@ -541,8 +581,8 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
             </div>
           </section>
 
-          <section class="sec" id="sec-content">
-            <div class="sec-head"><h2>תוכן ועיצוב</h2></div>
+          <section class="sec col" id="sec-content">
+            <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><h2>תוכן ועיצוב</h2><span class="sec-pick" id="pick-promote"></span><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
             <div class="sec-body">
               <div class="flabel">מה מקדמים? <b class="req">*</b></div>
               <p class="fhint">לא צריך לכתוב כותרת או טקסט. בוחרים ומדייקים במשפט, והקופי נכתב לבד</p>
@@ -577,8 +617,8 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
             </div>
           </section>
 
-          <section class="sec" id="sec-aud">
-            <div class="sec-head"><h2>קהל יעד</h2></div>
+          <section class="sec col" id="sec-aud">
+            <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><h2>קהל יעד</h2><span class="sec-pick" id="pick-aud"></span><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
             <div class="sec-body">
               <div class="aud-top">
                 <div><div class="flabel" style="margin-top:0">מגדר</div><div class="seg" id="segGender"></div></div>
@@ -916,7 +956,7 @@ function renderFonts(){
     AdCompose.FONT_SETS.map(f=>`<button class="chip ${S.font===f.v?'on':''}" data-f="${attr(f.v)}" style="font-family:'${f.head.f}';font-weight:${f.head.w}" title="${attr(f.head.f)}">${esc(f.t)}</button>`).join('');
   $('#optsFont').onclick=e=>{
     const b=e.target.closest('[data-f]'); if(!b)return;
-    S.font=b.dataset.f; renderFonts(); saveDraft(); drawThumbs();
+    S.font=b.dataset.f; renderFonts(); saveDraft(); drawThumbs(); updateStylePick();
   };
 }
 /* תמונות שכבר נטענו (לוגו), כדי שהתצוגה המקדימה לא תטען אותן שוב בכל שינוי */
@@ -957,10 +997,33 @@ function setOpen(secId,open){
 /* התקציר בכותרת של "איך המודעה תיראה": התבנית והצבע יחד */
 function updateStylePick(){
   const t=templateMeta();
-  if(t||S.color)markDone('sec-style','pick-style',esc((t?t.t:'בלי תבנית')+' · '+colorLabel()));
-  else document.getElementById('sec-style').classList.remove('done');
+  if(t)markDone('sec-style','pick-style',esc(t.t+' · '+AdCompose.fontSet(fontId()).t));
+  else{ document.getElementById('sec-style').classList.remove('done'); $('#pick-style').textContent='' }
 }
-function closeSoon(secId){ setTimeout(()=>setOpen(secId,false),320) }
+/* v3: התקצירים בכותרות של התוכן והקהל */
+function updateContentPick(){
+  const t=[S.promote,(S.promoteFree||'').trim()].filter(Boolean).join(' · ');
+  if(S.promote)markDone('sec-content','pick-promote',esc(t));
+  else{ document.getElementById('sec-content').classList.remove('done'); $('#pick-promote').textContent='' }
+}
+function updateAudPick(){
+  const t=[S.audience||(S.gender.length||S.ages.length||S.segs.length?'':''),S.tone].filter(Boolean).join(' · ');
+  if(t)markDone('sec-aud','pick-aud',esc(t));
+  else{ document.getElementById('sec-aud').classList.remove('done'); $('#pick-aud').textContent='' }
+}
+/* סוגרים את הכרטיס ופותחים את הבא שעוד לא מולא, כדי שהעמוד יישאר קצר */
+function closeSoon(secId){
+  setTimeout(()=>{
+    setOpen(secId,false);
+    const all=$$('.sec.col'), i=all.findIndex(x=>x.id===secId);
+    const nx=all.slice(i+1).find(x=>!x.classList.contains('done'));
+    if(nx&&!$$('.sec.col.open').length)setOpen(nx.id,true);
+  },320);
+}
+function openFirstOpenable(){
+  const first=$$('.sec.col').find(x=>!x.classList.contains('done'));
+  if(first)setOpen(first.id,true);
+}
 function wireCollapse(){
   $$('.sec.col').forEach(sec=>{
     const h=sec.querySelector('.sec-head');
@@ -1117,7 +1180,7 @@ function buildSections(){
   };
   renderFonts();
   wirePick('#optsPromote','promote','sec-promote','pick-promote','sec-aud');
-  wirePick('#optsStyle','template','sec-style','pick-style','',()=>esc(templateMeta().t+' · '+colorLabel()));
+  wirePick('#optsStyle','template','sec-style','pick-style','',()=>esc(templateMeta().t+' · '+AdCompose.fontSet(fontId()).t));
   wirePick('#optsFormat','format','sec-format','pick-format','',v=>formatLabel(v));
 
   $('#chipsTone').onclick = e => pickChip(e,'tone','#chipsTone');
@@ -1136,6 +1199,7 @@ function wirePick(sel,key,secId,pickId,nextId,label){
     markDone(secId,pickId,label?label(S[key]):esc(S[key]));
     refreshPrompt(); saveDraft();
     if(key==='promote'){
+      updateContentPick();
       /* בלי לדעת מה המוצר או האירוע המנוע ימציא אותם, ולכן נעצרים כאן לשאלה */
       /* תמיד נעצרים לשדה הדיוק ולמטרה. ממשיכים הלאה בבחירת מטרה או ב-Enter */
       renderPromoteDetail();
@@ -1166,7 +1230,7 @@ function renderAud(){
 function toggleAud(key,v){
   S[key]=S[key].includes(v)?S[key].filter(x=>x!==v):S[key].concat(v);
   S.audience=audienceText(); S.promptTouched=false;
-  renderAud(); refreshPrompt(); saveDraft();
+  renderAud(); refreshPrompt(); saveDraft(); updateAudPick();
 }
 
 /* הוספת קהל יעד משלהם: נשמר, הופך לשבב, ונבחר מיד */
@@ -1202,12 +1266,8 @@ function pickChip(e,key,sel){
 }
 
 /* מסמן את השלב כהושלם וממשיך הלאה, רק כששני החלקים מלאים */
-function afterAud(advance){
-  if(S.audience&&S.tone){
-    markDone('sec-aud','pick-aud',esc(S.audience+' · '+S.tone));
-    if(advance)closeSoon('sec-aud');
-  }
-}
+/* v3: בקהל בוחרים כמה דברים, ולכן לא סוגרים לבד. רק מעדכנים את התקציר */
+function afterAud(){ updateAudPick() }
 
 /* שדה הפירוט משתנה לפי מה שנבחר, וחלק מהאפשרויות לא יכולות לעבוד בלעדיו */
 function promoteMeta(){ return PROMOTE.find(x=>x.v===S.promote)||null }
@@ -1277,7 +1337,7 @@ function applyState(){
   set('#optsPromote',S.promote); set('#optsStyle',S.template); set('#optsFormat',S.format);
   set('#chipsTone',S.tone);
   renderAud();
-  if(S.promote)markDone('sec-promote','pick-promote',esc(S.promote));
+  updateContentPick(); updateAudPick();
   renderColors(); updateStylePick();
   if(S.format)markFormat();
   if(S.audience&&S.tone)markDone('sec-aud','pick-aud',esc(S.audience+' · '+S.tone));
@@ -1900,7 +1960,7 @@ function renderCounts(){
   };
 });
 $('#promoteFree').onkeydown=e=>{ if(e.code==='Enter'||e.code==='NumpadEnter'){ e.preventDefault(); if(S.promoteFree)closeSoon('sec-promote') } };
-$('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;renderTplPreview();saveDraft()};
+$('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;renderTplPreview();updateContentPick();saveDraft()};
 $('#audAdd').onclick=addAudience;
 $('#audOther').onkeydown=e=>{ if(e['key']==='Enter'){ e.preventDefault(); addAudience() } };
 $('#extraIn').oninput=()=>{S.extra=$('#extraIn').value;S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
@@ -1953,7 +2013,7 @@ $('#useOwn').onchange=e=>{ S.useOwn=e.target.checked; saveDraft() };
      ובלעדיה הוא ממציא את שם המותג ואת הצבעים */
   ASSETS.filter(a=>a.tag==='לוגו').forEach(a=>{ if(!S.assets.includes(a.id))S.assets.push(a.id) });
   $('#b_name').value=BIZ.name||''; $('#b_nameEn').value=BIZ.nameEn||''; $('#b_field').value=BIZ.field||''; $('#b_city').value=BIZ.city||''; $('#b_site').value=BIZ.site||'';
-  buildSections(); renderAssetPick(); wireCollapse(); applyState();
+  buildSections(); renderAssetPick(); wireCollapse(); applyState(); openFirstOpenable();
   renderCounts(); renderLib(); renderGallery();
   analyzeLogos();
 })();
