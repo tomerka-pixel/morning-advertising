@@ -859,10 +859,10 @@ function colorLabel(){
 const FORMAT = [
   {v:'4:5',   t:'אינסטגרם לאורך', px:'1080×1350', w:1080, h:1350, plat:'אינסטגרם', nets:['אינסטגרם'], fmt:true},
   {v:'fb',    t:'מודעת פייסבוק',  px:'1200×628',  w:1200, h:628,  plat:'פייסבוק', nets:['פייסבוק'], fmt:true},
-  {v:'9:16',  t:'סטורי',          px:'1080×1920', w:1080, h:1920, plat:'אינסטגרם', story:true, nets:['אינסטגרם'], fmt:true},
+  {v:'reels', t:'Reels / TikTok', px:'1080×1920', w:1080, h:1920, plat:'טיקטוק', story:true, nets:['טיקטוק'], fmt:true},
   {v:'1:1',   t:'פוסט בפיד',      px:'1080×1080', w:1080, h:1080, plat:'אינסטגרם', nets:['אינסטגרם'], fmt:true},
   {v:'li',    t:'פוסט בלינקדאין', px:'1200×627',  w:1200, h:627,  plat:'לינקדאין', nets:['לינקדאין'], fmt:true},
-  {v:'reels', t:'Reels / TikTok', px:'1080×1920', w:1080, h:1920, plat:'טיקטוק', story:true, nets:['אינסטגרם','טיקטוק'], fmt:true}
+  {v:'9:16',  t:'סטורי',          px:'1080×1920', w:1080, h:1920, plat:'אינסטגרם', story:true, nets:['אינסטגרם'], fmt:true}
 ];
 function formatMeta(){ return FORMAT.find(f=>f.v===S.format)||FORMAT[0] }
 /* היחס שנשלח למנוע התמונות (הוא מכיר רק כמה יחסים קבועים) */
