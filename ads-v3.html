@@ -396,6 +396,63 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
   .tpl-grid{grid-template-columns:repeat(2,1fr)}
   .sec-head,.sec-body{padding-left:16px;padding-right:16px}.sec-sub{padding:14px 16px 0}
 }
+
+/* v3.1: לפי המסכים המלאים של המעצב */
+.page-head{margin:6px 0 22px}
+.page-head h1{font-size:30px;font-weight:700;color:var(--ink);margin:0 0 6px}
+.page-head p{margin:0;color:#607684;font-size:16px}
+.flabel{font-size:14px;color:#033841;font-weight:500;margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+.sec-body>.flabel:first-child{margin-top:0}
+.flabel .req{color:var(--err)}
+.fhint{font-size:13.5px;color:#607684;margin:-4px 0 12px}
+.q{width:18px;height:18px;border-radius:50%;border:1.5px solid #033841;display:inline-grid;place-items:center;font-size:11px;font-weight:700;cursor:help}
+.pro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.pro-grid .opt{align-items:flex-start;text-align:right;gap:8px;padding:12px;border:1px solid #EFF1F6;border-radius:8px;background:#fff}
+.pro-grid .opt:hover{transform:none;box-shadow:none;border-color:#B2BEC6;background:#fff}
+.pro-grid .opt.on{border-color:#0DAC81;box-shadow:0 0 0 1px #0DAC81;background:#fff}
+.pro-grid .opt .ic{width:34px;height:34px;flex:0 0 34px;border-radius:8px;background:#F5F6FA;color:#033841}
+.pro-grid .opt.on .ic{background:#E6FBF4;color:#0DAC81}
+.pro-grid .opt .txt{display:flex;flex-direction:column;gap:2px}
+.pro-grid .opt b{font-size:16px;font-weight:500;color:#033841}
+.pro-grid .opt small{font-size:13px;color:#607684}
+.pro-grid .chk{display:none}
+.ufield{display:block;margin-top:16px}
+.ufield>span{display:flex;align-items:center;gap:8px;font-size:14px;color:#033841;font-weight:500;margin-bottom:4px}
+.ufield input,.ufield textarea{width:100%;border:0;border-bottom:1px solid #B2BEC6;border-radius:0;padding:8px 0;font-size:16px;background:transparent;outline:0;font-family:inherit;color:var(--ink);resize:vertical}
+.ufield input:focus,.ufield textarea:focus{border-bottom-color:#0DAC81}
+.fbox-row{display:flex;gap:8px;align-items:center}
+.fbox{flex:1;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #B2BEC6;border-radius:8px;padding:10px 14px;cursor:pointer;background:#fff;min-width:0}
+.fbox:hover{border-color:#0DAC81}
+.fbox input{display:none}
+.fname{color:#607684;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fbox.has .fname{color:var(--ink)}
+.fic svg{width:20px;height:20px;fill:none;stroke:#033841;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;display:block}
+.fclear{width:38px;height:38px;border-radius:8px;border:1px solid #EFF1F6;background:#fff;font-size:20px;color:#607684;cursor:pointer}
+.linkish{padding:6px 0;margin-top:6px;font-size:14px}
+#assetPick{margin-top:8px}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+.cfield .flabel{margin:22px 0 8px}
+.cbox{display:flex;align-items:center;justify-content:space-between;border:1px solid #B2BEC6;border-radius:8px;padding:8px 12px;background:#fff}
+.cbox:focus-within{border-color:#0DAC81;box-shadow:0 0 0 1px #0DAC81}
+.cbox .hex{border:0;outline:0;font-size:16px;width:100%;background:transparent;color:var(--ink);text-align:right;font-family:inherit}
+.cbox .dot{width:22px;height:22px;flex:0 0 22px;border-radius:50%;position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);background:conic-gradient(#E8505B,#F2B33D,#2F9E7A,#1D58E3,#6B4FA0,#E8505B)}
+.cbox .dot input{position:absolute;inset:-6px;opacity:0;cursor:pointer;width:40px;height:40px}
+.aud-top{display:flex;gap:32px;flex-wrap:wrap;margin-bottom:22px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:0;background:#F5F6FA;color:#033841;border-radius:6px;padding:7px 12px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit}
+.seg button.on{background:#033841;color:#fff}
+/* v3: שבבים כגלולות בשורה, כמו בעיצוב (ב-v2 הם היו רשימה אנכית) */
+.chips{flex-direction:row;flex-wrap:wrap;gap:8px}
+.chips .chip,.chips .chip.custom{display:inline-flex;width:auto;min-height:0;border-radius:100px;padding:8px 16px;font-size:15px;border-color:#B2BEC6;color:#033841;font-weight:500}
+.chips .chip::after{display:none}
+.chips .chip.on{background:#033841;border-color:#033841;color:#fff}
+.chips .chip.custom .x{margin-inline-start:4px}
+.chips.pills .chip.on{background:#E6FBF4;border-color:#0DAC81;color:#033841}
+.chips.pills .chip.on::before{content:"✓";margin-inline-end:6px;color:#0DAC81;font-weight:700}
+.actions{display:flex;gap:12px;justify-content:center;margin:26px 0 8px}
+.actions .btn{min-width:130px}
+.costline{text-align:center}
+@media (max-width:760px){.pro-grid{grid-template-columns:repeat(2,1fr)}.cgrid{grid-template-columns:1fr}.page-head h1{font-size:24px}}
 </style>
 </head>
 <body>
@@ -451,6 +508,11 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
         <!-- ============ יצירה ============ -->
         <section id="tab-create">
 
+          <div class="page-head">
+            <h1>יצירת מודעה לעסק</h1>
+            <p>בוחרים פורמט, תבנית וקהל, ותוך כמה שניות המודעה מוכנה לפרסום</p>
+          </div>
+
           <div class="biz">
             <div class="biz-head"><h3>העסק שלכם</h3><span class="from">מתוך החשבון שלכם במורנינג</span></div>
             <p class="biz-sub">הפרטים נלקחים מהחשבון. אפשר לדייק אותם כאן לצורך המודעה</p>
@@ -473,66 +535,75 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
             <div class="sec-body">
               <div class="tpl-grid" id="optsStyle"></div>
               <div class="style-row">
-                <span class="lbl">צבע</span>
-                <div class="swatches" id="optsColor"></div>
-                <span class="sw-name" id="colorName"></span>
-              </div>
-              <div class="style-row">
                 <span class="lbl">פונט</span>
                 <div class="chips" id="optsFont"></div>
               </div>
             </div>
           </section>
 
-          <section class="sec" id="sec-promote">
-            <div class="sec-head"><h2>מה מקדמים</h2></div>
-            <p class="sec-sub">לא צריך לכתוב כותרת או טקסט. מספיק לבחור מה מקדמים ולדייק במשפט, והקופי נכתב לבד</p>
-            <div class="sec-body"><div class="list" id="optsPromote"></div>
-              <label class="field" style="margin-top:16px" id="promoteDetailWrap">
+          <section class="sec" id="sec-content">
+            <div class="sec-head"><h2>תוכן ועיצוב</h2></div>
+            <div class="sec-body">
+              <div class="flabel">מה מקדמים? <b class="req">*</b></div>
+              <p class="fhint">לא צריך לכתוב כותרת או טקסט. בוחרים ומדייקים במשפט, והקופי נכתב לבד</p>
+              <div class="pro-grid" id="optsPromote"></div>
+              <label class="ufield" id="promoteDetailWrap">
                 <span id="promoteQ">רוצים לדייק?</span>
                 <input id="promoteFree" placeholder="בחרו קודם מה מקדמים"></label>
-              <div class="grouplabel">מטרת המודעה</div>
+              <div class="flabel">מטרת המודעה</div>
               <div class="chips" id="chipsGoal"></div>
+
+              <div class="flabel">הוספת תמונה <span class="q" title="צילום של המקום, של מוצר או של הצוות. בלי תמונה, המנוע ייצור צילום שמתאים למודעה">?</span> <span class="opt-tag">לא חובה</span></div>
+              <div class="fbox-row">
+                <label class="fbox" id="imgBox"><input type="file" id="imgFile" accept="image/*">
+                  <span class="fname" id="imgName">בחירת תמונה מהמחשב</span><span class="fic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="m4 18 5-5 4 4 3-3 4 4"/></svg></span></label>
+                <button class="fclear hidden" id="imgClear" title="הסרת התמונה" aria-label="הסרת התמונה">×</button>
+              </div>
+              <button class="btn btn-ghost linkish" id="pickLib">או בחירה מנכסי המותג</button>
+              <div id="assetPick" class="hidden"></div>
+              <label class="own hidden" id="ownWrap"><input type="checkbox" id="useOwn">
+                <span><b>להשתמש בתמונה שלי כמו שהיא</b><small>בלי ליצור תמונה חדשה. הכותרת, הלוגו והכפתור יונחו עליה, ונוצר רק הקופי</small></span></label>
+
+              <div class="cgrid">
+                <label class="cfield"><span class="flabel">בחירת צבע רקע</span>
+                  <span class="cbox"><input class="hex" id="bgHex" dir="ltr" spellcheck="false" placeholder="אוטומטי"><span class="dot" id="bgDot"><input type="color" id="bgPick"></span></span></label>
+                <label class="cfield"><span class="flabel">בחירת צבע ראשי</span>
+                  <span class="cbox"><input class="hex" id="mainHex" dir="ltr" spellcheck="false" placeholder="אוטומטי"><span class="dot" id="mainDot"><input type="color" id="mainPick"></span></span></label>
+              </div>
+              <p class="fhint" id="colorNote"></p>
+
+              <label class="ufield"><span>יש לכם רעיון או בקשה? <span class="opt-tag">לא חובה</span></span>
+                <textarea id="extraIn" rows="2" placeholder="לדוגמה: אמא ובת עושות פילאטיס יחד, עם חיוך"></textarea></label>
             </div>
           </section>
 
           <section class="sec" id="sec-aud">
-            <div class="sec-head"><h2>למי מדברים</h2></div>
+            <div class="sec-head"><h2>קהל יעד</h2></div>
             <div class="sec-body">
-              <div class="grouplabel" style="margin-top:0">קהל היעד</div><div class="chips" id="chipsAud"></div>
+              <div class="aud-top">
+                <div><div class="flabel" style="margin-top:0">מגדר</div><div class="seg" id="segGender"></div></div>
+                <div><div class="flabel" style="margin-top:0">טווח גילאים</div><div class="seg" id="segAges"></div></div>
+              </div>
+              <div class="chips pills" id="chipsAud"></div>
               <div class="addrow">
                 <input id="audOther" placeholder="לא מצאתם? כתבו כאן קהל יעד משלכם">
                 <button class="btn btn-outline btn-sm" id="audAdd">הוספה</button>
               </div>
-              <div class="grouplabel">הטון</div><div class="chips" id="chipsTone"></div>
+              <div class="flabel">הטון</div><div class="chips" id="chipsTone"></div>
             </div>
           </section>
 
-          <section class="sec" id="sec-assets">
-            <div class="sec-head"><h2>תמונה ולוגו</h2><span class="opt-tag">לא חובה</span></div>
-            <p class="sec-sub">אפשר להוסיף תמונה משלכם, צילום של המקום, של מוצר או של הצוות. בלי תמונה, המנוע ייצור צילום שמתאים למודעה</p>
-            <div class="sec-body">
-              <div id="assetPick"></div>
-              <label class="own hidden" id="ownWrap"><input type="checkbox" id="useOwn">
-                <span><b>להשתמש בתמונה שלי כמו שהיא</b><small>בלי ליצור תמונה חדשה. הכותרת, הלוגו והכפתור יונחו עליה, ונוצר רק הקופי</small></span></label>
-            </div>
-          </section>
-
-          <section class="sec" id="sec-go">
-            <div class="sec-head"><h2>יצירה</h2></div>
-            <div class="sec-body">
-              <label class="field" style="margin-top:0"><span>יש לכם רעיון או בקשה? <small class="muted">(לא חובה)</small></span>
-                <textarea id="extraIn" rows="3" placeholder="לדוגמה: אמא ובת עושות פילאטיס יחד, עם חיוך"></textarea></label>
-              <details class="adv">
-                <summary>הפרומפט שיישלח למנוע</summary>
-                <div style="display:flex;justify-content:flex-end"><button class="btn btn-ghost" id="resetPrompt">איפוס אוטומטי</button></div>
-                <label class="field" style="margin-bottom:8px"><textarea id="promptIn" rows="6"></textarea></label>
-                <div class="prompt-hint hidden" id="promptHint"></div>
-              </details>
-              <div class="costline" id="costline"></div>
-              <button class="btn btn-primary btn-lg" id="go">יצירת המודעה</button>
-            </div>
-          </section>
+          <div class="actions">
+            <button class="btn btn-primary btn-lg" id="go">צור מודעה</button>
+            <button class="btn btn-outline btn-lg" id="resetAll">איפוס</button>
+          </div>
+          <div class="costline" id="costline"></div>
+          <details class="adv">
+            <summary>הפרומפט שיישלח למנוע</summary>
+            <div style="display:flex;justify-content:flex-end"><button class="btn btn-ghost" id="resetPrompt">איפוס אוטומטי</button></div>
+            <label class="field" style="margin-bottom:8px"><textarea id="promptIn" rows="6"></textarea></label>
+            <div class="prompt-hint hidden" id="promptHint"></div>
+          </details>
 
           <section class="sec hidden" id="sec-result">
             <div class="sec-head"><h2>המודעה</h2></div>
@@ -744,7 +815,19 @@ function formatMeta(){ return FORMAT.find(f=>f.v===S.format)||FORMAT[0] }
 function genFormat(v){ return {fb:'16:9',li:'16:9',reels:'9:16'}[v]||v }
 function formatLabel(v){ const f=FORMAT.find(x=>x.v===v); return f?esc(f.t)+' <bdi dir="ltr">'+f.px+'</bdi>':v }
 /* v2: רק הקהלים החשובים. קהל אחר אפשר להוסיף בשדה החופשי */
-const AUDIENCE = ['קהל רחב','תושבי האזור','נשים','גברים','הורים','בעלי עסקים'];
+const AUDIENCE = [];   /* v3: הקהל נבנה ממגדר, גילאים ופלחים */
+const GENDERS = ['גברים','נשים'];
+const AGES = ['18–24','25–34','35–44','45–54','55+'];
+const SEGMENTS = ['הורים צעירים','זוגות לפני חתונה','סטודנטים','גיל הזהב','חובבי כושר ובריאות','בעלי בתים ומשפחות',
+                  'עסקים קטנים','סטארטאפים','מסעדות ובתי קפה','קליניקות ומטפלים','חנויות אונליין','משרדים ונותני שירות'];
+/* משפט הקהל שנכנס לפרומפט ולקופי. שני המגדרים או כל הגילאים = לא מצמצמים */
+function audienceText(){
+  const parts=[];
+  if(S.gender.length===1)parts.push(S.gender[0]);
+  if(S.ages.length&&S.ages.length<AGES.length)parts.push('בגילאי '+S.ages.join(', '));
+  if(S.segs.length)parts.push(S.segs.join(', '));
+  return parts.join(', ');
+}
 let MY_AUDIENCES = [];   /* קהלים שהמשתמש הוסיף, נשמרים ונשארים לבחירה */
 const TONE = ['ידידותי וחם','מקצועי ומהוקצע','אנרגטי ומניע','יוקרתי ורגוע'];
 const OVERLAY = ['כותרת על התמונה','בלי טקסט על התמונה'];
@@ -768,7 +851,7 @@ const LAYOUTS = [
 ];
 
 /* =================== המצב =================== */
-const S = { promote:'', promoteFree:'', template:'', color:'', font:'', useOwn:false, goal:'לידים ופניות', layout:'', format:'4:5', audience:'', tone:'', cta:'',
+const S = { promote:'', promoteFree:'', template:'', color:'', bg:'', font:'', useOwn:false, gender:[], ages:[], segs:[], goal:'לידים ופניות', layout:'', format:'4:5', audience:'', tone:'', cta:'',
             overlay:'כותרת על התמונה', overlayText:'',
             platform:'אינסטגרם', framework:'מוביל לפעולה', len:'קצר', emoji:'מדוד',
             extra:'', assets:[], prompt:'', promptTouched:false };
@@ -776,7 +859,7 @@ const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'', site:'' };
 
 const DRAFT='morning_ads_draft_v3';  /* טיוטה נפרדת מ-v2, כי הפורמטים שונים */
 function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify(S)) }catch(e){} }
-function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d); if(!TEMPLATES.some(x=>x.v===S.template))S.template=''; if(S.font&&!AdCompose.FONT_SETS.some(x=>x.v===S.font))S.font=''; S.overlay='כותרת על התמונה'; S.overlayText=''; S.cta=''; if(!TONE.includes(S.tone))S.tone=''; if(!PROMOTE.some(x=>x.v===S.promote)){S.promote='';S.promoteFree=''} S.layout=''; if(!FORMAT.some(x=>x.v===S.format))S.format='4:5' }catch(e){} }
+function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d); if(!TEMPLATES.some(x=>x.v===S.template))S.template=''; if(S.font&&!AdCompose.FONT_SETS.some(x=>x.v===S.font))S.font=''; S.overlay='כותרת על התמונה'; S.overlayText=''; S.cta=''; if(!TONE.includes(S.tone))S.tone=''; ['gender','ages','segs'].forEach(k=>{ if(!Array.isArray(S[k]))S[k]=[] }); S.audience=audienceText(); if(!PROMOTE.some(x=>x.v===S.promote)){S.promote='';S.promoteFree=''} S.layout=''; if(!FORMAT.some(x=>x.v===S.format))S.format='4:5' }catch(e){} }
 
 /* =================== גלילה לשלב הבא =================== */
 /* כל בחירה מורידה את המשתמש למקטע הבא, שכבר נמצא שם על המסך */
@@ -823,7 +906,7 @@ function styleCard(o){
 }
 function drawThumbs(){
   $$('#optsStyle canvas[data-tpl]').forEach(c=>AdCompose.render(c,{tpl:c.dataset.tpl,format:S.format,schematic:true,scale:0.24,
-    headline:'כותרת ראשית של המודעה',sub:'שורה משנית קצרה',cta:'לפרטים',name:'',color:adColor(),font:fontId()}));
+    headline:'כותרת ראשית של המודעה',sub:'שורה משנית קצרה',cta:'לפרטים',name:'',color:adColor(),bg:S.bg,font:fontId()}));
 }
 
 /* =================== v2: פונט ותצוגה מקדימה =================== */
@@ -854,6 +937,10 @@ function renderTplPreview(){ drawThumbs(); renderOwn() }
 /* v3: תמונה משלכם. עם תבנית אפשר להשתמש בה כמו שהיא, בלי ליצור תמונה חדשה */
 function ownPhoto(){ return ASSETS.find(a=>S.assets.includes(a.id)&&a.tag!=='לוגו')||null }
 function renderOwn(){
+  const a=ownPhoto();
+  $('#imgBox').classList.toggle('has',!!a);
+  $('#imgName').textContent=a?a.name:'בחירת תמונה מהמחשב';
+  $('#imgClear').classList.toggle('hidden',!a);
   const w=$('#ownWrap'); if(!w)return;
   const ok=!!(S.template&&ownPhoto());
   w.classList.toggle('hidden',!ok);
@@ -883,27 +970,34 @@ function wireCollapse(){
 }
 
 /* =================== v2: צבע המודעה =================== */
+/* v3: שני שדות צבע כמו בעיצוב. ריק = אוטומטי */
 function renderColors(){
-  const logo=chosenLogoInfo();
-  const custom=S.color&&S.color!=='logo'&&!AD_COLORS.some(x=>x.v===S.color)?S.color:'';
-  $('#optsColor').innerHTML=
-    `<button class="sw auto ${!S.color?'on':''}" data-c="" title="אוטומטי"></button>`+
-    (logo?`<button class="sw ${S.color==='logo'?'on':''}" data-c="logo" title="מהלוגו" style="background:${attr(logo.ink)}"></button>`:'')+
-    AD_COLORS.map(c=>`<button class="sw ${S.color===c.v?'on':''}" data-c="${attr(c.v)}" title="${attr(c.t)}" style="background:${attr(c.v)}"></button>`).join('')+
-    `<label class="sw custom ${custom?'on':''}" title="צבע אחר" ${custom?`style="background:${attr(custom)}"`:''}>${custom?'':'+'}<input type="color" id="colorIn" value="${attr(custom||'#033841')}"></label>`;
-  $('#colorName').textContent=!S.color?(logo?'אוטומטי, לפי הלוגו':'אוטומטי'):colorLabel();
-  $('#optsColor').onclick=e=>{
-    const b=e.target.closest('[data-c]'); if(!b)return;
-    pickColor(b.dataset.c);
+  const L=chosenLogoInfo(), main=S.color&&S.color!=='logo'?S.color:'';
+  colorField('main',main,'אוטומטי'+(L?' · מהלוגו':''),adColor());
+  colorField('bg',S.bg||'','אוטומטי · לפי התבנית',S.bg||'');
+  $('#colorNote').textContent='הצבע הראשי הוא של הכפתור וההדגשות. הרקע משמש בתבניות שיש בהן משטח צבע';
+}
+function colorField(k,val,ph,dot){
+  const hex=$('#'+k+'Hex');
+  if(document.activeElement!==hex)hex.value=val;
+  hex.placeholder=ph;
+  $('#'+k+'Dot').style.background=dot||'';
+  $('#'+k+'Pick').value=/^#[0-9a-f]{6}$/i.test(dot)?dot:'#033841';
+}
+function setColor(k,v){
+  if(k==='main')S.color=v; else S.bg=v;
+  S.promptTouched=false; renderColors(); refreshPrompt(); saveDraft();
+}
+['main','bg'].forEach(k=>{
+  $('#'+k+'Hex').oninput=e=>{
+    const v=e.target.value.trim().replace(/^#?/,'#');
+    if(e.target.value.trim()==='')setColor(k,'');
+    else if(/^#[0-9a-f]{6}$/i.test(v))setColor(k,v.toLowerCase());
   };
-  $('#colorIn').oninput=e=>pickColor(e.target.value);
-}
-function pickColor(c){
-  S.color=c; S.promptTouched=false;
-  renderColors(); updateStylePick();
-  refreshPrompt(); saveDraft();
-  if(c===''||c==='logo'||AD_COLORS.some(x=>x.v===c))closeSoon('sec-style');
-}
+  $('#'+k+'Hex').onblur=()=>renderColors();
+  $('#'+k+'Pick').oninput=e=>setColor(k,e.target.value);
+});
+function pickColor(c){ setColor('main',c) }
 
 /* =================== v2: ניתוח הלוגו =================== */
 /* בודקים אם ללוגו יש רקע שקוף, מה הצבע העיקרי שלו ומה הבהירות שלו.
@@ -1001,7 +1095,7 @@ function buildSections(){
   $('#optsPromote').innerHTML = PROMOTE.map(optCard).join('');
   $('#optsStyle').innerHTML   = TEMPLATES.map(styleCard).join('');
   $('#optsFormat').innerHTML  = FORMAT.map(optCard).join('');
-  renderAudChips();
+  renderAud();
   $('#chipsTone').innerHTML   = TONE.map(t=>`<button class="chip" data-v="${attr(t)}">${esc(t)}</button>`).join('');
   $('#chipsGoal').innerHTML   = GOALS.map(g=>`<button class="chip ${S.goal===g?'on':''}" data-v="${attr(g)}">${esc(g)}</button>`).join('');
   $('#chipsGoal').onclick = e => {
@@ -1026,7 +1120,6 @@ function buildSections(){
   wirePick('#optsStyle','template','sec-style','pick-style','',()=>esc(templateMeta().t+' · '+colorLabel()));
   wirePick('#optsFormat','format','sec-format','pick-format','',v=>formatLabel(v));
 
-  $('#chipsAud').onclick  = e => pickChip(e,'audience','#chipsAud');
   $('#chipsTone').onclick = e => pickChip(e,'tone','#chipsTone');
 }
 
@@ -1055,34 +1148,47 @@ function wirePick(sel,key,secId,pickId,nextId,label){
   };
 }
 
-function renderAudChips(){
-  $('#chipsAud').innerHTML =
-    AUDIENCE.map(a=>`<button class="chip ${S.audience===a?'on':''}" data-v="${attr(a)}">${esc(a)}</button>`).join('') +
-    MY_AUDIENCES.map(a=>`<button class="chip custom ${S.audience===a?'on':''}" data-v="${attr(a)}">${esc(a)}<span class="x" data-rm="${attr(a)}" title="הסרה">×</span></button>`).join('');
+function renderAud(){
+  /* טווחי גילאים מימין לשמאל מהמבוגר לצעיר, כמו בעיצוב, ובכיוון שמאל-ימין כדי ש-25–34 לא יתהפך */
+  const seg=(sel,list,key)=>{
+    $(sel).innerHTML=list.map(v=>`<button class="${S[key].includes(v)?'on':''}" data-v="${attr(v)}"${key==='ages'?' dir="ltr"':''}>${esc(v)}</button>`).join('');
+    $(sel).onclick=e=>{ const b=e.target.closest('[data-v]'); if(b)toggleAud(key,b.dataset.v) };
+  };
+  seg('#segGender',GENDERS,'gender'); seg('#segAges',AGES.slice().reverse(),'ages');
+  $('#chipsAud').innerHTML=
+    SEGMENTS.map(a=>`<button class="chip ${S.segs.includes(a)?'on':''}" data-v="${attr(a)}">${esc(a)}</button>`).join('')+
+    MY_AUDIENCES.map(a=>`<button class="chip custom ${S.segs.includes(a)?'on':''}" data-v="${attr(a)}">${esc(a)}<span class="x" data-rm="${attr(a)}" title="הסרה">×</span></button>`).join('');
+  $('#chipsAud').onclick=e=>{
+    const rm=e.target.closest('[data-rm]'); if(rm){ e.stopPropagation(); removeAudience(rm.dataset.rm); return }
+    const b=e.target.closest('[data-v]'); if(b)toggleAud('segs',b.dataset.v);
+  };
+}
+function toggleAud(key,v){
+  S[key]=S[key].includes(v)?S[key].filter(x=>x!==v):S[key].concat(v);
+  S.audience=audienceText(); S.promptTouched=false;
+  renderAud(); refreshPrompt(); saveDraft();
 }
 
 /* הוספת קהל יעד משלהם: נשמר, הופך לשבב, ונבחר מיד */
 async function addAudience(){
   const v=$('#audOther').value.trim();
   if(!v){toast('כתבו קהל יעד');$('#audOther').focus();return}
-  if(!MY_AUDIENCES.includes(v)&&!AUDIENCE.includes(v)){
+  if(!MY_AUDIENCES.includes(v)&&!SEGMENTS.includes(v)){
     MY_AUDIENCES.push(v);
     try{ await DB.put('settings',{id:'audiences',list:MY_AUDIENCES}) }catch(e){}
   }
-  S.audience=v; S.promptTouched=false;
+  if(!S.segs.includes(v))S.segs.push(v);
+  S.audience=audienceText(); S.promptTouched=false;
   $('#audOther').value='';
-  renderAudChips(); refreshPrompt(); saveDraft(); afterAud(true);
+  renderAud(); refreshPrompt(); saveDraft();
   toast('קהל היעד נוסף');
 }
 
 async function removeAudience(v){
   MY_AUDIENCES=MY_AUDIENCES.filter(x=>x!==v);
   try{ await DB.put('settings',{id:'audiences',list:MY_AUDIENCES}) }catch(e){}
-  if(S.audience===v){
-    S.audience=''; markDone('sec-aud','pick-aud','טרם נבחר');
-    document.getElementById('sec-aud').classList.remove('done');
-  }
-  renderAudChips(); refreshPrompt(); saveDraft();
+  S.segs=S.segs.filter(x=>x!==v); S.audience=audienceText();
+  renderAud(); refreshPrompt(); saveDraft();
 }
 
 function pickChip(e,key,sel){
@@ -1170,7 +1276,7 @@ function applyState(){
     if(g){$(sel).querySelectorAll('[data-v]').forEach(x=>x.classList.remove('on'));g.classList.add('on')}};
   set('#optsPromote',S.promote); set('#optsStyle',S.template); set('#optsFormat',S.format);
   set('#chipsTone',S.tone);
-  renderAudChips();
+  renderAud();
   if(S.promote)markDone('sec-promote','pick-promote',esc(S.promote));
   renderColors(); updateStylePick();
   if(S.format)markFormat();
@@ -1282,6 +1388,7 @@ function syncPrompt(){
   }
   /* v2: צבע המודעה. גובר על הצבעוניות של התבנית */
   const hexC=colorHex();
+  if(S.bg)p.push('צבע הרקע של המודעה: '+S.bg+'.');
   if(hexC)p.push('צבע המודעה: '+hexC+'. זה הצבע הדומיננטי של המודעה, ברקע או במשטחים הגדולים, ואפשר לשלב גוונים בהירים וכהים שלו. בלי צבעים חזקים נוספים מלבד צבעי הלוגו.');
   /* v2: המלצת פונטים (טיוטה, ראו V2-TODO.md) */
   if(S.overlay!==OVERLAY[1]){
@@ -1360,11 +1467,11 @@ async function preflight(){
                          hint:'node ~/morning-advertising/server.js'};
   }
   if(!BIZ.name)  return {msg:'חסר שם העסק', focus:'#b_name', go:null};
-  if(!S.promote) return {msg:'לא נבחר מה מקדמים', go:'sec-promote'};
+  if(!S.promote) return {msg:'לא נבחר מה מקדמים', go:'sec-content'};
   const pm=promoteMeta();
   if(pm&&pm.need&&!S.promoteFree)
     return {msg:pm.q.replace('?','')+' לא מולא. בלי זה המנוע ימציא פרטים שלא קיימים',
-            go:'sec-promote', focus:'#promoteFree'};
+            go:'sec-content', focus:'#promoteFree'};
   return null;
 }
 
@@ -1490,7 +1597,7 @@ async function showComposed(img,copy){
   const logo=await logoForAd();
   const head=headlineOf(text)||(S.promoteFree||'').trim()||S.promote||BIZ.name;
   /* כל מה שצריך כדי לצייר את המודעה מחדש. נשמר עם המודעה */
-  const D={tpl:S.template,font:fontId(),color:adColor(),format:S.format,
+  const D={tpl:S.template,font:fontId(),color:adColor(),bg:S.bg,format:S.format,
            headline:head,sub:composedSub(head),cta:ctaText(),name:BIZ.name,site:BIZ.site};
   await AdCompose.ensureFonts(D.font);
 
@@ -1744,7 +1851,7 @@ function showTab(name){
 }
 $$('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
 $('#fab').onclick=()=>{
-  Object.assign(S,{promote:'',promoteFree:'',template:'',color:'',font:'',useOwn:false,goal:'לידים ופניות',layout:'',format:'4:5',audience:'',tone:'',cta:'',platform:'אינסטגרם',framework:'מוביל לפעולה',len:'קצר',emoji:'מדוד',extra:'',assets:[],prompt:'',promptTouched:false});
+  Object.assign(S,{promote:'',promoteFree:'',template:'',color:'',bg:'',font:'',useOwn:false,gender:[],ages:[],segs:[],goal:'לידים ופניות',layout:'',format:'4:5',audience:'',tone:'',cta:'',platform:'אינסטגרם',framework:'מוביל לפעולה',len:'קצר',emoji:'מדוד',extra:'',assets:[],prompt:'',promptTouched:false});
   $('#audOther').value='';
   saveDraft();
   $$('.sec').forEach(x=>x.classList.remove('done','open'));
@@ -1800,6 +1907,15 @@ $('#extraIn').oninput=()=>{S.extra=$('#extraIn').value;S.promptTouched=false;syn
 $('#promptIn').oninput=()=>{S.prompt=$('#promptIn').value;S.promptTouched=true;saveDraft();renderPromptHint()};
 $('#resetPrompt').onclick=()=>{S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft();toast('הפרומפט אופס')};
 $('#go').onclick=generate;
+/* v3: שדה תמונה אחד. תמונה חדשה מחליפה את הקודמת, הלוגו נשאר */
+const keepLogos=()=>{ S.assets=S.assets.filter(id=>{const a=ASSETS.find(x=>x.id===id);return a&&a.tag==='לוגו'}) };
+$('#imgFile').onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f)return;
+  keepLogos(); await addFiles([f],{tag:'רקע',select:true}); renderOwn();
+};
+$('#imgClear').onclick=()=>{ keepLogos(); S.useOwn=false; renderAssetPick(); refreshPrompt(); saveDraft() };
+$('#pickLib').onclick=()=>$('#assetPick').classList.toggle('hidden');
+$('#resetAll').onclick=()=>$('#fab').onclick();
 $('#useOwn').onchange=e=>{ S.useOwn=e.target.checked; saveDraft() };
 
 /* =================== התחלה =================== */

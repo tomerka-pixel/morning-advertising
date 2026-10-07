@@ -49,15 +49,20 @@ function rgba(h,a){ const c=rgb(h); return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+
 const INK='#141414', WHITE='#FFFFFF';
 function textOn(bg){ return contrast(bg,WHITE)>=contrast(bg,INK) ? WHITE : INK }
 
-function palette(brand){
+/* brand = הצבע הראשי (כפתור, הדגשות), bg = צבע הרקע (לא חובה, אחרת לפי התבנית) */
+function palette(brand,bg){
   brand=brand||'#1F3A5F';
   const deep=mix(brand,'#000',0.62);
+  /* טקסט על משטח: גוון כהה של הצבע הראשי כשהוא קריא, אחרת לבן או שחור */
+  const ink=sf=>contrast(deep,sf)>=4.5?deep:textOn(sf);
   return {
-    brand, deep,
+    brand, deep, bg:bg||null,
     tint: mix(brand,WHITE,0.9),
     onBrand: textOn(brand),
-    /* כפתור על רקע בהיר: צבע המותג, אלא אם הוא בהיר מדי ונבלע */
-    pillOnLight: contrast(brand,WHITE)<1.7 ? deep : brand
+    ink,
+    muted: sf=>mix(ink(sf),sf,0.38),
+    /* הכפתור בצבע הראשי, אלא אם הוא נבלע ברקע שמאחוריו */
+    pill: sf=>{ const b=contrast(brand,sf)>=1.7?brand:contrast(deep,sf)>=1.7?deep:textOn(sf); return {bg:b,fg:textOn(b)} }
   };
 }
 
@@ -189,8 +194,8 @@ function geo(W,H){
 
 function split(ctx,W,H,o,p,F){
   const {U,pad,land,tall,top,bot}=geo(W,H);
-  const body=F.body, head=F.head;
-  ctx.fillStyle=WHITE; ctx.fillRect(0,0,W,H);
+  const body=F.body, head=F.head, sf=p.bg||WHITE, pl=p.pill(sf);
+  ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
   let tx, ty, tw, th;
   if(land){
     const iw=Math.round(W*0.5);
@@ -209,13 +214,13 @@ function split(ctx,W,H,o,p,F){
   const avail=th-rowH-blockH(sub)-(sub?22*U:0)-36*U;
   const hd=fit(ctx,o.headline,head,{w:tw,h:avail,max:(tall?108:100)*U,min:40*U,lines:3,track:-0.01});
   let y=ty;
-  y+=drawText(ctx,hd,tx,y,p.deep,'right',o.schematic);
-  if(sub){ y+=22*U; drawText(ctx,sub,tx,y,mix(p.deep,WHITE,0.38),'right',o.schematic) }
+  y+=drawText(ctx,hd,tx,y,p.ink(sf),'right',o.schematic);
+  if(sub){ y+=22*U; drawText(ctx,sub,tx,y,p.muted(sf),'right',o.schematic) }
   const by=ty+th-rowH;
-  pill(ctx,o.cta,tx,by,rowH,p.pillOnLight,textOn(p.pillOnLight),F.cta,'right',o.schematic);
-  if(land) brandMark(ctx,o,W-tw-pad,by,tw*0.4,rowH,'left',WHITE,body);
+  pill(ctx,o.cta,tx,by,rowH,pl.bg,pl.fg,F.cta,'right',o.schematic);
+  if(land) brandMark(ctx,o,W-tw-pad,by,tw*0.4,rowH,'left',sf,body);
   else if(o.site&&!o.schematic){
-    ctx.font=css(body,30*U); ctx.fillStyle=mix(p.deep,WHITE,0.45); ctx.direction='ltr'; ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.font=css(body,30*U); ctx.fillStyle=mix(p.ink(sf),sf,0.45); ctx.direction='ltr'; ctx.textAlign='left'; ctx.textBaseline='middle';
     ctx.fillText(o.site,pad,by+rowH/2);
   }
 }
@@ -224,7 +229,8 @@ function overlay(ctx,W,H,o,p,F){
   const {U,pad,land,top,bot}=geo(W,H);
   const body=F.body, head=F.head;
   cover(ctx,o.img,0,0,W,H);
-  const shade=mix(p.brand,'#000',0.72);
+  /* ההצללה בצבע הרקע כשנבחר, מוכהה מספיק כדי שטקסט לבן ייקרא */
+  const shade=p.bg?(lum(p.bg)>0.12?mix(p.bg,'#000',0.55):p.bg):mix(p.brand,'#000',0.72);
   const g=ctx.createLinearGradient(0,H*(land?0.25:0.36),0,H);
   g.addColorStop(0,rgba(shade,0)); g.addColorStop(0.45,rgba(shade,0.62)); g.addColorStop(1,rgba(shade,0.94));
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
@@ -250,8 +256,8 @@ function overlay(ctx,W,H,o,p,F){
 
 function frame(ctx,W,H,o,p,F){
   const {U,pad,land,tall,top,bot}=geo(W,H);
-  const body=F.body, head=F.head;
-  ctx.fillStyle=p.tint; ctx.fillRect(0,0,W,H);
+  const body=F.body, head=F.head, sf=p.bg||p.tint, pl=p.pill(sf);
+  ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
   const mat=Math.round(16*U), rowH=Math.round(80*U);
   const photo=(x,y,w,h)=>{
     ctx.save(); ctx.shadowColor='rgba(0,0,0,.16)'; ctx.shadowBlur=40*U; ctx.shadowOffsetY=14*U;
@@ -266,15 +272,15 @@ function frame(ctx,W,H,o,p,F){
     const hd=fit(ctx,o.headline,head,{w:tw,h:H*0.36,max:92*U,min:40*U,lines:3,track:-0.01});
     const logoH=84*U, total=logoH+40*U+blockH(hd)+(sub?20*U+blockH(sub):0)+40*U+rowH;
     let y=(H-total)/2;
-    brandMark(ctx,o,cx,y,tw*0.5,logoH,'center',p.tint,body); y+=logoH+40*U;
-    y+=drawText(ctx,hd,cx,y,p.deep,'center',o.schematic);
-    if(sub){ y+=20*U; y+=drawText(ctx,sub,cx,y,mix(p.deep,WHITE,0.35),'center',o.schematic) }
-    pill(ctx,o.cta,cx,y+40*U,rowH,p.pillOnLight,textOn(p.pillOnLight),F.cta,'center',o.schematic);
+    brandMark(ctx,o,cx,y,tw*0.5,logoH,'center',sf,body); y+=logoH+40*U;
+    y+=drawText(ctx,hd,cx,y,p.ink(sf),'center',o.schematic);
+    if(sub){ y+=20*U; y+=drawText(ctx,sub,cx,y,p.muted(sf),'center',o.schematic) }
+    pill(ctx,o.cta,cx,y+40*U,rowH,pl.bg,pl.fg,F.cta,'center',o.schematic);
     return;
   }
   const logoH=Math.round(96*U);
   const ly=top||pad*0.7;
-  brandMark(ctx,o,W/2,ly,W*0.4,logoH,'center',p.tint,body);
+  brandMark(ctx,o,W/2,ly,W*0.4,logoH,'center',sf,body);
   const fy=ly+logoH+pad*0.6, fh=Math.round(H*(tall?0.4:W===H?0.44:0.48));
   photo(pad,fy,W-pad*2,fh);
   const ty=fy+fh+pad*0.75, by=H-bot-rowH, tw=W-pad*2.6;
@@ -282,15 +288,17 @@ function frame(ctx,W,H,o,p,F){
   const hd=fit(ctx,o.headline,head,{w:tw,h:by-ty-32*U-blockH(sub)-(sub?16*U:0),max:84*U,min:36*U,lines:3,track:-0.01});
   const block=blockH(hd)+(sub?16*U+blockH(sub):0);
   let y=ty+Math.max(0,(by-32*U-ty-block)/2);
-  y+=drawText(ctx,hd,W/2,y,p.deep,'center',o.schematic);
-  if(sub){ y+=16*U; drawText(ctx,sub,W/2,y,mix(p.deep,WHITE,0.35),'center',o.schematic) }
-  pill(ctx,o.cta,W/2,by,rowH,p.pillOnLight,textOn(p.pillOnLight),F.cta,'center',o.schematic);
+  y+=drawText(ctx,hd,W/2,y,p.ink(sf),'center',o.schematic);
+  if(sub){ y+=16*U; drawText(ctx,sub,W/2,y,p.muted(sf),'center',o.schematic) }
+  pill(ctx,o.cta,W/2,by,rowH,pl.bg,pl.fg,F.cta,'center',o.schematic);
 }
 
 function type(ctx,W,H,o,p,F){
   const {U,pad,land,tall,top:safeTop,bot}=geo(W,H);
-  const body=F.body, head=F.head, fg=p.onBrand;
-  ctx.fillStyle=p.brand; ctx.fillRect(0,0,W,H);
+  /* בלי צבע רקע: הרקע בצבע הראשי והכפתור לבן. עם צבע רקע: הכפתור בצבע הראשי */
+  const body=F.body, head=F.head, sf=p.bg||p.brand, fg=p.bg?p.ink(sf):p.onBrand;
+  const pl=p.bg?p.pill(sf):{bg:fg,fg:p.brand};
+  ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
   const circle=(cx,cy,r)=>{
     ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,r+8*U,0,Math.PI*2); ctx.fillStyle=rgba(fg,0.9); ctx.fill();
     ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.clip(); cover(ctx,o.img,cx-r,cy-r,r*2,r*2); ctx.restore();
@@ -298,7 +306,7 @@ function type(ctx,W,H,o,p,F){
   const rowH=Math.round(80*U), by=H-bot-rowH;
   /* פוטר: קו דק, כפתור מימין ושם האתר משמאל */
   ctx.fillStyle=rgba(fg,0.28); ctx.fillRect(pad,by-36*U,W-pad*2,Math.max(1,2*U));
-  pill(ctx,o.cta,W-pad,by,rowH,fg,p.brand,F.cta,'right',o.schematic);
+  pill(ctx,o.cta,W-pad,by,rowH,pl.bg,pl.fg,F.cta,'right',o.schematic);
   if(o.site&&!o.schematic){
     ctx.font=css(body,30*U); ctx.fillStyle=rgba(fg,0.75); ctx.direction='ltr'; ctx.textAlign='left'; ctx.textBaseline='middle';
     ctx.fillText(o.site,pad,by+rowH/2);
@@ -308,11 +316,11 @@ function type(ctx,W,H,o,p,F){
   const y0=safeTop||pad;
   if(land){
     const r=H*0.3; circle(W-pad-r,(by-36*U)/2,r);
-    brandMark(ctx,o,pad,pad,W*0.2,80*U,'left',p.brand,body);
+    brandMark(ctx,o,pad,pad,W*0.2,80*U,'left',sf,body);
     top=pad+120*U; tx=W-pad*2-r*2; tw=tx-pad;
   }else{
     const r=W*(tall?0.2:0.16); circle(W-pad-r,y0+r,r);
-    brandMark(ctx,o,pad,y0,W*0.36,84*U,'left',p.brand,body);
+    brandMark(ctx,o,pad,y0,W*0.36,84*U,'left',sf,body);
     top=y0+r*2+pad*0.8; tw=W-pad*2;
   }
   const bottom=by-36*U-pad*0.6;
@@ -326,7 +334,7 @@ function type(ctx,W,H,o,p,F){
 
 const DRAW={ split, overlay, frame, type };
 
-/* o: { tpl, format, img, headline, sub, cta, name, site, logo:{img,info}, color, font, schematic }
+/* o: { tpl, format, img, headline, sub, cta, name, site, logo:{img,info}, color, bg, font, schematic }
    scale מקטין את הקנבס (תמונות ממוזערות) בלי לשנות את הפריסה */
 function render(canvas,o){
   const [W,H]=SIZES[o.format]||SIZES['4:5'], k=o.scale||1;
@@ -335,7 +343,7 @@ function render(canvas,o){
   ctx.setTransform(k,0,0,k,0,0);
   ctx.imageSmoothingQuality='high';
   const F=fontSet(o.font);
-  (DRAW[o.tpl]||split)(ctx,W,H,o,palette(o.color),F);
+  (DRAW[o.tpl]||split)(ctx,W,H,o,palette(o.color,o.bg),F);
   return canvas;
 }
 
