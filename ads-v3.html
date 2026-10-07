@@ -431,6 +431,19 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
 .sec.col .sec-pick:empty+.sec-toggle{margin-inline-start:auto}
 .sec.col.open .sec-toggle svg{transform:rotate(180deg)}
 
+/* v3.3: הבר העליון לפי פיגמה, והכותרת הכפולה ירדה */
+.topbar.ftop{height:60px;flex:0 0 60px;padding:0 40px;gap:24px;border-bottom:0;box-shadow:0 1px 0 #EFF1F6}
+.ft-a11y{width:20px;height:20px;padding:1.667px;border:0;background:none;cursor:pointer;display:block}
+.ft-a11y img{width:100%;height:100%;display:block}
+.ft-biz{width:230px;height:37px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 12px 6px 4px;background:#fff;border:1px solid #B2BEC6;border-radius:4px;cursor:pointer;font-family:inherit;font-size:16px;font-weight:500;color:#033841;line-height:22px}
+.ft-biz span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ft-chev{width:24px;height:24px;display:grid;place-items:center;flex:0 0 24px}
+.ft-chev img{width:8px;height:4.5px;display:block}
+.tabs{align-items:center}
+.tabs-status{margin-inline-start:auto}
+.tabs-status .live-badge{font-size:12.5px}
+@media (max-width:760px){.topbar.ftop{padding:0 16px;height:60px;flex-basis:60px}.ft-biz{width:180px}.tabs-status{display:none}}
+
 /* v3.1: לפי המסכים המלאים של המעצב */
 .page-head{margin:6px 0 22px}
 .page-head h1{font-size:30px;font-weight:700;color:var(--ink);margin:0 0 6px}
@@ -517,25 +530,16 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
   </aside>
 
   <div class="surface">
-    <header class="topbar">
+    <!-- הבר העליון לפי פיגמה (Top bar, node 22450:19388): נגישות ובורר העסק -->
+    <header class="topbar ftop">
       <div class="top-spacer"></div>
-      <button class="top-icon" title="התראות"><svg viewBox="0 0 24 24"><path d="M18 15v-4a6 6 0 1 0-12 0v4l-2 3h16ZM10 21h4"/></svg></button>
-      <button class="top-icon" title="מצב תצוגה"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18Z" fill="currentColor" stroke="none"/></svg></button>
-      <button class="top-icon" title="עזרה"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.6.2-1 .8-1 1.4v.4M12 17h.01"/></svg></button>
-      <button class="fab" title="מודעה חדשה" id="fab"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="ft-a11y" title="נגישות" aria-label="נגישות"><img src="assets/topbar/accessibility.svg" alt=""></button>
+      <button class="ft-biz" id="bizSwitch" title="העסק שלכם"><span id="bizSwitchName">העסק שלי</span><span class="ft-chev"><img src="assets/topbar/chevron-down.svg" alt=""></span></button>
+      <button id="fab" hidden></button>
     </header>
 
     <main class="main" id="main">
       <div class="wrap">
-
-        <section class="hello">
-          <div class="hello-disc"><img src="assets/morning-logo.svg" alt="morning"></div>
-          <div>
-            <h1>יוצר המודעות <span style="font-size:14px;font-weight:600;background:var(--ink);color:#fff;border-radius:100px;padding:3px 11px;vertical-align:middle">v3</span></h1>
-            <p>עונים על כמה שאלות, ומקבלים מודעה מוכנה לפרסום לעסק שלכם</p>
-            <div style="margin-top:10px" id="statusSlot"></div>
-          </div>
-        </section>
 
         <div id="notice"></div>
 
@@ -543,6 +547,7 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
           <button class="tab on" data-tab="create">יצירת מודעה</button>
           <button class="tab" data-tab="library">נכסי המותג <span class="count" id="cAssets">0</span></button>
           <button class="tab" data-tab="gallery">המודעות שלי <span class="count" id="cAds">0</span></button>
+          <span class="tabs-status" id="statusSlot"></span>
         </nav>
 
         <!-- ============ יצירה ============ -->
@@ -1954,7 +1959,7 @@ function renderCounts(){
 /* =================== שדות טקסט =================== */
 ['b_name','b_nameEn','b_field','b_city','b_site'].forEach(id=>{
   $('#'+id).oninput=()=>{
-    BIZ[id.slice(2)]=$('#'+id).value.trim();
+    BIZ[id.slice(2)]=$('#'+id).value.trim(); renderBizSwitch();
     S.promptTouched=false; syncPrompt(); $('#promptIn').value=S.prompt; renderTplPreview();
     clearTimeout(BIZ._t); BIZ._t=setTimeout(()=>DB.put('settings',{id:'biz',name:BIZ.name,nameEn:BIZ.nameEn,field:BIZ.field,city:BIZ.city,site:BIZ.site}),400);
   };
@@ -1967,6 +1972,9 @@ $('#extraIn').oninput=()=>{S.extra=$('#extraIn').value;S.promptTouched=false;syn
 $('#promptIn').oninput=()=>{S.prompt=$('#promptIn').value;S.promptTouched=true;saveDraft();renderPromptHint()};
 $('#resetPrompt').onclick=()=>{S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft();toast('הפרומפט אופס')};
 $('#go').onclick=generate;
+/* בורר העסק בבר העליון: מציג את שם העסק, ולחיצה מובילה לפרטי העסק */
+function renderBizSwitch(){ $('#bizSwitchName').textContent=BIZ.name||'העסק שלי' }
+$('#bizSwitch').onclick=()=>{ showTab('create'); const b=$('.biz'); b.scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(()=>$('#b_name').focus(),350) };
 /* v3: שדה תמונה אחד. תמונה חדשה מחליפה את הקודמת, הלוגו נשאר */
 const keepLogos=()=>{ S.assets=S.assets.filter(id=>{const a=ASSETS.find(x=>x.id===id);return a&&a.tag==='לוגו'}) };
 $('#imgFile').onchange=async e=>{
@@ -2013,7 +2021,7 @@ $('#useOwn').onchange=e=>{ S.useOwn=e.target.checked; saveDraft() };
      ובלעדיה הוא ממציא את שם המותג ואת הצבעים */
   ASSETS.filter(a=>a.tag==='לוגו').forEach(a=>{ if(!S.assets.includes(a.id))S.assets.push(a.id) });
   $('#b_name').value=BIZ.name||''; $('#b_nameEn').value=BIZ.nameEn||''; $('#b_field').value=BIZ.field||''; $('#b_city').value=BIZ.city||''; $('#b_site').value=BIZ.site||'';
-  buildSections(); renderAssetPick(); wireCollapse(); applyState(); openFirstOpenable();
+  buildSections(); renderAssetPick(); wireCollapse(); applyState(); openFirstOpenable(); renderBizSwitch();
   renderCounts(); renderLib(); renderGallery();
   analyzeLogos();
 })();
