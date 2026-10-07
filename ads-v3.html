@@ -1,0 +1,1846 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>morning · יוצר המודעות v3</title>
+<link rel="stylesheet" href="https://static.greeninvoice.co.il/fonts/ploni.min.css">
+<link rel="icon" href="assets/morning-mark.svg">
+<!-- הפונטים של המודעות עצמן (לא של הממשק): עבריים וחופשיים לשימוש מסחרי -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;800&family=Rubik:wght@400;700&family=Secular+One&family=Frank+Ruhl+Libre:wght@700&family=Assistant:wght@400;600&family=Karantina:wght@700&display=swap">
+<style>
+:root{
+  /* הטוקנים נלקחו מגיליון הסגנון של המערכת עצמה (app.css) */
+  --ink:#033841;          /* צבע הטקסט וגם רקע הסרגל הכהה */
+  /* v2: כל הירוק של הממשק הוחלף בכחול הכהה של הסרגל */
+  --teal:#033841;
+  --primary:#033841;
+  --primary-hover:#0b5260;
+  --blue:#1d58e3;
+  --bg:#f5f6fa;
+  --card:#fff;
+  --surface:#eff1f6;
+  --line:#d3dade;
+  --line-strong:#b2bec6;
+  --muted:#607684;
+  --placeholder:#91a1ac;
+  --err:#f63865;
+  --err-bg:#fff2f2;
+  --warn-bg:#fff8e6;
+  --ok-bg:#e8f0f2;
+  --deep:#033841;
+  --radius:16px;
+  --input-radius:8px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:ploni,Ping,Arial,sans-serif;color:var(--ink);background:var(--bg);direction:rtl;font-size:16px;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+h1,h2,h3{margin:0;font-weight:700}
+a{color:inherit}
+
+/* ===== שלד המערכת ===== */
+.app{display:flex;height:100%;overflow:hidden}
+.rail{width:76px;flex:0 0 76px;background:var(--ink);color:#fff;display:flex;flex-direction:column;align-items:center;padding:20px 0 16px;gap:2px;order:1}
+.rail .mark{width:34px;height:34px;margin-bottom:20px}
+.rail-btn{position:relative;width:52px;height:48px;border:0;background:transparent;color:#fff;border-radius:12px;cursor:pointer;display:grid;place-items:center;opacity:.88}
+.rail-btn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.rail-btn:hover,.rail-btn.active{background:rgba(255,255,255,.12);opacity:1}
+.rail-btn .dot{position:absolute;top:9px;left:11px;width:7px;height:7px;border-radius:50%;background:#fff}
+.rail-sep{width:40px;height:1px;background:rgba(255,255,255,.16);margin:8px 0}
+.rail-bottom{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:14px}
+.rail-avatar{width:40px;height:40px;border-radius:50%;background:#fff;display:grid;place-items:center}
+.rail-avatar img{width:22px;height:22px}
+.rail-collapse{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.12);border:0;color:#fff;cursor:pointer;display:grid;place-items:center}
+.rail-collapse svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.surface{flex:1;min-width:0;display:flex;flex-direction:column;order:2;overflow:hidden}
+.topbar{height:84px;flex:0 0 84px;background:#fff;display:flex;align-items:center;gap:20px;padding:0 40px;border-bottom:1px solid var(--surface)}
+.fab{width:58px;height:58px;border-radius:50%;background:var(--primary);color:#fff;border:0;cursor:pointer;display:grid;place-items:center;box-shadow:0 6px 18px rgba(3,56,65,.28)}
+.fab svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.top-icon{width:38px;height:38px;border-radius:50%;border:0;background:transparent;color:var(--ink);cursor:pointer;display:grid;place-items:center}
+.top-icon:hover{background:var(--surface)}
+.top-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.top-spacer{flex:1}
+.main{flex:1;overflow:auto;padding:34px 46px 140px}
+.wrap{max-width:780px;margin:0 auto}
+
+/* ===== ברכה ===== */
+.hello{display:flex;align-items:center;gap:22px;margin-bottom:24px}
+.hello-disc{width:92px;height:92px;flex:0 0 92px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 2px 14px rgba(3,56,65,.07)}
+.hello-disc img{width:58px}
+.hello h1{font-size:27px;margin-bottom:6px}
+.hello p{margin:0;color:var(--muted);font-size:17px}
+
+/* ===== כפתורים ===== */
+.btn{border-radius:100px;font-weight:500;padding:11px 26px;cursor:pointer;font-size:17px;border:1px solid transparent;background:transparent;transition:.15s}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btn-primary:disabled{background:var(--line);border-color:var(--line);cursor:not-allowed}
+.btn-outline{border-color:var(--ink);color:var(--ink)}
+.btn-outline:hover{background:var(--surface)}
+.btn-ghost{color:var(--primary);padding:7px 10px;font-size:15px}
+.btn-ghost:hover{text-decoration:underline}
+.btn-sm{padding:8px 18px;font-size:15px}
+.btn-lg{padding:14px 40px;font-size:18px}
+
+/* ===== לשוניות ===== */
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.tab{border:0;background:transparent;padding:12px 20px;cursor:pointer;font-size:17px;color:#557077;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--ink);font-weight:600;border-bottom-color:var(--primary)}
+.tab .count{background:var(--ok-bg);color:var(--deep);border-radius:4px;font-weight:500;padding:1px 8px;font-size:12px;margin-inline-start:6px}
+
+/* ===== פרטי העסק ===== */
+.biz{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;margin-bottom:18px}
+.biz-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.biz-head h3{font-size:17px}
+.biz-head .from{background:var(--surface);color:var(--muted);border-radius:4px;padding:2px 9px;font-size:12px;font-weight:500}
+.biz-sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.biz-fields{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media(max-width:900px){.biz-fields{grid-template-columns:repeat(2,1fr)}}
+
+/* ===== מקטע ===== */
+.sec{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:16px;scroll-margin-top:14px}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:3px}
+.sec-num{width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:var(--surface);color:var(--muted);display:grid;place-items:center;font-size:14px;font-weight:700}
+.sec.done .sec-num{background:var(--primary);color:#fff}
+.sec-head h2{font-size:20px}
+.sec-pick{margin-inline-start:auto;background:var(--ok-bg);color:var(--deep);border-radius:100px;padding:5px 14px;font-size:14px;font-weight:500;display:none}
+.sec.done .sec-pick{display:inline-block}
+.sec-sub{color:var(--muted);font-size:15px;margin:0 0 16px;padding-inline-start:40px}
+.sec-body{padding-inline-start:40px}
+
+/* ===== v2: מקטעים מתקפלים. האפשרויות מופיעות רק כשפותחים את החץ ===== */
+.sec.col .sec-head{cursor:pointer;user-select:none;margin-bottom:0}
+.sec.col.open .sec-head{margin-bottom:3px}
+.sec.col:not(.open) .sec-sub,.sec.col:not(.open) .sec-body{display:none}
+.sec.col.open .sec-sub{margin-top:6px}
+.sec.col .sec-pick{display:inline-block;margin-inline-start:4px;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* v2: מקטע סגור הוא שורה נמוכה, והבחירה צמודה לכותרת ולא בקצה השני של הכרטיס */
+.sec.col:not(.open){padding:14px 22px;margin-bottom:10px}
+.sec.col:not(.open) .sec-head h2{font-size:18px}
+.sec.col .sec-toggle{order:1}
+.sec.col:not(.done) .sec-pick{background:var(--surface);color:var(--muted)}
+.sec.col .sec-head{padding:8px 10px;margin:-8px -10px;border-radius:12px;transition:background .15s}
+.sec.col .sec-head:hover{background:var(--bg)}
+.sec.col .sec-head:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.sec-toggle{width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:var(--surface);color:var(--ink);display:grid;place-items:center;transition:background .15s}
+.sec.col .sec-head:hover .sec-toggle{background:var(--ink);color:#fff}
+.sec-toggle svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.sec.col.open .sec-toggle svg{transform:rotate(180deg)}
+.drop.drop-sm{padding:16px 14px;margin-top:14px;display:flex;align-items:center;gap:14px;text-align:right}
+.drop.drop-sm .ic{margin:0;flex:0 0 44px}
+.drop.drop-sm b{margin-bottom:2px}
+.sec-pick bdi,.opt bdi{unicode-bidi:isolate}
+
+/* תבניות: ריבוע צבע זמני עד שיוחלט מה התבניות */
+.tpl-swatch{position:absolute;inset:0}
+
+/* צבע המודעה */
+.colors{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.cdot{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:100px;padding:6px 14px 6px 8px;cursor:pointer;font-size:14.5px;transition:.14s}
+.cdot:hover{border-color:var(--primary)}
+.cdot.on{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary)}
+.cdot i{width:22px;height:22px;border-radius:50%;flex:0 0 22px;border:1px solid rgba(3,56,65,.18);display:block}
+.cdot i.auto{background:conic-gradient(#E8505B,#F2B33D,#2F9E7A,#1D58E3,#6B4FA0,#E8505B)}
+.cdot input[type=color]{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.cdot.custom{position:relative}
+
+/* פורמט: היחס במספרים ומלבן אפור קטן בצורה של המודעה */
+.ratio{width:46px;height:46px;display:grid;place-items:center;flex:0 0 46px}
+.ratio i{display:block;background:#c5cdd3;border-radius:3px}
+.opt.on .ratio i{background:var(--ink)}
+.rnum{display:inline-block;font-weight:700;color:var(--ink);background:var(--surface);border-radius:6px;padding:1px 8px;font-size:13px;margin-top:2px}
+.opt.on .rnum{background:#fff}
+
+/* v2: רשימת אפשרויות מלמעלה למטה, שורה לכל אפשרות */
+.list{display:flex;flex-direction:column;gap:8px}
+.list .opt{flex-direction:row;align-items:center;justify-content:flex-start;text-align:right;gap:14px;padding:10px 16px;border-radius:12px;width:100%;position:relative;min-height:60px}
+.list .opt:hover{transform:none;box-shadow:none}
+.list .opt .txt{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.list .opt .txt b{font-size:15.5px}
+.list .opt .rnum{margin:0 6px 0 0;vertical-align:1px}
+.list .opt .ic{width:38px;height:38px;flex:0 0 38px;border-radius:10px}
+.list .opt .thumb{width:38px;height:48px;flex:0 0 38px;border-radius:6px;overflow:hidden;border:1px solid rgba(3,56,65,.12)}
+.list .opt .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+/* תבניות: ממוזערת שמצוירת בקוד, בצבע ובפורמט שנבחרו */
+.list .opt .thumb.tpl{width:52px;height:64px;flex:0 0 52px;background:var(--surface);border:0;border-radius:6px}
+.list .opt .thumb.tpl canvas{width:100%;height:100%;object-fit:contain;display:block}
+.list .opt .fsample{font-size:26px;line-height:1;width:52px;flex:0 0 52px;text-align:center;color:var(--ink)}
+.tpl-prev{display:flex;gap:16px;align-items:flex-start;margin-top:18px;padding:14px;background:var(--surface);border-radius:14px}
+.tpl-prev canvas{width:200px;height:auto;border-radius:6px;box-shadow:0 6px 18px rgba(3,56,65,.14);flex:0 0 auto}
+.tpl-prev p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.6}
+@media (max-width:560px){.tpl-prev{flex-direction:column}.tpl-prev canvas{width:100%}}
+.list .opt .ratio{width:38px;height:38px;flex:0 0 38px}
+.list .opt .dot{width:28px;height:28px;flex:0 0 28px;border-radius:50%;border:1px solid rgba(3,56,65,.18);display:block}
+.list .opt .dot.auto{background:conic-gradient(#E8505B,#F2B33D,#2F9E7A,#1D58E3,#6B4FA0,#E8505B)}
+.list .opt .chk{width:20px;height:20px;flex:0 0 20px;border-radius:50%;border:2px solid var(--line-strong);margin-inline-start:auto;position:relative}
+.list .opt.on .chk{border-color:var(--ink);background:var(--ink)}
+.list .opt.on .chk::after{content:"";position:absolute;inset:4px;border-radius:50%;background:#fff}
+.list .opt.custom input[type=color]{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+
+/* v2: גם הבחירות הקטנות (מטרה, רשת, קהל, טון, כיתוב) הן רשימה מלמעלה למטה */
+.chips{flex-direction:column;flex-wrap:nowrap;gap:8px}
+.chips .chip,.chips .chip.soc,.chips .chip.custom{display:flex;align-items:center;gap:12px;width:100%;text-align:right;border-radius:12px;padding:10px 16px;min-height:50px;font-size:15.5px}
+.chips .chip::after{content:"";width:20px;height:20px;flex:0 0 20px;box-sizing:border-box;border-radius:50%;border:2px solid var(--line-strong);margin-inline-start:auto}
+.chips .chip.on{color:var(--ink)}
+.chips .chip.on::after{border-color:var(--ink);background:radial-gradient(circle,#fff 0 3.5px,var(--ink) 4.5px)}
+.chips .chip.soc svg{width:20px;height:20px;flex:0 0 20px}
+
+/* ===== קלפי בחירה ===== */
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+/* סגנונות: כרטיסי דוגמה מלאים כמו גלריית הפריסטים של היגספילד, 4 על 2 */
+.opts.gallery{grid-template-columns:repeat(4,1fr);gap:14px}
+.opt.sopt{display:flex;flex-direction:column;align-items:stretch;gap:0;padding:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;text-align:right;transition:box-shadow .16s,transform .16s,border-color .16s}
+.opt.sopt .media{position:relative;aspect-ratio:4/5;background:var(--ink);overflow:hidden;isolation:isolate}
+.opt.sopt .bg{position:absolute;inset:0;z-index:-1}
+.opt.sopt .bg svg,.opt.sopt .bg img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.opt.sopt .bg svg{transform:scale(1.25)}
+.opt.sopt .cap{padding:11px 13px 12px;display:flex;flex-direction:column;gap:2px}
+.opt.sopt .cap b{font-size:15px;font-weight:700;line-height:1.25;color:var(--ink)}
+.opt.sopt .cap small{font-size:12.5px;color:var(--muted);line-height:1.35}
+.opt.sopt .tick{position:absolute;top:10px;left:10px;width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;opacity:0;transform:scale(.6);transition:.16s;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.opt.sopt .tick svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.opt.sopt:hover{background:#fff;border-color:var(--primary);transform:translateY(-3px);box-shadow:0 14px 28px rgba(3,56,65,.14)}
+.opt.sopt:hover .bg img{transform:scale(1.05)}
+.opt.sopt.on{background:var(--ok-bg);border-color:var(--primary);box-shadow:0 0 0 2px var(--primary),0 14px 28px rgba(3,56,65,.2)}
+.opt.sopt.on .tick{opacity:1;transform:none}
+@media (max-width:1100px){.opts.gallery{grid-template-columns:repeat(2,1fr)}}
+.chip.soc{display:inline-flex;align-items:center;gap:8px}
+.chip.soc svg{width:17px;height:17px;flex:0 0 17px}
+.opts.wide{grid-template-columns:repeat(auto-fill,minmax(168px,1fr))}
+.opt{border:1px solid var(--line);background:#fff;border-radius:14px;padding:16px 14px;cursor:pointer;text-align:center;transition:.14s;display:flex;flex-direction:column;align-items:center;gap:8px}
+.opt:hover{border-color:var(--primary);background:var(--surface);transform:translateY(-2px);box-shadow:0 8px 18px rgba(3,56,65,.07)}
+.opt.on{border-color:var(--primary);background:var(--ok-bg);box-shadow:0 0 0 2px rgba(3,56,65,.22)}
+.opt .ic{width:42px;height:42px;border-radius:12px;background:var(--surface);color:var(--teal);display:grid;place-items:center;flex:0 0 42px}
+.opt.on .ic{background:var(--primary);color:#fff}
+.opt .ic svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.opt b{font-size:15px;font-weight:600;line-height:1.3}
+.opt small{color:var(--muted);font-size:12.5px;line-height:1.4}
+.opt .swatch{width:100%;height:52px;border-radius:10px;display:grid;place-items:center;overflow:hidden}
+.opt .swatch svg{width:100%;height:100%}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:100px;padding:8px 16px;cursor:pointer;font-size:15px;transition:.14s}
+.chip:hover{border-color:var(--primary);background:var(--surface)}
+.chip.on{border-color:var(--primary);background:var(--ok-bg);color:var(--teal);font-weight:600}
+.prompt-hint{font-size:13.5px;line-height:1.6;color:var(--deep);background:var(--ok-bg);border-radius:10px;padding:10px 13px;margin-bottom:16px}
+.prompt-hint code{background:#fff;border-radius:4px;padding:1px 6px;font-family:inherit;font-weight:600}
+.addrow{display:flex;gap:10px;align-items:center;margin-top:12px}
+.addrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:var(--input-radius);padding:11px 14px;font-size:16px;background:#fff;outline:0}
+.addrow input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(3,56,65,.12)}
+.addrow input::placeholder{color:var(--placeholder)}
+.addrow .btn{flex:0 0 auto}
+.chip.custom{padding-inline-end:8px;display:inline-flex;align-items:center;gap:8px}
+.chip .x{width:18px;height:18px;border-radius:50%;border:0;background:var(--surface);color:var(--muted);cursor:pointer;font-size:13px;line-height:1;display:grid;place-items:center;flex:0 0 18px}
+.chip.on .x{background:#fff}
+.chip .x:hover{background:var(--err);color:#fff}
+.chip-note{font-size:13.5px;color:var(--muted);margin:10px 0 0;line-height:1.6}
+.grouplabel{font-size:14px;color:var(--muted);font-weight:500;margin:18px 0 8px}
+.grouplabel:first-child{margin-top:0}
+
+.field{display:block;margin-bottom:14px}
+.field span{display:block;font-size:14px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:var(--input-radius);padding:11px 14px;font-size:16px;background:#fff;outline:0}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(3,56,65,.12)}
+.field input::placeholder,.field textarea::placeholder{color:var(--placeholder)}
+.field textarea{resize:vertical;line-height:1.6}
+
+/* ===== נכסי מותג ===== */
+.drop{border:2px dashed #c4ced3;border-radius:14px;padding:26px 18px;text-align:center;background:var(--bg);cursor:pointer;transition:.15s;display:block}
+.drop:hover,.drop.over{border-color:var(--primary);background:var(--ok-bg)}
+.drop input{display:none}
+.drop .ic{width:44px;height:44px;border-radius:50%;background:var(--ok-bg);color:var(--primary);display:grid;place-items:center;margin:0 auto 10px}
+.drop .ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.drop b{display:block;font-size:16px;margin-bottom:3px}
+.drop small{color:var(--muted)}
+.asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:12px;margin-top:16px}
+.asset{position:relative;border:2px solid var(--line);border-radius:13px;overflow:hidden;background:#fff;cursor:pointer;transition:.14s}
+.asset:hover{border-color:var(--line-strong)}
+.asset.on{border-color:var(--primary);box-shadow:0 0 0 3px rgba(3,56,65,.16)}
+.asset .thumb{aspect-ratio:1;display:grid;place-items:center;
+  background:linear-gradient(45deg,#eff1f6 25%,transparent 25%),linear-gradient(-45deg,#eff1f6 25%,transparent 25%),
+  linear-gradient(45deg,transparent 75%,#eff1f6 75%),linear-gradient(-45deg,transparent 75%,#eff1f6 75%);
+  background-size:14px 14px;background-position:0 0,0 7px,7px -7px,-7px 0}
+.asset .thumb img{width:100%;height:100%;object-fit:contain;padding:8px}
+.asset .cap{padding:7px 9px;font-size:12px;border-top:1px solid var(--surface);display:flex;justify-content:space-between;align-items:center;gap:6px}
+.asset .cap b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.asset .cap span{color:var(--muted);flex:0 0 auto}
+.asset .tick{position:absolute;top:7px;inset-inline-start:7px;width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;display:none;place-items:center;font-size:13px}
+.asset.on .tick{display:grid}
+.asset .del{position:absolute;top:7px;inset-inline-end:7px;width:22px;height:22px;border-radius:50%;background:rgba(3,56,65,.62);color:#fff;border:0;cursor:pointer;display:none;place-items:center;font-size:15px;line-height:1}
+.asset:hover .del{display:grid}
+.tagrow{display:flex;gap:5px;flex-wrap:wrap;padding:0 9px 9px}
+.tagrow button{border:1px solid var(--line);background:#fff;border-radius:100px;padding:3px 10px;font-size:12px;cursor:pointer}
+.tagrow button.on{border-color:var(--primary);background:var(--ok-bg);color:var(--teal);font-weight:600}
+.empty-lib{color:var(--muted);text-align:center;padding:24px;border:1px dashed #c4ced3;border-radius:13px;line-height:1.7}
+
+/* ===== תוצאה ===== */
+.stage{background:var(--surface);border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:center;min-height:240px}
+.stage img{max-width:100%;max-height:520px;border-radius:10px;box-shadow:0 8px 26px rgba(3,56,65,.14);display:block;cursor:zoom-in}
+.stage canvas{max-width:100%;max-height:560px;width:auto;height:auto;border-radius:6px;box-shadow:0 8px 26px rgba(3,56,65,.14);display:block;cursor:zoom-in}
+.ed-grid{display:grid;grid-template-columns:2fr 1.4fr 1fr;gap:12px;margin-top:16px}
+.ed-grid .field{margin-bottom:0}
+@media (max-width:760px){.ed-grid{grid-template-columns:1fr}}
+.ed-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.ed-row .lbl{font-size:13.5px;color:var(--muted);margin-inline-end:4px;min-width:52px}
+.ed-row .chip{padding:6px 14px;font-size:14px}
+.ed-row .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.meta{font-size:13px;color:var(--deep);background:var(--ok-bg);border-radius:10px;padding:9px 12px;margin-top:12px}
+.result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.result-actions a{text-decoration:none;display:inline-block}
+.spinner{width:46px;height:46px;border:5px solid var(--surface);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:48px 20px;color:var(--muted)}
+.loading b{display:block;color:var(--ink);font-size:18px;margin-bottom:8px}
+.clock{font-variant-numeric:tabular-nums;font-size:15px;margin-top:10px}
+
+/* ===== גלריה ===== */
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.g-card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.g-thumb{aspect-ratio:1;background:var(--surface);cursor:zoom-in}
+.g-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.g-body{padding:11px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
+.g-text{font-size:13px;line-height:1.5;color:var(--ink);white-space:pre-wrap;flex:1;max-height:74px;overflow:hidden}
+.g-foot{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--placeholder);gap:6px}
+.g-card{cursor:pointer;transition:transform .14s,box-shadow .14s}
+.g-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(3,56,65,.1)}
+.g-thumb{cursor:pointer}
+/* תצוגת מודעה מוגדלת: תמונה וקופי זה לצד זה, עם כל הפעולות */
+.adview{position:fixed;inset:0;z-index:100;background:rgba(3,26,26,.72);display:grid;place-items:center;padding:24px}
+.adview .box{background:#fff;border-radius:18px;width:min(1080px,100%);max-height:calc(100vh - 48px);display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.adview .pic{background:var(--ink);display:grid;place-items:center;min-height:0}
+.adview .pic img{max-width:100%;max-height:calc(100vh - 48px);display:block;object-fit:contain}
+.adview .side{display:flex;flex-direction:column;min-height:0;padding:22px 24px 20px;gap:14px}
+.adview .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.adview .top h3{font-size:18px;margin:0;color:var(--ink)}
+.adview .top small{display:block;color:var(--muted);font-size:12.5px;margin-top:3px}
+.adview .x{border:0;background:var(--surface);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;color:var(--ink);flex:0 0 34px}
+.adview .copy{flex:1;overflow:auto;white-space:pre-wrap;font-size:15px;line-height:1.7;color:var(--ink);background:var(--surface);border-radius:12px;padding:14px 16px}
+.adview .acts{display:flex;flex-wrap:wrap;gap:8px}
+.adview .nav{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.92);cursor:pointer;font-size:22px;color:var(--ink);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.adview .nav.prev{right:14px}.adview .nav.next{left:14px}
+@media (max-width:760px){.adview{padding:0}.adview .box{grid-template-columns:1fr;border-radius:0;max-height:100vh;height:100vh;overflow:auto}.adview .pic img{max-height:60vh}.adview .nav{top:auto;bottom:14px;transform:none}}
+.g-empty{color:var(--muted);padding:30px;text-align:center;background:#fff;border:1px dashed #c4ced3;border-radius:14px}
+
+/* ===== כללי ===== */
+.notice{border-radius:12px;padding:13px 16px;font-size:15px;margin-bottom:18px;line-height:1.6}
+.notice.warn{background:var(--warn-bg);border:1px solid #ffe1a3;color:#8a5f00}
+.notice.err{background:var(--err-bg);border:1px solid #ffd0da;color:var(--err)}
+.live-badge{display:inline-flex;align-items:center;gap:7px;background:var(--ok-bg);color:var(--deep);border-radius:100px;padding:5px 13px;font-size:13px;font-weight:600}
+.live-badge i{width:8px;height:8px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 3px rgba(3,56,65,.2)}
+.lightbox{position:fixed;inset:0;background:rgba(3,26,26,.86);display:grid;place-items:center;z-index:99;cursor:zoom-out;padding:30px}
+.lightbox img{max-width:94%;max-height:94%;border-radius:10px}
+.chat-fab{position:fixed;bottom:26px;left:26px;width:56px;height:56px;border-radius:50%;background:var(--ink);color:#fff;border:0;cursor:pointer;display:grid;place-items:center;box-shadow:0 8px 22px rgba(3,56,65,.28);z-index:80}
+.chat-fab svg{width:24px;height:26px;fill:currentColor}
+.toast{position:fixed;bottom:24px;left:96px;background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;z-index:120;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+.hidden{display:none!important}
+
+@media(max-width:640px){
+  .main{padding:22px 16px 110px}.rail{width:58px;flex-basis:58px}.topbar{padding:0 16px;height:72px;flex-basis:72px;gap:10px}
+  .hello{gap:14px}.hello-disc{width:70px;height:70px;flex-basis:70px}.hello-disc img{width:44px}.hello h1{font-size:22px}
+  .sec{padding:18px}.sec-sub,.sec-body{padding-inline-start:0}
+  .biz-fields{grid-template-columns:1fr}
+  .opts{grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}
+}
+
+/* =================== v3: כרטיסים לפי העיצוב בפיגמה, הכל במרכז =================== */
+.wrap{max-width:760px}
+.sec{padding:0;border:1px solid #EFF1F6;border-radius:12px;margin-bottom:16px;overflow:hidden}
+.sec-head{padding:18px 24px;margin:0;border-bottom:1px solid #EFF1F6;gap:10px}
+.sec-head h2{font-size:18px;font-weight:700;color:var(--ink)}
+.sec-num,.sec-toggle,.sec-pick{display:none!important}
+.sec-sub{padding:16px 24px 0;margin:0}
+.sec-body{padding:18px 24px 22px}
+.opt-tag{font-size:13px;color:#607684;background:#F5F6FA;border-radius:100px;padding:3px 10px}
+.muted{color:var(--muted);font-weight:400}
+/* פורמט: כרטיסי רדיו */
+.fmt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.fmt-grid .opt{align-items:flex-start;justify-content:center;text-align:right;gap:8px;padding:12px;border:1px solid #EFF1F6;border-radius:8px;background:#fff;min-height:110px}
+.fmt-grid .opt:hover{transform:none;box-shadow:none;border-color:#B2BEC6;background:#fff}
+.fmt-grid .opt.on{border-color:#0DAC81;box-shadow:0 0 0 1px #0DAC81;background:#fff}
+.fmt-grid .shape{height:36px;max-width:48px;border:1.5px solid #B2BEC6;background:#F5F6FA;border-radius:3px;display:block}
+.fmt-grid .opt.on .shape{background:#E6FBF4;border-color:#0DAC81}
+.fmt-grid b{font-size:16px;font-weight:500;color:#033841;line-height:22px}
+.fmt-grid small{font-size:16px;color:#607684;line-height:22px}
+/* תבנית: ממוזערת מצוירת בקוד, שם ותיאור */
+.tpl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.tpl-grid .opt{padding:0;border:0;background:none;align-items:stretch;text-align:right;gap:10px}
+.tpl-grid .opt:hover,.tpl-grid .opt.on{transform:none;box-shadow:none;background:none}
+.tpl-grid .tthumb{display:grid;place-items:center;aspect-ratio:4/5;padding:8px;background:#fff;border:1px solid #EFF1F6;border-radius:8px;transition:.14s}
+.tpl-grid .opt:hover .tthumb{border-color:#B2BEC6}
+.tpl-grid .opt.on .tthumb{border-color:#0DAC81;box-shadow:0 0 0 1px #0DAC81}
+.tpl-grid canvas{max-width:100%;max-height:100%;border-radius:3px;box-shadow:0 1px 4px rgba(3,56,65,.12)}
+.tpl-grid b{font-size:16px;font-weight:500;color:#033841}
+.tpl-grid small{font-size:14px;color:#607684;line-height:1.4}
+.style-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid #EFF1F6}
+.style-row .lbl{font-size:14px;color:var(--muted);font-weight:500;min-width:40px}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #DDE2EA;cursor:pointer;padding:0;position:relative}
+.sw.on{box-shadow:0 0 0 2px #0DAC81}
+.sw.auto{background:conic-gradient(#E8505B,#F2B33D,#2F9E7A,#1D58E3,#6B4FA0,#E8505B)}
+.sw.custom{background:#fff;display:grid;place-items:center;font-size:18px;color:var(--muted);overflow:hidden}
+.sw.custom input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.sw-name{font-size:14px;color:var(--muted)}
+#optsFont .chip{font-size:16px}
+/* תמונה משלכם */
+.own{display:flex;gap:12px;align-items:flex-start;margin-top:14px;padding:14px 16px;border:1px solid #0DAC81;background:#E6FBF4;border-radius:10px;cursor:pointer}
+.own input{width:18px;height:18px;margin-top:3px;accent-color:#0DAC81;flex:0 0 18px}
+.own span{display:flex;flex-direction:column;gap:2px}
+.own small{color:var(--muted);font-size:13.5px}
+details.adv{margin:4px 0 14px;border:1px solid #EFF1F6;border-radius:10px;padding:10px 14px}
+details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight:500}
+@media (max-width:760px){
+  .fmt-grid{grid-template-columns:repeat(2,1fr)}
+  .tpl-grid{grid-template-columns:repeat(2,1fr)}
+  .sec-head,.sec-body{padding-left:16px;padding-right:16px}.sec-sub{padding:14px 16px 0}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="rail">
+    <img class="mark" src="assets/morning-mark.svg" alt="morning" style="filter:brightness(0) invert(1)">
+    <button class="rail-btn" title="מועדפים"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg></button>
+    <div class="rail-sep"></div>
+    <button class="rail-btn" title="הכנסות"><svg viewBox="0 0 24 24"><path d="M4 19V12m6 7V8m6 11V5m4 14H2M4 8l5-4 5 2 6-4"/></svg></button>
+    <button class="rail-btn" title="ניהול שוטף"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5"/></svg></button>
+    <button class="rail-btn" title="הוצאות"><svg viewBox="0 0 24 24"><path d="M3 7h15a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H3zM3 7l3-4h9l3 4M16 13h5"/></svg></button>
+    <button class="rail-btn" title="מכירות ולידים"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg></button>
+    <button class="rail-btn" title="רשות המיסים"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M14.5 8.5c-1-1-5-.7-5 1.5 0 3 5 1 5 4 0 2-4 2.5-5 .8M12 7v10"/></svg></button>
+    <button class="rail-btn" title="ניהול פיננסי"><svg viewBox="0 0 24 24"><path d="M4 18V6h16v12zM7 15l3-3 3 2 4-5"/></svg></button>
+    <button class="rail-btn active" title="ניהול פרסום"><span class="dot"></span><svg viewBox="0 0 24 24"><path d="M4 14V9l12-4v13L4 14Zm0 0 2 6h4l-2-5M19 8l2-2M19 15l2 2M20 11h3"/></svg></button>
+    <button class="rail-btn" title="תוספים לעסק"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM16.5 13.5v6M13.5 16.5h6"/></svg></button>
+    <div class="rail-bottom">
+      <div class="rail-avatar"><img src="assets/morning-mark.svg" alt=""></div>
+      <button class="rail-collapse" title="כיווץ"><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button>
+    </div>
+  </aside>
+
+  <div class="surface">
+    <header class="topbar">
+      <div class="top-spacer"></div>
+      <button class="top-icon" title="התראות"><svg viewBox="0 0 24 24"><path d="M18 15v-4a6 6 0 1 0-12 0v4l-2 3h16ZM10 21h4"/></svg></button>
+      <button class="top-icon" title="מצב תצוגה"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18Z" fill="currentColor" stroke="none"/></svg></button>
+      <button class="top-icon" title="עזרה"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.6.2-1 .8-1 1.4v.4M12 17h.01"/></svg></button>
+      <button class="fab" title="מודעה חדשה" id="fab"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    </header>
+
+    <main class="main" id="main">
+      <div class="wrap">
+
+        <section class="hello">
+          <div class="hello-disc"><img src="assets/morning-logo.svg" alt="morning"></div>
+          <div>
+            <h1>יוצר המודעות <span style="font-size:14px;font-weight:600;background:var(--ink);color:#fff;border-radius:100px;padding:3px 11px;vertical-align:middle">v2</span></h1>
+            <p>עונים על כמה שאלות, ומקבלים מודעה מוכנה לפרסום לעסק שלכם</p>
+            <div style="margin-top:10px" id="statusSlot"></div>
+          </div>
+        </section>
+
+        <div id="notice"></div>
+
+        <nav class="tabs">
+          <button class="tab on" data-tab="create">יצירת מודעה</button>
+          <button class="tab" data-tab="library">נכסי המותג <span class="count" id="cAssets">0</span></button>
+          <button class="tab" data-tab="gallery">המודעות שלי <span class="count" id="cAds">0</span></button>
+        </nav>
+
+        <!-- ============ יצירה ============ -->
+        <section id="tab-create">
+
+          <div class="biz">
+            <div class="biz-head"><h3>העסק שלכם</h3><span class="from">מתוך החשבון שלכם במורנינג</span></div>
+            <p class="biz-sub">הפרטים נלקחים מהחשבון. אפשר לדייק אותם כאן לצורך המודעה</p>
+            <div class="biz-fields">
+              <label class="field" style="margin:0"><span>שם העסק</span><input id="b_name" placeholder="סטודיו מוב"></label>
+              <label class="field" style="margin:0"><span>השם באנגלית</span><input id="b_nameEn" placeholder="STUDIO MOVE"></label>
+              <label class="field" style="margin:0"><span>תחום</span><input id="b_field" placeholder="סטודיו לפילאטיס"></label>
+              <label class="field" style="margin:0"><span>עיר</span><input id="b_city" placeholder="תל אביב"></label>
+              <label class="field" style="margin:0"><span>אתר</span><input id="b_site" placeholder="studiomove.co.il"></label>
+            </div>
+          </div>
+
+          <section class="sec" id="sec-format">
+            <div class="sec-head"><h2>פורמט</h2></div>
+            <div class="sec-body"><div class="fmt-grid" id="optsFormat"></div></div>
+          </section>
+
+          <section class="sec" id="sec-style">
+            <div class="sec-head"><h2>תבנית</h2></div>
+            <div class="sec-body">
+              <div class="tpl-grid" id="optsStyle"></div>
+              <div class="style-row">
+                <span class="lbl">צבע</span>
+                <div class="swatches" id="optsColor"></div>
+                <span class="sw-name" id="colorName"></span>
+              </div>
+              <div class="style-row">
+                <span class="lbl">פונט</span>
+                <div class="chips" id="optsFont"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="sec" id="sec-promote">
+            <div class="sec-head"><h2>מה מקדמים</h2></div>
+            <p class="sec-sub">לא צריך לכתוב כותרת או טקסט. מספיק לבחור מה מקדמים ולדייק במשפט, והקופי נכתב לבד</p>
+            <div class="sec-body"><div class="list" id="optsPromote"></div>
+              <label class="field" style="margin-top:16px" id="promoteDetailWrap">
+                <span id="promoteQ">רוצים לדייק?</span>
+                <input id="promoteFree" placeholder="בחרו קודם מה מקדמים"></label>
+              <div class="grouplabel">מטרת המודעה</div>
+              <div class="chips" id="chipsGoal"></div>
+            </div>
+          </section>
+
+          <section class="sec" id="sec-aud">
+            <div class="sec-head"><h2>למי מדברים</h2></div>
+            <div class="sec-body">
+              <div class="grouplabel" style="margin-top:0">קהל היעד</div><div class="chips" id="chipsAud"></div>
+              <div class="addrow">
+                <input id="audOther" placeholder="לא מצאתם? כתבו כאן קהל יעד משלכם">
+                <button class="btn btn-outline btn-sm" id="audAdd">הוספה</button>
+              </div>
+              <div class="grouplabel">הטון</div><div class="chips" id="chipsTone"></div>
+            </div>
+          </section>
+
+          <section class="sec" id="sec-assets">
+            <div class="sec-head"><h2>תמונה ולוגו</h2><span class="opt-tag">לא חובה</span></div>
+            <p class="sec-sub">אפשר להוסיף תמונה משלכם, צילום של המקום, של מוצר או של הצוות. בלי תמונה, המנוע ייצור צילום שמתאים למודעה</p>
+            <div class="sec-body">
+              <div id="assetPick"></div>
+              <label class="own hidden" id="ownWrap"><input type="checkbox" id="useOwn">
+                <span><b>להשתמש בתמונה שלי כמו שהיא</b><small>בלי ליצור תמונה חדשה. הכותרת, הלוגו והכפתור יונחו עליה, ונוצר רק הקופי</small></span></label>
+            </div>
+          </section>
+
+          <section class="sec" id="sec-go">
+            <div class="sec-head"><h2>יצירה</h2></div>
+            <div class="sec-body">
+              <label class="field" style="margin-top:0"><span>יש לכם רעיון או בקשה? <small class="muted">(לא חובה)</small></span>
+                <textarea id="extraIn" rows="3" placeholder="לדוגמה: אמא ובת עושות פילאטיס יחד, עם חיוך"></textarea></label>
+              <details class="adv">
+                <summary>הפרומפט שיישלח למנוע</summary>
+                <div style="display:flex;justify-content:flex-end"><button class="btn btn-ghost" id="resetPrompt">איפוס אוטומטי</button></div>
+                <label class="field" style="margin-bottom:8px"><textarea id="promptIn" rows="6"></textarea></label>
+                <div class="prompt-hint hidden" id="promptHint"></div>
+              </details>
+              <div class="costline" id="costline"></div>
+              <button class="btn btn-primary btn-lg" id="go">יצירת המודעה</button>
+            </div>
+          </section>
+
+          <section class="sec hidden" id="sec-result">
+            <div class="sec-head"><h2>המודעה</h2></div>
+            <div class="sec-body" id="result"></div>
+          </section>
+
+        </section>
+
+        <!-- ============ נכסי מותג ============ -->
+        <section id="tab-library" class="hidden">
+          <div class="sec">
+            <div class="sec-head"><h2>נכסי המותג</h2></div>
+            <p class="sec-sub" style="padding:0">לוגו, תמונות מוצר ותמונות רקע. נשמרים כאן וזמינים לכל מודעה שתיצרו</p>
+            <label class="drop" id="drop">
+              <input type="file" id="file" accept="image/*" multiple>
+              <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 17v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1"/></svg></div>
+              <b>גררו לכאן קבצים, או לחצו לבחירה</b>
+              <small>PNG, JPG, WEBP או SVG. את הלוגו עדיף להעלות עם רקע שקוף</small>
+            </label>
+            <div id="lib"></div>
+          </div>
+        </section>
+
+        <!-- ============ המודעות שלי ============ -->
+        <section id="tab-gallery" class="hidden">
+          <div class="sec">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div><h2 style="font-size:20px">המודעות שלי</h2><p class="sec-sub" style="padding:0;margin:2px 0 0">כל מה שיצרתם, שמור בדפדפן הזה</p></div>
+              <button class="btn btn-ghost" id="clearGal">ניקוי הכל</button>
+            </div>
+            <div id="gal"></div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+<button class="chat-fab" title="לעזרה במערכת, אני כאן"><svg viewBox="0 0 28 32"><path d="M28 32s-4.714-1.855-8.527-3.34H3.437C1.54 28.66 0 27.026 0 25.013V3.644C0 1.633 1.54 0 3.437 0h21.125c1.898 0 3.437 1.632 3.437 3.645v18.404H28V32z"/></svg></button>
+<div class="toast" id="toast"></div>
+
+<script src="assets/compose.js"></script>
+<script>
+/* ===================================================================
+   יוצר המודעות של morning
+   היצירה רצה בשרת (api/generate + api/post) מול OpenAI.
+   מפתח ה-API יושב אך ורק במשתני הסביבה של השרת, לעולם לא בדף הזה.
+   פרטי העסק, נכסי המותג והמודעות נשמרים ב-IndexedDB של הדפדפן הזה בלבד.
+   =================================================================== */
+
+const API_BASE = /github\.io$/.test(location.hostname) ? 'https://REPLACE_WITH_VERCEL_URL' : '';
+/* תצוגה לשיתוף: כשהדף לא רץ מהשרת המקומי (למשל בלינק השיתוף), אין מנוע יצירה,
+   ומציגים הסבר במקום הוראות הפעלה של השרת */
+const SHARE_PREVIEW = !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const LIVE = { on:false, info:null, text:null, image:null };
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),3200)}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function attr(s){return esc(s).replace(/"/g,'&quot;')}
+
+let _ac;
+function accessCode(){
+  if(_ac!==undefined)return _ac;
+  let c='';
+  try{c=localStorage.getItem('morning_ac')||'';if(!c&&API_BASE){c=prompt('הזינו קוד גישה ליצירה (נשמר במחשב זה בלבד):')||'';if(c)localStorage.setItem('morning_ac',c)}}catch(e){}
+  _ac=c;return _ac;
+}
+const headers = () => ({'Content-Type':'application/json','x-access-code':accessCode()});
+
+/* =================== אחסון מקומי =================== */
+const DB = {
+  _p:null,
+  open(){
+    if(this._p)return this._p;
+    this._p=new Promise((res,rej)=>{
+      const r=indexedDB.open('morning_ads',2);
+      r.onupgradeneeded=()=>{const d=r.result;['assets','ads','settings'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};
+      r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+    });
+    return this._p;
+  },
+  async all(s){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction(s).objectStore(s).getAll();t.onsuccess=()=>res(t.result||[]);t.onerror=()=>rej(t.error)})},
+  async get(s,id){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction(s).objectStore(s).get(id);t.onsuccess=()=>res(t.result||null);t.onerror=()=>rej(t.error)})},
+  async put(s,v){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction(s,'readwrite').objectStore(s).put(v);t.onsuccess=()=>res(v);t.onerror=()=>rej(t.error)})},
+  async del(s,id){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction(s,'readwrite').objectStore(s).delete(id);t.onsuccess=()=>res();t.onerror=()=>rej(t.error)})},
+  async clear(s){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction(s,'readwrite').objectStore(s).clear();t.onsuccess=()=>res();t.onerror=()=>rej(t.error)})}
+};
+let ASSETS=[], ADS=[];
+
+/* =================== בדיקת חיבור =================== */
+/* נבדק בעלייה, ושוב בלחיצה על יצירה. כך שרת שעלה אחרי טעינת הדף נתפס לבד */
+function checkHealth(){
+  return fetch(API_BASE+'/api/health',{cache:'no-store'})
+    .then(r=>r.ok?r.json():null)
+    .then(j=>{
+      if(!j){ offline('לא הצלחנו להגיע לשרת היצירה'); return null }
+      LIVE.info=j; LIVE.text=j.text||null; LIVE.image=j.image||null;
+      LIVE.on=!!(LIVE.text||LIVE.image);
+      if(!LIVE.on){ offline('השרת עונה אבל אין מנוע יצירה מחובר'); return null }
+      $('#statusSlot').innerHTML='<span class="live-badge"><i></i>'+
+        (LIVE.image?'מחובר ליצירה אמיתית':'הקופי מחובר · '+esc(j.textLabel||'טקסט'))+'</span>';
+      $('#notice').innerHTML = LIVE.image ? '' :
+        '<div class="notice warn"><b>התמונות עדיין לא מחוברות.</b> '+
+        'הקופי נכתב עכשיו דרך '+esc(j.textLabel||'מנוע הטקסט')+', בלי עלות נוספת. '+
+        'יצירת התמונה עצמה דורשת מפתח OpenAI או את ה-CLI של היגספילד</div>';
+      renderCost();
+      return j;
+    })
+    .catch(()=>{ offline('לא הצלחנו להגיע לשרת היצירה'); return null });
+}
+checkHealth();
+
+function offline(why){
+  LIVE.on=false; LIVE.text=null; LIVE.image=null;
+  $('#statusSlot').innerHTML='<span class="live-badge" style="background:var(--warn-bg);color:#8a5f00"><i style="background:#ffaf00;box-shadow:none"></i>'+(SHARE_PREVIEW?'תצוגה בלבד':'לא מחובר')+'</span>';
+  if(SHARE_PREVIEW){
+    $('#notice').innerHTML='<div class="notice warn"><b>זו תצוגה לשיתוף.</b> '+
+      'אפשר לעבור על כל השלבים, לבחור ולהעלות קבצים, אבל יצירת המודעה עצמה פועלת רק בהפעלה המקומית של הכלי</div>';
+    renderCost(); return;
+  }
+  $('#notice').innerHTML='<div class="notice warn"><b>מצב לא מחובר.</b> '+esc(why)+
+    '. אפשר לעבור על הכל ולנהל נכסים, אבל היצירה עצמה דורשת שהשרת המקומי ירוץ. '+
+    'הפעלה: <code>node ~/morning-advertising/server.js</code></div>';
+  renderCost();
+}
+
+/* =================== האפשרויות =================== */
+/* לכל אפשרות יש שדה פירוט. need=true אומר שאי אפשר ליצור בלעדיו,
+   אחרת המנוע ממציא מוצר או אירוע שלא קיימים */
+/* v2: ארבע האפשרויות החשובות בלבד. גיוס עובדים, פתיחת עסק, גיוס לקוחות ותוכן מיתוגי ירדו.
+   גיוס לקוחות כבר מכוסה במטרת המודעה (לידים ופניות) */
+const PROMOTE = [
+  {v:'שירות', d:'שירות מקצועי שאתם נותנים', need:true,
+   q:'איזה שירות?', ph:'שיעורי פילאטיס מכשירים בקבוצות קטנות',
+   ic:'M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM4 21c1-5 15-5 16 0'},
+  {v:'מוצר', d:'מוצר שאתם מוכרים, חדש או קיים', need:true,
+   q:'איזה מוצר בדיוק?', ph:'רפורמר פרימיום, מכשיר פילאטיס חדש בסטודיו',
+   ic:'m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9Z'},
+  {v:'מבצע או הנחה', d:'הטבה לזמן מוגבל', need:true,
+   q:'מה ההטבה בדיוק?', ph:'20% הנחה על מנוי שנתי, עד סוף החודש',
+   ic:'M9 15 15 9M9.5 9.5h.01M14.5 14.5h.01M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Z'},
+  {v:'אירוע', d:'סדנה, כנס או ערב לקוחות', need:true,
+   q:'איזה אירוע ומתי?', ph:'סדנת נשימה ותנועה, יום שישי ב-10:00',
+   ic:'M7 3v3M17 3v3M4 9h16M5 6h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z'}
+];
+const GOALS = ['לידים ופניות','מכירות','הרשמות','חשיפה ומודעות'];
+/* בלי קריאה לפעולה אין רצועת פוטר במודעה, ולכן לכל מטרה יש ברירת מחדל */
+const CTA_BY_GOAL = {'לידים ופניות':'השאירו פרטים','מכירות':'לרכישה',
+                     'הרשמות':'להרשמה','חשיפה ומודעות':'לפרטים נוספים'};
+function ctaText(){ return (S.cta||'').trim() || CTA_BY_GOAL[S.goal] || 'לפרטים נוספים' }
+const PLATFORMS  = ['אינסטגרם','פייסבוק','לינקדאין','טיקטוק'];
+/* לוגואים של הרשתות (Simple Icons) בצבע המותג של כל רשת */
+const PLATFORM_ICON = {
+  'אינסטגרם':{c:'#E4405F',d:'M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z'},
+  'פייסבוק': {c:'#0866FF',d:'M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z'},
+  'לינקדאין':{c:'#0A66C2',d:'M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z'},
+  'טיקטוק':  {c:'#000000',d:'M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z'}
+};
+/* בחירת רשת מסמנת את הפורמט הטבעי שלה, והמשתמש יכול לשנות */
+/* שמות בעברית פשוטה. ראשי תיבות באנגלית לא אומרים כלום לבעל עסק */
+const FRAMEWORKS = [
+  {v:'מוביל לפעולה', d:'עוצר, מסקרן, גורם לרצות, ובסוף מבקש. הבחירה הבטוחה למודעה ממומנת'},
+  {v:'מהכאב לפתרון', d:'מתחיל בבעיה שהלקוח כבר מכיר, ואתם הפתרון. טוב כשיש כאב ברור'},
+  {v:'סיפור קצר',    d:'רגע אנושי אחד שממחיש את הערך, בלי למכור ישירות. טוב לחשיפה ולמותג'}
+];
+
+/* v2: ארבע תבניות שנבנות בקוד (assets/compose.js). המנוע מייצר רק את התמונה, בלי טקסט,
+   והכותרת, הכפתור, הלוגו והצבע מונחים עליה בקנבס. כך העברית תמיד מדויקת והמודעה
+   בזהות של העסק של הלקוח, ולא נראית כמו מודעה שבינה מלאכותית עיצבה */
+const TEMPLATES = AdCompose.TEMPLATES;
+function templateMeta(){ return TEMPLATES.find(x=>x.v===S.template)||null }
+
+/* הפונט של המודעה. '' = לפי הטון שנבחר */
+function fontId(){ return S.font || AdCompose.fontForTone(S.tone) }
+/* צבע המודעה בפועל: הנבחר, ובאוטומטי צבע המותג מהלוגו */
+function adColor(){ const L=chosenLogoInfo(); return colorHex() || (L&&L.brand) || '#1F3A5F' }
+
+/* צבע המודעה. '' = אוטומטי, 'logo' = הצבע העיקרי של הלוגו, אחרת קוד צבע */
+const AD_COLORS = [
+  {v:'#033841', t:'כחול כהה'},
+  {v:'#1D58E3', t:'כחול'},
+  {v:'#E8505B', t:'אלמוג'},
+  {v:'#F2B33D', t:'חרדל'},
+  {v:'#2F9E7A', t:'ירוק'},
+  {v:'#6B4FA0', t:'סגול'},
+  {v:'#111111', t:'שחור'},
+  {v:'#F5EFE6', t:'שמנת'}
+];
+function colorHex(){ if(S.color==='logo'){const l=chosenLogoInfo();return l?l.ink:''} return S.color||'' }
+function colorLabel(){
+  if(!S.color)return 'אוטומטי';
+  if(S.color==='logo')return 'מהלוגו';
+  const c=AD_COLORS.find(x=>x.v===S.color); return c?c.t:'צבע מותאם';
+}
+
+/* v3: פורמט לפי מקום הפרסום, כמו בעיצוב. הרשת נגזרת מהפורמט (לקופי) */
+const FORMAT = [
+  {v:'4:5',   t:'אינסטגרם לאורך', px:'1080×1350', w:1080, h:1350, plat:'אינסטגרם', fmt:true},
+  {v:'1:1',   t:'פוסט בפיד',      px:'1080×1080', w:1080, h:1080, plat:'אינסטגרם', fmt:true},
+  {v:'9:16',  t:'סטורי',          px:'1080×1920', w:1080, h:1920, plat:'אינסטגרם', story:true, fmt:true},
+  {v:'fb',    t:'מודעת פייסבוק',  px:'1200×628',  w:1200, h:628,  plat:'פייסבוק', fmt:true},
+  {v:'li',    t:'פוסט בלינקדאין', px:'1200×627',  w:1200, h:627,  plat:'לינקדאין', fmt:true},
+  {v:'reels', t:'Reels / TikTok', px:'1080×1920', w:1080, h:1920, plat:'טיקטוק', story:true, fmt:true}
+];
+function formatMeta(){ return FORMAT.find(f=>f.v===S.format)||FORMAT[0] }
+/* היחס שנשלח למנוע התמונות (הוא מכיר רק כמה יחסים קבועים) */
+function genFormat(v){ return {fb:'16:9',li:'16:9',reels:'9:16'}[v]||v }
+function formatLabel(v){ const f=FORMAT.find(x=>x.v===v); return f?esc(f.t)+' <bdi dir="ltr">'+f.px+'</bdi>':v }
+/* v2: רק הקהלים החשובים. קהל אחר אפשר להוסיף בשדה החופשי */
+const AUDIENCE = ['קהל רחב','תושבי האזור','נשים','גברים','הורים','בעלי עסקים'];
+let MY_AUDIENCES = [];   /* קהלים שהמשתמש הוסיף, נשמרים ונשארים לבחירה */
+const TONE = ['ידידותי וחם','מקצועי ומהוקצע','אנרגטי ומניע','יוקרתי ורגוע'];
+const OVERLAY = ['כותרת על התמונה','בלי טקסט על התמונה'];
+
+/* תבניות מנוע המודעות של היגספילד. הבקאנד מרכיב מהן לייאאוט מלא:
+   כותרת, תגית, נקודות תועלת, הצעה ורצועת פרטים. */
+const LAYOUTS = [
+  {id:'', v:'עיצוב חופשי', d:'המנוע מרכיב את המודעה לבד, כמו בדמו המקורי'},
+  {id:'fd9b886c-8b4d-4e9a-aa4d-11b4a67456a5', v:'תועלות',        d:'כותרת ושלוש נקודות עם אייקונים'},
+  {id:'c4c9ee3e-c161-4cc6-b401-77f122cd3c3c', v:'הצעה מיוחדת',   d:'מבצע או הנחה בולטים'},
+  {id:'18e9f327-b667-40f1-84d1-f234c67a4929', v:'כותרת גדולה',   d:'אמירה אחת חזקה'},
+  {id:'cb2da9cc-f477-4fd3-b9d6-aa9cbfa14dcd', v:'צ׳ק ליסט',      d:'רשימת תועלות מסומנת'},
+  {id:'4b71d6d0-4a79-4241-8f3a-60bb766d1945', v:'מה מקבלים',     d:'פירוט המאפיינים'},
+  {id:'c7932132-dbe5-4806-a7cc-ee9bc5094367', v:'בפעולה',        d:'המוצר או השירות בשימוש'},
+  {id:'e961f13c-c96d-4504-bb70-77abeeaa9027', v:'ציטוט לקוח',    d:'המלצה בתוך המודעה'},
+  {id:'c3884bf7-5d3b-460b-8815-81f82e5bc0fb', v:'ביקורת כוכבים', d:'דירוג והמלצה'},
+  {id:'30ab1615-9b6f-4d73-bf84-9436b0861cb4', v:'הוכחה חברתית',  d:'כמה כבר הצטרפו'},
+  {id:'cfb067f6-735a-46d8-a2f0-22e5a47b122e', v:'אמירה נועזת',   d:'משפט אחד על כל הפריים'},
+  {id:'9f83c485-959d-4ea1-a2ff-7a4e7370dd62', v:'סגנון מגזין',   d:'עריכה מוקפדת כמו כתבה'},
+  {id:'7200218e-d78e-492c-ae9b-a3a08af2b923', v:'פוסט אורגני',   d:'נראה כמו פוסט רגיל בפיד'},
+];
+
+/* =================== המצב =================== */
+const S = { promote:'', promoteFree:'', template:'', color:'', font:'', useOwn:false, goal:'לידים ופניות', layout:'', format:'4:5', audience:'', tone:'', cta:'',
+            overlay:'כותרת על התמונה', overlayText:'',
+            platform:'אינסטגרם', framework:'מוביל לפעולה', len:'קצר', emoji:'מדוד',
+            extra:'', assets:[], prompt:'', promptTouched:false };
+const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'', site:'' };
+
+const DRAFT='morning_ads_draft_v3';  /* טיוטה נפרדת מ-v2, כי הפורמטים שונים */
+function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify(S)) }catch(e){} }
+function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d); if(!TEMPLATES.some(x=>x.v===S.template))S.template=''; if(S.font&&!AdCompose.FONT_SETS.some(x=>x.v===S.font))S.font=''; S.overlay='כותרת על התמונה'; S.overlayText=''; S.cta=''; if(!TONE.includes(S.tone))S.tone=''; if(!PROMOTE.some(x=>x.v===S.promote)){S.promote='';S.promoteFree=''} S.layout=''; if(!FORMAT.some(x=>x.v===S.format))S.format='4:5' }catch(e){} }
+
+/* =================== גלילה לשלב הבא =================== */
+/* כל בחירה מורידה את המשתמש למקטע הבא, שכבר נמצא שם על המסך */
+function slideTo(id){
+  const el=document.getElementById(id), main=$('#main');
+  if(!el||!main)return;
+  /* גלילה מונפשת משלנו ולא scroll-behavior של ה-CSS, כדי שההתנהגות תהיה ודאית */
+  const delta=el.getBoundingClientRect().top-main.getBoundingClientRect().top-12;
+  const max=main.scrollHeight-main.clientHeight;
+  const from=main.scrollTop, to=Math.max(0,Math.min(max,from+delta)), dist=to-from;
+  if(Math.abs(dist)<2)return;
+  const dur=Math.min(700,240+Math.abs(dist)*0.3), t0=performance.now();
+  const ease=t=>1-Math.pow(1-t,3);
+  /* setTimeout ולא requestAnimationFrame: rAF נעצר בלשונית מוסתרת והגלילה לא הייתה מתבצעת */
+  (function step(){
+    const t=Math.min(1,(performance.now()-t0)/dur);
+    main.scrollTop=from+dist*ease(t);
+    if(t<1)setTimeout(step,16);
+  })();
+}
+
+/* =================== בניית המקטעים (פעם אחת) =================== */
+function ratioBox(v){
+  const [w,h]=v.split(':').map(Number), k=38/Math.max(w,h);
+  return `<span class="ratio"><i style="width:${Math.round(w*k)}px;height:${Math.round(h*k)}px"></i></span>`;
+}
+function optCard(o){
+  /* v2: כל אפשרות היא שורה ברשימה מלמעלה למטה */
+  if(o.fmt){
+    /* צורה ביחס הפורמט, בגובה 36 ועד רוחב 48, כמו בעיצוב */
+    const w=Math.min(48,Math.round(36*o.w/o.h*10)/10);
+    return `<button class="opt" data-v="${attr(o.v)}"><i class="shape" style="width:${w}px"></i>
+      <b>${esc(o.t)}</b><small><bdi dir="ltr">${esc(o.px)}</bdi></small></button>`;
+  }
+  return `<button class="opt" data-v="${attr(o.v)}">
+    ${o.ic?`<span class="ic"><svg viewBox="0 0 24 24"><path d="${o.ic}"/></svg></span>`:''}
+    <span class="txt"><b>${esc(o.t||o.v)}</b>${o.d?`<small>${esc(o.d)}</small>`:''}</span><span class="chk"></span></button>`;
+}
+
+/* כרטיס תבנית: ממוזערת סכמטית שמצוירת בקוד, בצבע ובפורמט שנבחרו */
+function styleCard(o){
+  return `<button class="opt" data-v="${attr(o.v)}"><span class="tthumb"><canvas data-tpl="${attr(o.v)}"></canvas></span>
+    <b>${esc(o.t)}</b><small>${esc(o.d)}</small></button>`;
+}
+function drawThumbs(){
+  $$('#optsStyle canvas[data-tpl]').forEach(c=>AdCompose.render(c,{tpl:c.dataset.tpl,format:S.format,schematic:true,scale:0.24,
+    headline:'כותרת ראשית של המודעה',sub:'שורה משנית קצרה',cta:'לפרטים',name:'',color:adColor(),font:fontId()}));
+}
+
+/* =================== v2: פונט ותצוגה מקדימה =================== */
+function renderFonts(){
+  $('#optsFont').innerHTML=
+    `<button class="chip ${!S.font?'on':''}" data-f="">לפי הטון</button>`+
+    AdCompose.FONT_SETS.map(f=>`<button class="chip ${S.font===f.v?'on':''}" data-f="${attr(f.v)}" style="font-family:'${f.head.f}';font-weight:${f.head.w}" title="${attr(f.head.f)}">${esc(f.t)}</button>`).join('');
+  $('#optsFont').onclick=e=>{
+    const b=e.target.closest('[data-f]'); if(!b)return;
+    S.font=b.dataset.f; renderFonts(); saveDraft(); drawThumbs();
+  };
+}
+/* תמונות שכבר נטענו (לוגו), כדי שהתצוגה המקדימה לא תטען אותן שוב בכל שינוי */
+const IMG_CACHE={};
+async function assetImg(a){
+  if(!a)return null;
+  if(!IMG_CACHE[a.id])IMG_CACHE[a.id]=AdCompose.loadImage(a.url).catch(()=>null);
+  return IMG_CACHE[a.id];
+}
+async function logoForAd(){
+  const a=ASSETS.find(x=>x.tag==='לוגו'&&S.assets.includes(x.id));
+  const img=await assetImg(a);
+  return img?{img,info:LOGO_INFO[a.id]||null}:null;
+}
+/* v3: בלי תצוגה מקדימה. הממוזערות של התבניות מתעדכנות לפי הפורמט, הצבע והפונט */
+function renderTplPreview(){ drawThumbs(); renderOwn() }
+
+/* v3: תמונה משלכם. עם תבנית אפשר להשתמש בה כמו שהיא, בלי ליצור תמונה חדשה */
+function ownPhoto(){ return ASSETS.find(a=>S.assets.includes(a.id)&&a.tag!=='לוגו')||null }
+function renderOwn(){
+  const w=$('#ownWrap'); if(!w)return;
+  const ok=!!(S.template&&ownPhoto());
+  w.classList.toggle('hidden',!ok);
+  $('#useOwn').checked=ok&&!!S.useOwn;
+}
+function usingOwn(){ return !!(S.template&&S.useOwn&&ownPhoto()) }
+
+/* =================== v2: מקטעים מתקפלים =================== */
+function setOpen(secId,open){
+  const sec=document.getElementById(secId); if(!sec)return;
+  sec.classList.toggle('open',open);
+  sec.querySelector('.sec-head').setAttribute('aria-expanded',open?'true':'false');
+}
+/* התקציר בכותרת של "איך המודעה תיראה": התבנית והצבע יחד */
+function updateStylePick(){
+  const t=templateMeta();
+  if(t||S.color)markDone('sec-style','pick-style',esc((t?t.t:'בלי תבנית')+' · '+colorLabel()));
+  else document.getElementById('sec-style').classList.remove('done');
+}
+function closeSoon(secId){ setTimeout(()=>setOpen(secId,false),320) }
+function wireCollapse(){
+  $$('.sec.col').forEach(sec=>{
+    const h=sec.querySelector('.sec-head');
+    h.onclick=()=>setOpen(sec.id,!sec.classList.contains('open'));
+    h.onkeydown=e=>{ if(e['key']==='Enter'||e['key']===' '){ e.preventDefault(); h.onclick() } };
+  });
+}
+
+/* =================== v2: צבע המודעה =================== */
+function renderColors(){
+  const logo=chosenLogoInfo();
+  const custom=S.color&&S.color!=='logo'&&!AD_COLORS.some(x=>x.v===S.color)?S.color:'';
+  $('#optsColor').innerHTML=
+    `<button class="sw auto ${!S.color?'on':''}" data-c="" title="אוטומטי"></button>`+
+    (logo?`<button class="sw ${S.color==='logo'?'on':''}" data-c="logo" title="מהלוגו" style="background:${attr(logo.ink)}"></button>`:'')+
+    AD_COLORS.map(c=>`<button class="sw ${S.color===c.v?'on':''}" data-c="${attr(c.v)}" title="${attr(c.t)}" style="background:${attr(c.v)}"></button>`).join('')+
+    `<label class="sw custom ${custom?'on':''}" title="צבע אחר" ${custom?`style="background:${attr(custom)}"`:''}>${custom?'':'+'}<input type="color" id="colorIn" value="${attr(custom||'#033841')}"></label>`;
+  $('#colorName').textContent=!S.color?(logo?'אוטומטי, לפי הלוגו':'אוטומטי'):colorLabel();
+  $('#optsColor').onclick=e=>{
+    const b=e.target.closest('[data-c]'); if(!b)return;
+    pickColor(b.dataset.c);
+  };
+  $('#colorIn').oninput=e=>pickColor(e.target.value);
+}
+function pickColor(c){
+  S.color=c; S.promptTouched=false;
+  renderColors(); updateStylePick();
+  refreshPrompt(); saveDraft();
+  if(c===''||c==='logo'||AD_COLORS.some(x=>x.v===c))closeSoon('sec-style');
+}
+
+/* =================== v2: ניתוח הלוגו =================== */
+/* בודקים אם ללוגו יש רקע שקוף, מה הצבע העיקרי שלו ומה הבהירות שלו.
+   מזה הפרומפט יודע על איזה רקע הלוגו יהיה קריא, ומתי לשים מאחוריו משטח */
+const LOGO_INFO={};
+const hex2=n=>n.toString(16).padStart(2,'0');
+function relLum(hex){
+  const c=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));
+  return .2126*c[0]+.7152*c[1]+.0722*c[2];
+}
+function contrast(a,b){ const x=relLum(a),y=relLum(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05) }
+function analyzeLogo(url){
+  return new Promise(res=>{
+    const im=new Image();
+    im.onerror=()=>res(null);
+    im.onload=()=>{
+      try{
+        const N=96, k=N/Math.max(im.naturalWidth||N,im.naturalHeight||N);
+        const w=Math.max(1,Math.round((im.naturalWidth||N)*k)), h=Math.max(1,Math.round((im.naturalHeight||N)*k));
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        const g=c.getContext('2d'); g.drawImage(im,0,0,w,h);
+        const d=g.getImageData(0,0,w,h).data;
+        const key=i=>(d[i]>>4)+','+(d[i+1]>>4)+','+(d[i+2]>>4);
+        const hexOf=k=>'#'+k.split(',').map(v=>hex2(Number(v)*16+8)).join('');
+        let clear=0, edge={}, edgeN=0;
+        for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+          const i=(y*w+x)*4;
+          if(d[i+3]<40){clear++;continue}
+          if(x===0||y===0||x===w-1||y===h-1){const kk=key(i);edge[kk]=(edge[kk]||0)+1;edgeN++}
+        }
+        const transparent=clear/(w*h)>0.08;
+        /* לוגו בלי שקיפות: הצבע הנפוץ בשוליים הוא הרקע שלו */
+        let bg=null;
+        if(!transparent&&edgeN){ const top=Object.entries(edge).sort((a,b)=>b[1]-a[1])[0]; if(top[1]/edgeN>0.5)bg=hexOf(top[0]) }
+        /* שלוש קבוצות: צבעוני (צבע המותג), כהה (בדרך כלל הטקסט) ובהיר */
+        const all={}, sat={}, darkH={}, lightH={}; let n=0, nDark=0, nLight=0, nSat=0;
+        const bump=(h,k)=>h[k]=(h[k]||0)+1;
+        for(let i=0;i<d.length;i+=4){
+          if(d[i+3]<40)continue;
+          const kk=key(i), hx=hexOf(kk);
+          if(bg&&contrast(hx,bg)<1.25)continue;
+          const L=relLum('#'+hex2(d[i])+hex2(d[i+1])+hex2(d[i+2]));
+          const S_=(Math.max(d[i],d[i+1],d[i+2])-Math.min(d[i],d[i+1],d[i+2]))/255;
+          n++; bump(all,kk);
+          if(S_>0.35){nSat++;bump(sat,kk)}
+          if(L<0.2){nDark++;bump(darkH,kk)} else if(L>0.6){nLight++;bump(lightH,kk)}
+        }
+        const top=h=>{const e=Object.entries(h).sort((a,b)=>b[1]-a[1])[0];return e?hexOf(e[0]):null};
+        /* לוגו עם חלקים כהים (טקסט) צריך רקע בהיר, גם אם יש בו משטח בהיר גדול */
+        const dark = n ? (nDark/n>=0.12 || nDark>=nLight) : true;
+        const read = (dark?top(darkH):top(lightH)) || top(all) || '#000000';
+        const brand = (n&&nSat/n>=0.05?top(sat):null) || read;
+        res({transparent, bg, read, brand, dark, ink:brand});
+      }catch(e){ res(null) }
+    };
+    im.src=url;
+  });
+}
+async function analyzeLogos(){
+  const logos=ASSETS.filter(a=>a.tag==='לוגו'&&!LOGO_INFO[a.id]);
+  for(const a of logos)LOGO_INFO[a.id]=await analyzeLogo(a.url);
+  if(logos.length){ renderColors(); refreshPrompt() }
+}
+function chosenLogoInfo(){
+  const a=ASSETS.find(x=>x.tag==='לוגו'&&S.assets.includes(x.id));
+  return a?LOGO_INFO[a.id]||null:null;
+}
+/* המשפט על הלוגו בפרומפט: איפה הוא יהיה קריא ומתי צריך משטח מאחוריו */
+function logoSentences(){
+  const L=chosenLogoInfo(), out=[];
+  out.push('שלב את הלוגו המצורף כמו שהוא, נקי וקריא, בלי לעוות אותו ובלי לשנות את צבעיו.');
+  if(!L){
+    out.push('לפני שממקמים את הלוגו, בדקו את הרקע מאחוריו: אם הניגודיות נמוכה, שימו מאחוריו משטח נקי בצבע מנוגד, כמו כרטיס, פס או עיגול, כדי שיהיה קריא לגמרי.');
+    return out;
+  }
+  if(!L.transparent&&L.bg){
+    out.push('ללוגו יש רקע מלא משלו בצבע '+L.bg+'. שלבו אותו כמלבן שלם יחד עם הרקע שלו, או התאימו את הצבע סביבו לאותו צבע, כדי שלא ייראה כמו מדבקה. אל תחתכו ממנו את הרקע.');
+    return out;
+  }
+  const need=L.dark?'בהיר':'כהה', avoid=L.dark?'כהה':'בהיר', plate=L.dark?'לבן או שמנת':'כהה כמו כחול לילה או שחור';
+  out.push('הלוגו '+avoid+' (החלקים שצריכים להיקרא בו בצבע '+L.read+(L.brand!==L.read?', וצבע המותג שלו '+L.brand:'')+') ועם רקע שקוף, ולכן הוא קריא רק על רקע '+need+'. '+
+           'לפני שממקמים אותו בדקו את הרקע באזור הזה: אם הוא '+avoid+', עמוס או צבעוני מדי, שימו מאחורי הלוגו משטח '+plate+' נקי, כמו כרטיס, פס או עיגול.');
+  const c=colorHex();
+  if(c&&S.color!=='logo'){
+    out.push(contrast(c,L.read)<3
+      ? 'צבע המודעה שנבחר ('+c+') קרוב בבהירות שלו ללוגו, ולכן הלוגו לא יהיה קריא ישירות עליו. חובה להניח אותו על משטח '+plate+'.'
+      : 'הלוגו יכול לשבת ישירות על צבע המודעה ('+c+'), הניגודיות ביניהם טובה.');
+  }else if(S.color==='logo'){
+    out.push('צבע המודעה זהה לצבע הלוגו, ולכן הלוגו לא יכול לשבת על המשטחים בצבע הזה. מקמו אותו על אזור '+need+' או על משטח '+plate+'.');
+  }
+  return out;
+}
+
+function buildSections(){
+  $('#optsPromote').innerHTML = PROMOTE.map(optCard).join('');
+  $('#optsStyle').innerHTML   = TEMPLATES.map(styleCard).join('');
+  $('#optsFormat').innerHTML  = FORMAT.map(optCard).join('');
+  renderAudChips();
+  $('#chipsTone').innerHTML   = TONE.map(t=>`<button class="chip" data-v="${attr(t)}">${esc(t)}</button>`).join('');
+  $('#chipsGoal').innerHTML   = GOALS.map(g=>`<button class="chip ${S.goal===g?'on':''}" data-v="${attr(g)}">${esc(g)}</button>`).join('');
+  $('#chipsGoal').onclick = e => {
+    const b=e.target.closest('[data-v]'); if(!b)return;
+    S.goal=b.dataset.v; S.promptTouched=false;
+    $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
+    refreshPrompt(); saveDraft();
+    const pm=promoteMeta();
+    if(pm&&(!pm.need||S.promoteFree))closeSoon('sec-promote');
+  };
+  const simpleChips=(sel,list,key)=>{
+    $(sel).innerHTML=list.map(v=>`<button class="chip ${S[key]===v?'on':''}" data-v="${attr(v)}">${esc(v)}</button>`).join('');
+    $(sel).onclick=e=>{
+      const b=e.target.closest('[data-v]'); if(!b)return;
+      S[key]=b.dataset.v; S.promptTouched=false;
+      $(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
+      renderCtaNote(); refreshPrompt(); saveDraft();
+    };
+  };
+  renderFonts();
+  wirePick('#optsPromote','promote','sec-promote','pick-promote','sec-aud');
+  wirePick('#optsStyle','template','sec-style','pick-style','',()=>esc(templateMeta().t+' · '+colorLabel()));
+  wirePick('#optsFormat','format','sec-format','pick-format','',v=>formatLabel(v));
+
+  $('#chipsAud').onclick  = e => pickChip(e,'audience','#chipsAud');
+  $('#chipsTone').onclick = e => pickChip(e,'tone','#chipsTone');
+}
+
+function markFormat(){
+  markDone('sec-format','pick-format',formatLabel(S.format));
+}
+
+function wirePick(sel,key,secId,pickId,nextId,label){
+  $(sel).onclick = e => {
+    const b=e.target.closest('[data-v]'); if(!b)return;
+    S[key]=b.dataset.v; S.promptTouched=false;
+    if(key==='format')S.platform=formatMeta().plat;
+    $(sel).querySelectorAll('.opt').forEach(x=>x.classList.toggle('on',x===b));
+    markDone(secId,pickId,label?label(S[key]):esc(S[key]));
+    refreshPrompt(); saveDraft();
+    if(key==='promote'){
+      /* בלי לדעת מה המוצר או האירוע המנוע ימציא אותם, ולכן נעצרים כאן לשאלה */
+      /* תמיד נעצרים לשדה הדיוק ולמטרה. ממשיכים הלאה בבחירת מטרה או ב-Enter */
+      renderPromoteDetail();
+      $('#promoteFree').focus({preventScroll:true});
+      return;
+    }
+    /* v2: אחרי בחירה המקטע נסגר ומציג את מה שנבחר. לא גוללים ולא פותחים את הבא.
+       בתבנית לא סוגרים, כי מתחתיה בוחרים את הצבע */
+    if(key!=='template')closeSoon(secId);
+  };
+}
+
+function renderAudChips(){
+  $('#chipsAud').innerHTML =
+    AUDIENCE.map(a=>`<button class="chip ${S.audience===a?'on':''}" data-v="${attr(a)}">${esc(a)}</button>`).join('') +
+    MY_AUDIENCES.map(a=>`<button class="chip custom ${S.audience===a?'on':''}" data-v="${attr(a)}">${esc(a)}<span class="x" data-rm="${attr(a)}" title="הסרה">×</span></button>`).join('');
+}
+
+/* הוספת קהל יעד משלהם: נשמר, הופך לשבב, ונבחר מיד */
+async function addAudience(){
+  const v=$('#audOther').value.trim();
+  if(!v){toast('כתבו קהל יעד');$('#audOther').focus();return}
+  if(!MY_AUDIENCES.includes(v)&&!AUDIENCE.includes(v)){
+    MY_AUDIENCES.push(v);
+    try{ await DB.put('settings',{id:'audiences',list:MY_AUDIENCES}) }catch(e){}
+  }
+  S.audience=v; S.promptTouched=false;
+  $('#audOther').value='';
+  renderAudChips(); refreshPrompt(); saveDraft(); afterAud(true);
+  toast('קהל היעד נוסף');
+}
+
+async function removeAudience(v){
+  MY_AUDIENCES=MY_AUDIENCES.filter(x=>x!==v);
+  try{ await DB.put('settings',{id:'audiences',list:MY_AUDIENCES}) }catch(e){}
+  if(S.audience===v){
+    S.audience=''; markDone('sec-aud','pick-aud','טרם נבחר');
+    document.getElementById('sec-aud').classList.remove('done');
+  }
+  renderAudChips(); refreshPrompt(); saveDraft();
+}
+
+function pickChip(e,key,sel){
+  const rm=e.target.closest('[data-rm]');
+  if(rm){ e.stopPropagation(); removeAudience(rm.dataset.rm); return }
+  const b=e.target.closest('[data-v]');
+  if(!b)return;
+  S[key]=b.dataset.v; S.promptTouched=false;
+  $(sel).querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
+  refreshPrompt(); saveDraft(); afterAud(true);
+}
+
+/* מסמן את השלב כהושלם וממשיך הלאה, רק כששני החלקים מלאים */
+function afterAud(advance){
+  if(S.audience&&S.tone){
+    markDone('sec-aud','pick-aud',esc(S.audience+' · '+S.tone));
+    if(advance)closeSoon('sec-aud');
+  }
+}
+
+/* שדה הפירוט משתנה לפי מה שנבחר, וחלק מהאפשרויות לא יכולות לעבוד בלעדיו */
+function promoteMeta(){ return PROMOTE.find(x=>x.v===S.promote)||null }
+function renderPromoteDetail(){
+  const m=promoteMeta(), q=$('#promoteQ'), inp=$('#promoteFree');
+  if(!q||!inp)return;
+  if(!m){ q.textContent='רוצים לדייק?'; inp.placeholder='בחרו קודם מה מקדמים'; return }
+  q.innerHTML=esc(m.q)+(m.need?' <b style="color:var(--err)">*</b>':'');
+  inp.placeholder=m.ph;
+}
+
+function markDone(secId,pickId,text){
+  const sec=document.getElementById(secId);
+  if(sec)sec.classList.add('done');
+  const p=document.getElementById(pickId);
+  if(p)p.innerHTML=text;
+}
+
+/* מקטע נכסי המותג נבנה מחדש כשהספרייה משתנה */
+function renderAssetPick(){
+  $('#assetPick').innerHTML = ASSETS.length
+    ? `<div class="asset-grid">${ASSETS.map(a=>`
+        <div class="asset ${S.assets.includes(a.id)?'on':''}" data-asset="${attr(a.id)}">
+          <span class="tick">✓</span>
+          <div class="thumb"><img src="${a.url}" alt=""></div>
+          <div class="cap"><b>${esc(a.name)}</b><span>${esc(a.tag)}</span></div>
+        </div>`).join('')}</div>
+       <label class="drop drop-sm" id="extraDrop">
+         <input type="file" id="extraFile" accept="image/*" multiple>
+         <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 17v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1"/></svg></div>
+         <div><b>הוספת תמונה נוספת למודעה</b>
+         <small>צילום נוף, רקע, צילום של המקום או כל תמונה שתרצו במודעה. גוררים לכאן או לוחצים לבחירה</small></div>
+       </label>
+       <button class="btn btn-ghost" data-tabjump="library" style="margin-top:8px">לניהול נכסי המותג</button>`
+    : `<div class="empty-lib">עדיין אין נכסים שמורים.<br>אפשר להעלות לוגו ותמונות בלשונית נכסי המותג, או פשוט להמשיך</div>
+       <label class="drop drop-sm" id="extraDrop">
+         <input type="file" id="extraFile" accept="image/*" multiple>
+         <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 17v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1"/></svg></div>
+         <div><b>הוספת תמונה נוספת למודעה</b>
+         <small>צילום נוף, רקע, צילום של המקום או כל תמונה שתרצו במודעה. גוררים לכאן או לוחצים לבחירה</small></div>
+       </label>
+       <button class="btn btn-ghost" data-tabjump="library" style="margin-top:8px">להעלאת לוגו ונכסים</button>`;
+  /* v2: העלאה ישירות מכאן. התמונה נשמרת כרקע בספרייה ונבחרת מיד למודעה הזאת */
+  const xd=$('#extraDrop'), xf=$('#extraFile');
+  xf.onchange=()=>{ addFiles(xf.files,{tag:'רקע',select:true}); xf.value='' };
+  xd.ondragover=e=>{e.preventDefault();xd.classList.add('over')};
+  xd.ondragleave=()=>xd.classList.remove('over');
+  xd.ondrop=e=>{e.preventDefault();xd.classList.remove('over');addFiles(e.dataTransfer.files,{tag:'רקע',select:true})};
+
+  $$('#assetPick [data-asset]').forEach(el=>el.onclick=()=>{
+    const id=el.dataset.asset;
+    S.assets = S.assets.includes(id) ? S.assets.filter(x=>x!==id) : S.assets.concat(id);
+    el.classList.toggle('on');
+    markDone('sec-assets','pick-assets',S.assets.length?S.assets.length+' נבחרו':'ללא');
+    if(S.color==='logo'&&!chosenLogoInfo())S.color='';
+    renderColors(); updateStylePick();
+    refreshPrompt(); saveDraft();
+  });
+  $$('#assetPick [data-tabjump]').forEach(el=>el.onclick=()=>showTab(el.dataset.tabjump));
+  analyzeLogos();  /* לוגו חדש בספרייה נבדק פעם אחת */
+}
+
+/* החזרת המצב השמור אל המסך */
+function applyState(){
+  const set=(sel,val)=>{const g=$(sel).querySelector(`[data-v="${(val||'').replace(/"/g,'\\"')}"]`);
+    if(g){$(sel).querySelectorAll('[data-v]').forEach(x=>x.classList.remove('on'));g.classList.add('on')}};
+  set('#optsPromote',S.promote); set('#optsStyle',S.template); set('#optsFormat',S.format);
+  set('#chipsTone',S.tone);
+  renderAudChips();
+  if(S.promote)markDone('sec-promote','pick-promote',esc(S.promote));
+  renderColors(); updateStylePick();
+  if(S.format)markFormat();
+  if(S.audience&&S.tone)markDone('sec-aud','pick-aud',esc(S.audience+' · '+S.tone));
+  if(S.assets.length)markDone('sec-assets','pick-assets',S.assets.length+' נבחרו');
+  $('#promoteFree').value=S.promoteFree||'';
+  renderPromoteDetail();
+  $('#chipsGoal').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.v===S.goal));
+  renderCtaNote();
+  $('#extraIn').value=S.extra||'';
+  refreshPrompt();
+}
+
+/* =================== הפרומפט =================== */
+/* השורה הראשונה של הקופי היא הכותרת. מנקים אימוג'י וסימני קצה כדי שתיצרב נקי */
+function headlineOf(text){
+  const first=String(text||'').split('\n').map(x=>x.trim()).filter(Boolean)[0]||'';
+  return first
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{2190}-\u{21FF}]/gu,'')
+    .replace(/\s{2,}/g,' ')
+    .replace(/^["'\u201c\u201d\s]+|["'\u201c\u201d\s]+$/g,'')
+    .slice(0,60)
+    .trim();
+}
+
+/* מעדכן גם את הפרומפט שבמצב וגם את התיבה שהמשתמש רואה */
+function refreshPrompt(){
+  syncPrompt();
+  const el=$('#promptIn');
+  if(el&&!S.promptTouched)el.value=S.prompt;
+  renderPromptHint();
+  renderTplPreview();
+}
+
+/* הסבר על הסמן, אחרת נראה כאילו המילה {{כותרת}} תיכתב על המודעה */
+function renderPromptHint(){
+  const box=$('#promptHint'); if(!box)return;
+  const cur=($('#promptIn')&&$('#promptIn').value)||S.prompt||'';
+  if(cur.indexOf('{{כותרת}}')<0){ box.classList.add('hidden'); return }
+  box.innerHTML='<code>{{כותרת}}</code> הוא סמן, לא טקסט. קודם נכתב הקופי, ואז השורה הראשונה שלו '+
+    'נכנסת במקומו רגע לפני השליחה, כך שהכותרת על המודעה זהה לקופי. '+
+    'רוצים לקבוע אותה בעצמכם? כתבו אותה בשדה הכיתוב למעלה.';
+  box.classList.remove('hidden');
+}
+
+function layoutId(){ const l=LAYOUTS.find(x=>x.v===S.layout); return l?l.id:'' }
+function usingAdEngine(){ return !!layoutId() && !!(LIVE.info&&LIVE.info.adEngine) }
+
+function syncPrompt(){
+  if(S.promptTouched)return;
+  const p=[];
+  const who=(BIZ.name||'העסק')+(BIZ.field?', '+BIZ.field:'')+(BIZ.city?', '+BIZ.city:'');
+  const tpl=templateMeta();
+  const chosen=ASSETS.filter(a=>S.assets.includes(a.id));
+  const head=(S.overlayText||'').trim()||'{{כותרת}}';
+  /* כשיש פירוט הוא מה שמעניין. "מבצע או הנחה" היא קטגוריה בממשק,
+     ואם שולחים אותה המנוע עלול להדפיס אותה מילה במילה על המודעה */
+  const what=(S.promoteFree||'').trim()||S.promote;
+
+  /* משותף לשני המסלולים: מי, מה, למי ובאיזה אופי */
+  const brief=()=>{
+    p.push('מודעה שיווקית בעברית עבור '+who+'.');
+    if(BIZ.nameEn)p.push('שם המותג באותיות לטיניות נכתב בדיוק כך ובלי שינוי: '+BIZ.nameEn+'.');
+    else p.push('אל תכתוב את שם המותג באותיות לטיניות, רק בעברית.');
+    p.push('מה שמקדמים: '+what+'.');
+    if(BIZ.site)p.push('כתובת האתר שתופיע על המודעה, בדיוק כך: '+BIZ.site+'.');
+    if(S.goal)p.push('מטרת המודעה: '+S.goal+'.');
+    if(S.audience)p.push('קהל היעד: '+S.audience+'.');
+    if(S.tone)p.push('טון: '+S.tone+'.');
+  };
+
+  if(tpl){
+    /* תבנית: המנוע מייצר רק את הצילום. הטקסט, הלוגו והכפתור מונחים עליו בקוד אחר כך */
+    S.prompt=photoPrompt(who,what,tpl,chosen.filter(a=>a.tag!=='לוגו'));
+    return;
+  }
+
+  if(layoutId()){
+    /* מנוע המודעות מרכיב את הלייאאוט בעצמו */
+    brief();
+    p.push('כותרת ראשית: "'+head+'".');
+    p.push('קריאה לפעולה על המודעה: "'+ctaText()+'".');
+  }else{
+    /* עיצוב חופשי = שיטת הבריף החופשי: נותנים למודל רק את הבריף ולא מכתיבים לייאאוט.
+       כשמכתיבים מבנה יוצאת תמונה עם כותרת; כשנותנים חופש המודל מעצב מודעה שלמה */
+    p.push('צרו מודעה חזותית בעברית עבור '+who+'.');
+    /* הבקשה של בעל העסק מיד בהתחלה ומסומנת כחובה, כדי שהמודל לא יתעלם ממנה */
+    if(S.extra&&S.extra.trim())p.push('בקשה מפורשת של בעל העסק, חובה לבצע: '+S.extra.trim()+'.');
+    if(BIZ.nameEn)p.push('שם המותג באותיות לטיניות: '+BIZ.nameEn+'.');
+    if(what)p.push('מה לקדם: '+what+'.');
+    if(S.goal)p.push('המטרה: '+S.goal+'.');
+    if(S.audience)p.push('קהל יעד: '+S.audience+'.');
+    if(S.tone)p.push('טון: '+S.tone+'.');
+    if(S.platform)p.push('המודעה עולה ל'+S.platform+'.');
+    p.push('פורמט: '+formatMeta().px+' ('+formatMeta().t+').');
+    if(BIZ.site)p.push('אתר: '+BIZ.site+'.');
+    if(S.overlay===OVERLAY[1]){
+      p.push('בלי שום טקסט כתוב על התמונה: בלי כותרת, בלי מילים ובלי כפתור. רק התמונה עצמה.');
+    }else{
+      if((S.overlayText||'').trim())p.push('כותרת: "'+S.overlayText.trim()+'".');
+      if((S.cta||'').trim())p.push('קריאה לפעולה: "'+S.cta.trim()+'".');
+    }
+    p.push('התאימו את המסר לקהל היעד.');
+  }
+
+  if(chosen.length){
+    const what={'לוגו':'הלוגו','מוצר':'תמונת מוצר','רקע':'תמונת רקע או נוף','אחר':'תמונה נוספת'};
+    p.push('התמונות המצורפות לפי הסדר: '+chosen.map((a,i)=>'תמונה '+(i+1)+': '+(what[a.tag]||'תמונה נוספת')).join('. ')+'.');
+  }
+  /* v2: צבע המודעה. גובר על הצבעוניות של התבנית */
+  const hexC=colorHex();
+  if(hexC)p.push('צבע המודעה: '+hexC+'. זה הצבע הדומיננטי של המודעה, ברקע או במשטחים הגדולים, ואפשר לשלב גוונים בהירים וכהים שלו. בלי צבעים חזקים נוספים מלבד צבעי הלוגו.');
+  /* v2: המלצת פונטים (טיוטה, ראו V2-TODO.md) */
+  if(S.overlay!==OVERLAY[1]){
+    const f=AdCompose.fontSet(fontId());
+    p.push('טיפוגרפיה: הכותרת בפונט עברי '+f.head.f+' או בפונט דומה לו מאוד, והטקסט המשני ב-'+f.body.f+'. לא יותר משני פונטים במודעה.');
+  }
+  if(chosen.some(a=>a.tag==='לוגו'))logoSentences().forEach(x=>p.push(x));
+  if(chosen.some(a=>a.tag==='רקע'))p.push('השתמש בתמונת הרקע או הנוף המצורפת כרקע או כסצנה של המודעה, נאמנה למקור. אפשר לחתוך אותה ולהכהות או להבהיר אותה כדי שהטקסט יהיה קריא, אבל לא להחליף אותה בסצנה אחרת.');
+  if(chosen.some(a=>a.tag==='אחר'))p.push('שלב במודעה את התמונות הנוספות המצורפות, נאמנות למקור.');
+  if(chosen.some(a=>a.tag==='מוצר'))p.push('השתמש בתמונות המוצר המצורפות כנושא המרכזי, נאמן למקור.');
+  else if(!chosen.some(a=>a.tag==='מוצר')&&!/מוצר/.test(S.promote)){
+    p.push('אין כאן מוצר פיזי למכירה. הנושא המרכזי הוא האנשים והמקום עצמו, בחזית ובפוקוס מלא.');
+    p.push('אל תמציא אריזה, בקבוק או פריט ממותג ואל תשים אובייקט מומצא במרכז הפריים.');
+  }
+  if(S.overlay!==OVERLAY[1])p.push('כל הטקסט על המודעה בעברית תקינה מימין לשמאל, אותיות שלמות וברורות, בלי אותיות הפוכות, בלי אותיות חסרות, בלי מילים מומצאות ובלי אנגלית מלבד שם המותג.');
+  S.prompt=p.join(' ');
+}
+
+/* הפרומפט של מסלול התבניות: צילום בלבד. איפה ייכנס הטקסט תלוי בתבנית,
+   ולכן כל תבנית אומרת למנוע איפה לשים את הנושא ואיזה אזור להשאיר רגוע */
+const PHOTO_COMPOSITION={
+  split:'הנושא המרכזי באמצע הפריים עם מעט אוויר מסביב. השוליים של התמונה עשויים להיחתך מעט.',
+  overlay:'הכותרת תונח על השליש התחתון של התמונה, ולכן הנושא המרכזי בשני השלישים העליונים, והשליש התחתון רגוע, כהה יחסית ופשוט, בלי פרטים חשובים.',
+  frame:'הנושא המרכזי באמצע הפריים, קומפוזיציה נקייה ומאוזנת.',
+  type:'התמונה תיחתך לעיגול קטן, ולכן נושא אחד ברור וקרוב, באמצע הפריים, על רקע פשוט.'
+};
+function photoPrompt(who,what,tpl,refs){
+  const p=[];
+  p.push('צילום פרסומי עבור '+who+'.');
+  if(S.extra&&S.extra.trim())p.push('בקשה מפורשת של בעל העסק, חובה לבצע: '+S.extra.trim()+'.');
+  if(what)p.push('מה שמקדמים: '+what+'.');
+  if(S.audience)p.push('קהל היעד: '+S.audience+'.');
+  if(S.tone)p.push('האווירה: '+S.tone+'.');
+  p.push('זו רק התמונה של המודעה. בלי שום טקסט, בלי אותיות, בלי מספרים, בלי לוגו, בלי כפתורים, בלי שלטים קריאים ובלי מסגרות. הכותרת והלוגו יתווספו אחר כך.');
+  p.push(PHOTO_COMPOSITION[tpl.v]||PHOTO_COMPOSITION.frame);
+  p.push('צילום אמיתי וטבעי, אור רך, צבעים טבעיים. לא נראה כמו תמונת סטוק ולא כמו הדמיה ממוחשבת.');
+  p.push('אפשר לשלב בסצנה נגיעות עדינות בצבע '+adColor()+', כדי שהתמונה תתחבר לעיצוב המודעה.');
+  if(refs.length){
+    const kind={'מוצר':'תמונת מוצר','רקע':'תמונת רקע או נוף','אחר':'תמונה נוספת'};
+    p.push('התמונות המצורפות לפי הסדר: '+refs.map((a,i)=>'תמונה '+(i+1)+': '+(kind[a.tag]||'תמונה נוספת')).join('. ')+'.');
+  }
+  if(refs.some(a=>a.tag==='רקע'))p.push('השתמש בתמונת הרקע או הנוף המצורפת כסצנה, נאמנה למקור. אפשר לחתוך אותה, אבל לא להחליף אותה בסצנה אחרת.');
+  if(refs.some(a=>a.tag==='אחר'))p.push('שלב בתמונה את התמונות הנוספות המצורפות, נאמנות למקור.');
+  if(refs.some(a=>a.tag==='מוצר'))p.push('תמונות המוצר המצורפות הן הנושא המרכזי, נאמנות למקור.');
+  else if(!/מוצר/.test(S.promote)){
+    p.push('אין כאן מוצר פיזי למכירה. הנושא המרכזי הוא האנשים והמקום עצמו, בחזית ובפוקוס מלא.');
+    p.push('אל תמציא אריזה, בקבוק או פריט ממותג ואל תשים אובייקט מומצא במרכז הפריים.');
+  }
+  return p.join(' ');
+}
+
+function copyBrief(){
+  return {
+    /* הטקסט שמלווה את המודעה נכתב עם הוראות הפוסט, כמו בדמו עם הסרטונים.
+       הוראות המודעה (כותרת ושתי שורות) הוציאו קופי דל מדי */
+    type:'post', hashtags:false, engine:'openai',
+    business:{name:BIZ.name,field:BIZ.field,city:BIZ.city,vibe:S.tone,website:''},  /* במודעה לוחצים על הכפתור, לא מקלידים כתובת */
+    goal:(S.goal||'')+'. קידום: '+S.promote+(S.promoteFree?' · '+S.promoteFree:''),
+    tone:S.tone, framework:S.framework,
+    platform:formatMeta().plat+(formatMeta().story?' · סטורי':''),
+    audience:S.audience, offer:S.promoteFree||S.promote, cta:ctaText(),
+    length:'בינוני', emoji:S.emoji, extra:S.extra
+  };
+}
+
+/* =================== היצירה =================== */
+let busy=false;
+
+/* מה חוסם את היצירה. מחזיר null כשהכל תקין */
+async function preflight(){
+  if(!LIVE.on){
+    /* אולי השרת עלה אחרי שהדף נטען. בודקים שוב לפני שמסרבים */
+    await checkHealth();
+    if(!LIVE.on&&SHARE_PREVIEW) return {msg:'בתצוגה לשיתוף אי אפשר ליצור מודעה. היצירה פועלת רק בהפעלה המקומית של הכלי'};
+    if(!LIVE.on) return {msg:'אין חיבור לשרת היצירה. ודאו שהשרת המקומי רץ, ואז רעננו את הדף',
+                         hint:'node ~/morning-advertising/server.js'};
+  }
+  if(!BIZ.name)  return {msg:'חסר שם העסק', focus:'#b_name', go:null};
+  if(!S.promote) return {msg:'לא נבחר מה מקדמים', go:'sec-promote'};
+  const pm=promoteMeta();
+  if(pm&&pm.need&&!S.promoteFree)
+    return {msg:pm.q.replace('?','')+' לא מולא. בלי זה המנוע ימציא פרטים שלא קיימים',
+            go:'sec-promote', focus:'#promoteFree'};
+  return null;
+}
+
+/* הודעה גדולה במקום שבו מסתכלים, לא רק טוסט בפינה */
+function showBlocked(p){
+  $('#sec-result').classList.remove('hidden');
+  $('#result').innerHTML='<div class="notice err" style="margin:0"><b>לא ניתן ליצור עדיין.</b> '+esc(p.msg)+
+    (p.hint?'<br><code style="background:#fff;padding:2px 6px;border-radius:4px">'+esc(p.hint)+'</code>':'')+'</div>';
+  toast(p.msg);
+  if(p.go){ setOpen(p.go,true); slideTo(p.go); if(p.focus)setTimeout(()=>{const el=$(p.focus);if(el)el.focus()},450) }
+  else if(p.focus){ slideTo('sec-go'); const el=$(p.focus); if(el)el.focus() }
+}
+
+async function generate(){
+  if(busy)return;
+  const blocked=await preflight();
+  if(blocked){ showBlocked(blocked); return }
+
+  busy=true; $('#go').disabled=true;
+  $('#sec-result').classList.remove('hidden');
+  const t0=Date.now();
+  $('#result').innerHTML='<div class="loading"><div class="spinner"></div><b>'+
+    (LIVE.image?'מייצרים את המודעה':'כותבים את הקופי')+'</b>'+
+    '<div>'+(LIVE.image?'כותבים את הקופי ומרכיבים את הקריאייטיב':'מנוע התמונות לא מחובר, אז מייצרים את הטקסט בלבד')+
+    '</div><div class="clock" id="clock">0:00</div></div>';
+  slideTo('sec-result');
+  let tick=setInterval(()=>{const el=$('#clock');if(!el)return clearInterval(tick);
+    const s=Math.floor((Date.now()-t0)/1000);el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')},1000);
+
+  /* try/finally, כדי ש-busy והכפתור ישתחררו גם אם משהו נופל באמצע.
+     בלי זה לחיצה אחת שנכשלת משתקת את הכפתור עד רענון. */
+  try{
+    const tpl=templateMeta();
+    /* בתבנית הלוגו מונח בקוד, ולכן הוא לא נשלח למנוע */
+    const refs=ASSETS.filter(a=>S.assets.includes(a.id)&&!(tpl&&a.tag==='לוגו')).map(a=>a.url);
+
+    const askCopy = () => fetch(API_BASE+'/api/post',{method:'POST',headers:headers(),body:JSON.stringify(copyBrief())})
+      .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
+      .catch(e=>({_err:e.message||String(e)}));
+
+    const askImage = prompt => LIVE.image
+      ? fetch(API_BASE+'/api/generate',{method:'POST',headers:headers(),
+          body:JSON.stringify({kind:'image',prompt,format:tpl?AdCompose.slotFormat(tpl.v,S.format):genFormat(S.format),images:refs,
+                               adFormat:layoutId(),adFormatName:S.layout})})
+        .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
+        .catch(e=>({_err:e.message||String(e)}))
+      : Promise.resolve({_skipped:true});
+
+    const copyP=askCopy();
+    let copy={}, img={};
+
+    if(tpl){
+      /* תבנית: הקופי והצילום רצים במקביל, והמודעה מורכבת מהם בדפדפן.
+         עם תמונה משלכם לא מייצרים תמונה בכלל */
+      const own=usingOwn()&&ownPhoto();
+      const r=await Promise.all([copyP,own?{url:own.url,model:'התמונה שלכם',took:0}:askImage(S.prompt)]);
+      copy=r[0]||{}; img=r[1]||{};
+      if(img._err||img._skipped){ showResult(img,copy); return }
+      await showComposed(img,copy);
+      return;
+    }
+
+    if(S.prompt.indexOf('{{כותרת}}')>=0){
+      /* הכותרת נצרבת בתמונה, ולכן צריך את הקופי לפני שמייצרים אותה */
+      copy=await copyP||{};
+      const head=headlineOf(copy&&copy.text)||S.overlayText.trim()||S.promoteFree||S.promote||BIZ.name;
+      img=await askImage(S.prompt.split('{{כותרת}}').join(head))||{};
+      if(img&&img.url)img.headline=head;
+    }else{
+      const r=await Promise.all([copyP,askImage(S.prompt)]);
+      copy=r[0]||{}; img=r[1]||{};
+    }
+
+    if((img._err||img._skipped)&&copy._err){
+      $('#result').innerHTML='<div class="notice err"><b>היצירה נכשלה.</b> '+esc(img._err||copy._err)+'</div>';
+      return;
+    }
+    showResult(img,copy);
+  }catch(e){
+    $('#result').innerHTML='<div class="notice err"><b>היצירה נכשלה.</b> '+esc(e&&e.message||e)+'</div>';
+  }finally{
+    clearInterval(tick);
+    busy=false;
+    const gb=$('#go'); if(gb)gb.disabled=false;
+  }
+}
+
+function showResult(img,copy){
+  const text=(copy&&copy.text)?copy.text.trim():'';
+  $('#result').innerHTML=`
+    ${img&&img.url?`<div class="stage"><img src="${img.url}" alt="המודעה שנוצרה" id="resImg"></div>`:''}
+    <label class="field" style="margin-top:16px"><span>הקופי למודעה</span><textarea id="resText" rows="6">${esc(text)}</textarea></label>
+    ${copy&&copy._err?'<div class="notice err">כתיבת הקופי נכשלה: '+esc(copy._err)+'</div>':''}
+    ${img&&img._err?'<div class="notice err">יצירת התמונה נכשלה: '+esc(img._err)+'</div>':''}
+    ${img&&img._skipped?'<div class="notice warn">התמונה לא נוצרה כי מנוע התמונות לא מחובר. הקופי למעלה אמיתי ומוכן לשימוש</div>':''}
+    ${img&&img.url?`<div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took!=null?' · '+img.took+' שניות':''}${img.refs?' · '+img.refs+' נכסי מותג שולבו':''}${img.adFormat?' · מבנה: '+esc(img.adFormat):''}${img.headline?'<br>כותרת שנצרבה: '+esc(img.headline):''}</div>`:''}
+    <div class="result-actions">
+      ${img&&img.url?`<button class="btn btn-primary btn-sm" id="dlImg">הורדת התמונה</button>`:''}
+      <button class="btn btn-outline btn-sm" id="copyText">העתקת הקופי</button>
+      <button class="btn btn-outline btn-sm" id="again">יצירה נוספת</button>
+    </div>`;
+  const ri=$('#resImg'); if(ri)ri.onclick=()=>lightbox(img.url);
+  const dl=$('#dlImg'); if(dl)dl.onclick=()=>downloadAd({url:img.url,biz:BIZ.name,format:S.format});
+  $('#copyText').onclick=()=>{if(navigator.clipboard)navigator.clipboard.writeText($('#resText').value);toast('הקופי הועתק')};
+  $('#again').onclick=()=>generate();
+  if(img&&img.url)saveAd(img,text);
+}
+
+/* =================== v2: מודעה מורכבת מתבנית =================== */
+/* התמונה שהמנוע החזיר נטענת לקנבס. תמונה מדומיין אחר עוברת דרך השרת, אחרת הקנבס ננעל */
+async function loadAdPhoto(url){
+  if(/^(data|blob):/.test(url))return AdCompose.loadImage(url);
+  return AdCompose.loadImage(URL.createObjectURL(await fetchImage(url)));
+}
+function composedSub(head){
+  const sub=(S.promoteFree||'').trim();
+  if(sub&&sub!==head)return sub;
+  return [BIZ.field,BIZ.city].filter(Boolean).join(' · ');
+}
+async function showComposed(img,copy){
+  const text=(copy&&copy.text)?copy.text.trim():'';
+  const photo=await loadAdPhoto(img.url);
+  const logo=await logoForAd();
+  const head=headlineOf(text)||(S.promoteFree||'').trim()||S.promote||BIZ.name;
+  /* כל מה שצריך כדי לצייר את המודעה מחדש. נשמר עם המודעה */
+  const D={tpl:S.template,font:fontId(),color:adColor(),format:S.format,
+           headline:head,sub:composedSub(head),cta:ctaText(),name:BIZ.name,site:BIZ.site};
+  await AdCompose.ensureFonts(D.font);
+
+  const chips=(list,key)=>list.map(x=>`<button class="chip ${D[key]===x.v?'on':''}" data-k="${key}" data-v="${attr(x.v)}">${esc(x.t)}</button>`).join('');
+  $('#result').innerHTML=`
+    <div class="stage"><canvas id="resCanvas"></canvas></div>
+    <div class="ed-grid">
+      <label class="field"><span>כותרת</span><input id="edHead" value="${attr(D.headline)}"></label>
+      <label class="field"><span>שורה משנית</span><input id="edSub" value="${attr(D.sub)}"></label>
+      <label class="field"><span>כפתור</span><input id="edCta" value="${attr(D.cta)}"></label>
+    </div>
+    <div class="ed-row"><span class="lbl">תבנית</span>${chips(TEMPLATES,'tpl')}</div>
+    <div class="ed-row"><span class="lbl">פונט</span>${chips(AdCompose.FONT_SETS,'font')}</div>
+    <p class="chip-note">שינויים בטקסט, בתבנית ובפונט מתעדכנים במודעה מיד, בלי יצירה חדשה ובלי עלות</p>
+    <label class="field" style="margin-top:16px"><span>הקופי למודעה</span><textarea id="resText" rows="6">${esc(text)}</textarea></label>
+    ${copy&&copy._err?'<div class="notice err">כתיבת הקופי נכשלה: '+esc(copy._err)+'</div>':''}
+    <div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took!=null?' · '+img.took+' שניות':''} · התמונה מהמנוע, הטקסט והלוגו מונחים בקוד</div>
+    <div class="result-actions">
+      <button class="btn btn-primary btn-sm" id="dlImg">הורדת המודעה</button>
+      <button class="btn btn-outline btn-sm" id="copyText">העתקת הקופי</button>
+      <button class="btn btn-outline btn-sm" id="again">יצירה נוספת</button>
+    </div>`;
+
+  const cv=$('#resCanvas');
+  const rec={id:'ad'+Date.now(),url:'',text,biz:BIZ.name,format:S.format,promote:S.promote,
+             date:new Date().toLocaleString('he-IL'),photo:img.url,compose:D};
+  const draw=()=>{ AdCompose.render(cv,Object.assign({img:photo,logo},D)); rec.url=cv.toDataURL('image/jpeg',0.93);
+                   rec.template=(TEMPLATES.find(x=>x.v===D.tpl)||{}).t||'' };
+  let saveT=null;
+  const save=()=>{ clearTimeout(saveT); saveT=setTimeout(async()=>{ rec.text=$('#resText').value; await DB.put('ads',rec); ADS=await DB.all('ads'); renderGallery(); renderCounts() },500) };
+  draw(); save();
+
+  [['#edHead','headline'],['#edSub','sub'],['#edCta','cta']].forEach(([sel,k])=>$(sel).oninput=e=>{ D[k]=e.target.value; draw(); save() });
+  $('#resText').oninput=save;
+  $$('#result .ed-row').forEach(row=>row.onclick=async e=>{
+    const b=e.target.closest('[data-k]'); if(!b)return;
+    D[b.dataset.k]=b.dataset.v;
+    row.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));
+    if(b.dataset.k==='font')await AdCompose.ensureFonts(D.font);
+    draw(); save();
+  });
+  cv.onclick=()=>lightbox(rec.url);
+  $('#dlImg').onclick=()=>downloadAd({url:rec.url,biz:BIZ.name,format:S.format});
+  $('#copyText').onclick=()=>{if(navigator.clipboard)navigator.clipboard.writeText($('#resText').value);toast('הקופי הועתק')};
+  $('#again').onclick=()=>generate();
+}
+
+function lightbox(url){
+  const d=document.createElement('div');
+  d.className='lightbox'; d.innerHTML=`<img src="${url}" alt="">`;
+  d.onclick=()=>d.remove(); document.body.appendChild(d);
+}
+
+/* =================== נכסי מותג =================== */
+const TAGS=['לוגו','מוצר','רקע','אחר'];
+
+function shrink(file,max){
+  max=max||1280;
+  /* כל קובץ עובר רסטור לקנבס ויוצא כ-WebP: מקטין, מאחד פורמט ושומר שקיפות.
+     חשוב במיוחד ל-SVG, שמנוע התמונות של OpenAI לא מקבל. */
+  const raster=src=>new Promise((res,rej)=>{
+    const im=new Image();
+    im.onerror=()=>rej(new Error('הקובץ אינו תמונה תקינה'));
+    im.onload=()=>{
+      const w=im.naturalWidth||im.width||max, h=im.naturalHeight||im.height||max;
+      const sc=Math.min(1,max/Math.max(w,h));
+      const c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(w*sc)); c.height=Math.max(1,Math.round(h*sc));
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      res(c.toDataURL('image/webp',0.92));
+    };
+    im.src=src;
+  });
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onerror=()=>rej(new Error('קריאת הקובץ נכשלה'));
+    if(file.type==='image/svg+xml'){
+      fr.onload=()=>{
+        /* ל-SVG בלי מידות מפורשות הדפדפן לא יודע לצייר לקנבס, לכן משלימים מה-viewBox */
+        let t=String(fr.result);
+        if(!/<svg[^>]*\swidth=/.test(t)){
+          const vb=/viewBox="([\d.\s-]+)"/.exec(t);
+          const box=vb?vb[1].trim().split(/\s+/):null;
+          const w=box?Math.round(parseFloat(box[2]))||512:512;
+          const h=box?Math.round(parseFloat(box[3]))||512:512;
+          const k=max/Math.max(w,h);
+          t=t.replace('<svg','<svg width="'+Math.round(w*k)+'" height="'+Math.round(h*k)+'"');
+        }
+        raster('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(t)).then(res,rej);
+      };
+      fr.readAsText(file);
+    }else{
+      fr.onload=()=>raster(fr.result).then(res,rej);
+      fr.readAsDataURL(file);
+    }
+  });
+}
+
+async function addFiles(files,opt){
+  opt=opt||{};
+  let added=0;
+  for(const f of Array.from(files||[])){
+    if(!/^image\//.test(f.type)){toast('אפשר להעלות תמונות בלבד');continue}
+    if(f.size>15e6){toast('הקובץ '+f.name+' גדול מדי');continue}
+    try{
+      const url=await shrink(f);
+      const tag=opt.tag||(/logo|לוגו/i.test(f.name)?'לוגו':'מוצר');
+      const id='a'+Date.now()+Math.random().toString(36).slice(2,6);
+      await DB.put('assets',{id,
+        name:f.name.replace(/\.[^.]+$/,'').slice(0,28),tag,url,date:new Date().toLocaleString('he-IL')});
+      if(opt.select&&!S.assets.includes(id))S.assets.push(id);
+      added++;
+    }catch(e){toast('לא הצלחנו לקרוא את '+f.name)}
+  }
+  if(added){
+    ASSETS=await DB.all('assets');renderLib();renderAssetPick();renderCounts();
+    if(opt.select){ markDone('sec-assets','pick-assets',S.assets.length+' נבחרו'); refreshPrompt(); saveDraft(); toast(added===1?'התמונה נוספה ונבחרה למודעה':added+' תמונות נוספו ונבחרו') }
+    else toast(added===1?'נכס נוסף':added+' נכסים נוספו');
+  }
+}
+
+function renderLib(){
+  if(!ASSETS.length){$('#lib').innerHTML='<div class="empty-lib" style="margin-top:16px">עדיין לא הועלו נכסים.<br>התחילו מהלוגו של העסק</div>';return}
+  $('#lib').innerHTML='<div class="asset-grid">'+ASSETS.map(a=>`
+    <div class="asset">
+      <button class="del" data-del="${attr(a.id)}" title="מחיקה">×</button>
+      <div class="thumb"><img src="${a.url}" alt=""></div>
+      <div class="cap"><b>${esc(a.name)}</b></div>
+      <div class="tagrow">${TAGS.map(t=>`<button class="${a.tag===t?'on':''}" data-tag="${attr(a.id)}|${attr(t)}">${esc(t)}</button>`).join('')}</div>
+    </div>`).join('')+'</div>';
+  $$('#lib [data-del]').forEach(b=>b.onclick=async ev=>{
+    ev.stopPropagation();
+    await DB.del('assets',b.dataset.del);
+    S.assets=S.assets.filter(x=>x!==b.dataset.del);
+    ASSETS=await DB.all('assets'); renderLib(); renderAssetPick(); renderCounts(); saveDraft(); toast('הנכס נמחק');
+  });
+  $$('#lib [data-tag]').forEach(b=>b.onclick=async()=>{
+    const parts=b.dataset.tag.split('|');
+    const a=ASSETS.find(x=>x.id===parts[0]); if(!a)return;
+    a.tag=parts[1]; await DB.put('assets',a); ASSETS=await DB.all('assets'); renderLib(); renderAssetPick(); refreshPrompt();
+  });
+}
+
+const drop=$('#drop');
+$('#file').onchange=e=>{addFiles(e.target.files);e.target.value=''};
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>addFiles(e.dataTransfer.files));
+
+/* =================== המודעות שנוצרו =================== */
+async function saveAd(img,text){
+  const rec={id:'ad'+Date.now(),url:img.url,text,biz:BIZ.name,format:S.format,
+    template:(templateMeta()||{}).t||'',color:colorHex(),promote:S.promote,date:new Date().toLocaleString('he-IL')};
+  await DB.put('ads',rec); ADS=await DB.all('ads'); renderGallery(); renderCounts();
+}
+
+function renderGallery(){
+  const arr=ADS.slice().reverse();
+  if(!arr.length){$('#gal').innerHTML='<div class="g-empty">עדיין לא נוצרו מודעות. המודעות שתיצרו יישמרו כאן</div>';return}
+  $('#gal').innerHTML='<div class="gallery-grid">'+arr.map(c=>`
+    <div class="g-card" data-open="${attr(c.id)}">
+      <div class="g-thumb"><img src="${c.url}" alt=""></div>
+      <div class="g-body">
+        <div class="g-text">${esc((c.text||'').slice(0,140))}</div>
+        <div class="g-foot"><span>${esc(c.promote||'')}</span><span>${esc(c.style||'')}</span></div>
+        <div class="g-foot">
+          <button class="btn btn-ghost" data-copy="${attr(c.id)}" style="padding:2px 0">העתקה</button>
+          <button class="btn btn-ghost" data-dl="${attr(c.id)}" style="padding:2px 0">הורדה</button>
+          <button class="btn btn-ghost" data-del="${attr(c.id)}" style="padding:2px 0;color:var(--err)">מחיקה</button>
+        </div>
+      </div>
+    </div>`).join('')+'</div>';
+  $$('#gal [data-open]').forEach(el=>el.onclick=()=>openAd(el.dataset.open));
+  $$('#gal [data-copy]').forEach(b=>b.onclick=e=>{e.stopPropagation();copyAd(ADS.find(x=>x.id===b.dataset.copy))});
+  $$('#gal [data-dl]').forEach(b=>b.onclick=e=>{e.stopPropagation();downloadAd(ADS.find(x=>x.id===b.dataset.dl))});
+  $$('#gal [data-del]').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteAd(b.dataset.del)});
+}
+
+function copyAd(c){
+  if(!c)return;
+  try{ navigator.clipboard.writeText(c.text||''); toast('הקופי הועתק') }catch(e){ toast('ההעתקה נכשלה') }
+}
+/* התמונות יושבות על דומיין אחר, ושם download לא עובד ו-fetch נחסם ב-CORS.
+   מורידים דרך השרת (/api/download), שמחזיר את הקובץ כקובץ להורדה. תמונה שכבר בדפדפן (data/blob) נשמרת ישר */
+async function fetchImage(url){
+  if(/^(data|blob):/.test(url))return (await fetch(url)).blob();
+  const r=await fetch('/api/download?url='+encodeURIComponent(url));
+  if(!r.ok)throw new Error('download '+r.status);
+  return r.blob();
+}
+async function downloadAd(c){
+  if(!c)return;
+  try{
+    const b=await fetchImage(c.url);
+    const ext=(b.type.split('/')[1]||'png').replace('jpeg','jpg');
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+    a.download=((c.biz||'morning')+'-'+(c.format||'').replace(':','x')+'.'+ext).replace(/\s+/g,'-');
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    toast('התמונה ירדה למחשב');
+  }catch(e){ toast('ההורדה נכשלה, התמונה נפתחה בלשונית חדשה'); window.open(c.url,'_blank','noopener') }
+}
+async function deleteAd(id){
+  if(!confirm('למחוק את המודעה?'))return false;
+  await DB.del('ads',id); ADS=await DB.all('ads'); renderGallery(); renderCounts(); return true;
+}
+
+/* תצוגה מוגדלת של מודעה: התמונה, הקופי המלא והפעולות. חיצים עוברים בין מודעות */
+function openAd(id){
+  const list=ADS.slice().reverse(); let i=list.findIndex(x=>x.id===id); if(i<0)return;
+  $$('.adview').forEach(x=>x.remove());
+  const v=document.createElement('div'); v.className='adview';
+  const close=()=>{ v.remove(); document.removeEventListener('keydown',onKey) };
+  const draw=()=>{
+    const c=list[i];
+    v.innerHTML=`<div class="box">
+      <div class="pic"><img src="${c.url}" alt=""></div>
+      <div class="side">
+        <div class="top"><div><h3>${esc(c.biz||'המודעה')}</h3>
+          <small>${[c.style,c.promote,(FORMAT.find(f=>f.v===c.format)||{}).t,c.date].filter(Boolean).map(esc).join(' · ')}</small></div>
+          <button class="x" data-a="close" aria-label="סגירה">✕</button></div>
+        <div class="copy">${esc(c.text||'')}</div>
+        <div class="acts">
+          <button class="btn btn-primary" data-a="dl">הורדת התמונה</button>
+          <button class="btn btn-outline" data-a="copy">העתקת הקופי</button>
+          <button class="btn btn-ghost" data-a="del" style="color:var(--err)">מחיקה</button>
+        </div>
+      </div></div>
+      ${list.length>1?'<button class="nav prev" data-a="prev" aria-label="הקודמת">›</button><button class="nav next" data-a="next" aria-label="הבאה">‹</button>':''}`;
+  };
+  v.onclick=async e=>{
+    const a=e.target.closest('[data-a]')?.dataset.a;
+    if(e.target===v||a==='close')return close();
+    const c=list[i];
+    if(a==='dl')downloadAd(c);
+    if(a==='copy')copyAd(c);
+    if(a==='prev'){ i=(i-1+list.length)%list.length; draw() }
+    if(a==='next'){ i=(i+1)%list.length; draw() }
+    if(a==='del'&&await deleteAd(c.id)){ list.splice(i,1); if(!list.length)return close(); i=Math.min(i,list.length-1); draw() }
+  };
+  const onKey=e=>{ if(e.code==='Escape')close(); if(e.code==='ArrowLeft'){i=(i+1)%list.length;draw()} if(e.code==='ArrowRight'){i=(i-1+list.length)%list.length;draw()} };
+  document.addEventListener('keydown',onKey);
+  draw(); document.body.appendChild(v);
+}
+$('#clearGal').onclick=async()=>{if(confirm('למחוק את כל המודעות השמורות?')){await DB.clear('ads');ADS=[];renderGallery();renderCounts()}};
+
+/* =================== לשוניות =================== */
+function showTab(name){
+  $$('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===name));
+  ['create','library','gallery'].forEach(n=>$('#tab-'+n).classList.toggle('hidden',n!==name));
+  $('#main').scrollTop=0;
+}
+$$('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
+$('#fab').onclick=()=>{
+  Object.assign(S,{promote:'',promoteFree:'',template:'',color:'',font:'',useOwn:false,goal:'לידים ופניות',layout:'',format:'4:5',audience:'',tone:'',cta:'',platform:'אינסטגרם',framework:'מוביל לפעולה',len:'קצר',emoji:'מדוד',extra:'',assets:[],prompt:'',promptTouched:false});
+  $('#audOther').value='';
+  saveDraft();
+  $$('.sec').forEach(x=>x.classList.remove('done','open'));
+  $$('.sec-pick').forEach(x=>x.textContent='טרם נבחר');
+  updateStylePick();
+  $$('.opt,.chip').forEach(x=>x.classList.remove('on'));
+  $('#sec-result').classList.add('hidden');
+  renderAssetPick(); applyState(); showTab('create');
+};
+
+/* מה רץ ובכמה זה עולה, לפני שלוחצים */
+/* מסבירים מה המסגרת שנבחרה עושה, במקום להשאיר שם שצריך לנחש */
+/* בבריף החופשי שדה ריק לא נשלח, והמודל בוחר קריאה לפעולה בעצמו */
+function renderCtaNote(){
+  const el=$('#ctaNote'); if(!el)return;
+  el.textContent=(S.cta||'').trim() ? '' : 'אם משאירים ריק, נבחר קריאה לפעולה שמתאימה למודעה';
+}
+
+function renderCost(){
+  const el=$('#costline'); if(!el)return;
+  const j=LIVE.info||{};
+  const bits=[];
+  if(j.textLabel)bits.push('קופי: <b>'+esc(j.textLabel)+'</b>');
+  if(j.imageLabel)bits.push('תמונה: <b>'+esc(j.imageLabel)+'</b>');
+  if(j.imageCost){
+    const ad=usingAdEngine();
+    bits.push('עלות: <b>'+(ad?j.adCost:j.imageCost)+' קרדיט למודעה</b>');
+    if(ad)bits[bits.length-2]='מודעה: <b>מנוע המודעות של היגספילד</b>';
+  }
+  if(!bits.length){el.style.display='none';return}
+  el.innerHTML=bits.join(' · ');
+  el.style.display='block';
+}
+
+function renderCounts(){
+  $('#cAssets').textContent=ASSETS.length;
+  $('#cAds').textContent=ADS.length;
+}
+
+/* =================== שדות טקסט =================== */
+['b_name','b_nameEn','b_field','b_city','b_site'].forEach(id=>{
+  $('#'+id).oninput=()=>{
+    BIZ[id.slice(2)]=$('#'+id).value.trim();
+    S.promptTouched=false; syncPrompt(); $('#promptIn').value=S.prompt; renderTplPreview();
+    clearTimeout(BIZ._t); BIZ._t=setTimeout(()=>DB.put('settings',{id:'biz',name:BIZ.name,nameEn:BIZ.nameEn,field:BIZ.field,city:BIZ.city,site:BIZ.site}),400);
+  };
+});
+$('#promoteFree').onkeydown=e=>{ if(e.code==='Enter'||e.code==='NumpadEnter'){ e.preventDefault(); if(S.promoteFree)closeSoon('sec-promote') } };
+$('#promoteFree').oninput=()=>{S.promoteFree=$('#promoteFree').value.trim();S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;renderTplPreview();saveDraft()};
+$('#audAdd').onclick=addAudience;
+$('#audOther').onkeydown=e=>{ if(e['key']==='Enter'){ e.preventDefault(); addAudience() } };
+$('#extraIn').oninput=()=>{S.extra=$('#extraIn').value;S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft()};
+$('#promptIn').oninput=()=>{S.prompt=$('#promptIn').value;S.promptTouched=true;saveDraft();renderPromptHint()};
+$('#resetPrompt').onclick=()=>{S.promptTouched=false;syncPrompt();$('#promptIn').value=S.prompt;saveDraft();toast('הפרומפט אופס')};
+$('#go').onclick=generate;
+$('#useOwn').onchange=e=>{ S.useOwn=e.target.checked; saveDraft() };
+
+/* =================== התחלה =================== */
+(async()=>{
+  try{
+    const r=await Promise.all([DB.all('assets'),DB.all('ads'),DB.get('settings','biz'),DB.get('settings','audiences')]);
+    ASSETS=r[0]; ADS=r[1];
+    if(r[2])Object.assign(BIZ,r[2]);
+    if(r[3]&&Array.isArray(r[3].list))MY_AUDIENCES=r[3].list;
+  }catch(e){ toast('האחסון המקומי לא זמין בדפדפן הזה') }
+  /* מותג לדוגמה, מועבר מהדמו המקורי, כדי שאפשר יהיה ליצור מיד בלי הכנות */
+  try{
+    if(!ASSETS.length && !(await DB.get('settings','seeded'))){
+      const svg=await fetch('assets/studio-move-logo.svg').then(r=>r.ok?r.text():null);
+      if(svg){
+        const url=await shrink(new File([svg],'studio-move-logo.svg',{type:'image/svg+xml'}),512);
+        await DB.put('assets',{id:'seed-logo',name:'studio-move-logo',tag:'לוגו',url,
+                               date:new Date().toLocaleString('he-IL')});
+        ASSETS=await DB.all('assets');
+      }
+      if(!BIZ.name){
+        Object.assign(BIZ,{name:'סטודיו מוב',nameEn:'STUDIO MOVE',field:'סטודיו לפילאטיס מכשירים',city:'תל אביב',site:'studiomove.co.il'});
+        await DB.put('settings',{id:'biz',name:BIZ.name,nameEn:BIZ.nameEn,field:BIZ.field,city:BIZ.city,site:BIZ.site});
+      }
+      await DB.put('settings',{id:'seeded',at:Date.now()});
+    }
+  }catch(e){}
+
+  loadDraft();
+  /* טיוטות שנשמרו עם השמות הישנים */
+  S.framework={'AIDA':'מוביל לפעולה','בעיה-פתרון':'מהכאב לפתרון','סטוריטלינג':'סיפור קצר'}[S.framework]||S.framework;
+  if(!FRAMEWORKS.some(f=>f.v===S.framework))S.framework='מוביל לפעולה';
+  S.assets=(S.assets||[]).filter(id=>ASSETS.some(a=>a.id===id));
+  /* הלוגו נבחר לבד. הבקאנד של מנוע המודעות מתייחס לתמונה המצורפת כערכת המותג,
+     ובלעדיה הוא ממציא את שם המותג ואת הצבעים */
+  ASSETS.filter(a=>a.tag==='לוגו').forEach(a=>{ if(!S.assets.includes(a.id))S.assets.push(a.id) });
+  $('#b_name').value=BIZ.name||''; $('#b_nameEn').value=BIZ.nameEn||''; $('#b_field').value=BIZ.field||''; $('#b_city').value=BIZ.city||''; $('#b_site').value=BIZ.site||'';
+  buildSections(); renderAssetPick(); wireCollapse(); applyState();
+  renderCounts(); renderLib(); renderGallery();
+  analyzeLogos();
+})();
+</script>
+</body>
+</html>
