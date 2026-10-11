@@ -223,8 +223,9 @@ function photoColor(img){
     if(!best||best.bn.w<0.15)return null;
     const B=best.bn, h=(Math.atan2(B.y,B.x)*180/Math.PI+360)%360, sat=B.s/B.w, l=B.l/B.w;
     /* כהה ועמוק, או פסטל רך. שניהם כמו במודעות הדוגמה */
-    return l<0.58 ? hsl2hex(h,Math.max(0.35,Math.min(0.7,sat)),Math.max(0.2,Math.min(0.34,l*0.75)))
-                  : hsl2hex(h,Math.max(0.45,Math.min(0.8,sat)),0.86);
+    /* גוונים מעודנים ולא "מוחלטים" (תומר): רוויה מרוסנת, כהה עמוק או פסטל רך, כמו בפלטה של מעצב */
+    return l<0.58 ? hsl2hex(h,Math.max(0.2,Math.min(0.4,sat*0.55)),Math.max(0.17,Math.min(0.26,l*0.6)))
+                  : hsl2hex(h,Math.max(0.24,Math.min(0.48,sat*0.6)),0.9);
   }catch(e){ return null }
 }
 
@@ -273,11 +274,28 @@ function scale(W,H){
     T: story?120:0, B: story?140:0 };                 /* בסטורי הממשק של הרשת מכסה למעלה ולמטה */
 }
 /* הכפתור מנוגד לפאנל: על פאנל כהה גלולה בהירה בגוון של הצבע, על פאנל בהיר גלולה כהה */
-function ctaColors(sf,p){
-  if(textOn(sf)===WHITE){ const b=mix(p.primary,WHITE,0.82); return {bg:contrast(b,TEXT_INK)>=4.5?b:'#FFF6B8',fg:TEXT_INK} }
-  return {bg:'#1F1F1F',fg:WHITE};
+/* גוון של אותו צבע בבהירות אחרת. כך הטקסט והכפתור נראים חלק מאותה פלטה ולא לבן או שחור "מוחלט" */
+function hexHsl(h){
+  const [r,g,b]=rgb(h).map(v=>v/255), mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2, d=mx-mn;
+  if(!d)return [0,0,l];
+  const s=d/(1-Math.abs(2*l-1));
+  let hu=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4; hu=(hu*60+360)%360;
+  return [hu,s,l];
 }
-function inkOn(sf){ return textOn(sf)===WHITE?WHITE:TEXT_INK }
+function tone(sf,s,l){ const [h,s0]=hexHsl(sf); return hsl2hex(h,Math.min(s0,s),l) }
+const WARM_WHITE='#FBF8F3';
+function inkOn(sf){ return textOn(sf)===WHITE?WARM_WHITE:tone(sf,0.35,0.15) }
+function ctaColors(sf,p){
+  /* על פאנל כהה: כפתור קרם בגוון של הצבע וטקסט כהה מאותו גוון. על פאנל בהיר: כפתור עמוק מאותו גוון */
+  if(textOn(sf)===WHITE) return {bg:tone(sf,0.3,0.93),fg:tone(sf,0.4,0.16)};
+  return {bg:tone(sf,0.4,0.2),fg:WARM_WHITE};
+}
+/* פאנל עם מעבר טונאלי עדין מאוד (בהיר מעט למעלה, עמוק מעט למטה), כדי שלא ייראה כמו צבע שטוח */
+function panel(ctx,sf,x,y,w,h){
+  const g=ctx.createLinearGradient(x,y,x+w*0.25,y+h);
+  g.addColorStop(0,mix(sf,'#FFFFFF',0.06)); g.addColorStop(1,mix(sf,'#000000',0.07));
+  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+}
 function ctaSpec(F){ return F.v==='display'?F.body:F.head }
 
 /* הרבה קובצי לוגו מגיעים עם שוליים שקופים רחבים, והלוגו יוצא זעיר. חותכים אותם פעם אחת */
@@ -372,7 +390,7 @@ function drawText(ctx,tb,x,y,ink,align,schematic){
    גובה הפאנל לפי התוכן (מינימום לפי היחסים של הדוגמאות), והתוכן במרכז שלו */
 function split(ctx,W,H,o,p,F,lim){
   const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
-  ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
+  panel(ctx,sf,0,0,W,H);
   if(S.land){
     /* לרוחב: תמונה משמאל 44%, ובעמודה הימנית הכל ממורכז: לוגו גדול למעלה, כותרת גדולה, משנה וכפתור */
     const iw=Math.round(W*0.44), x0=iw+S.M*1.5, x1=W-S.M*1.5, cw=x1-x0, xc=(x0+x1)/2;
@@ -438,9 +456,8 @@ function overlay(ctx,W,H,o,p,F,lim){
   drawMark(ctx,m,lx,ly,WHITE,o.schematic,mix(p.primary,'#000',0.4));
   const tb=textBlock(ctx,o,F,S,lim,(S.land?W*0.62:W)-S.M*2);
   const by=H-(S.B||S.M)-S.bh;
-  drawText(ctx,tb,W-S.M,by-30-tb.h,WHITE,'right',o.schematic);
-  const col={bg:mix(p.primary,WHITE,0.85),fg:TEXT_INK};
-  if(contrast(col.bg,TEXT_INK)<4.5)col.bg='#FFFFFF';
+  drawText(ctx,tb,W-S.M,by-30-tb.h,WARM_WHITE,'right',o.schematic);
+  const col={bg:tone(p.primary,0.3,0.93),fg:tone(p.primary,0.4,0.16)};
   pill(ctx,o,F,W-S.M,by,S.land?Math.max(pillWidth(ctx,o,F,S),W*0.3):W-S.M*2,S,col);
 }
 
@@ -448,7 +465,7 @@ function overlay(ctx,W,H,o,p,F,lim){
 function frame(ctx,W,H,o,p,F,lim){
   /* הרקע בצבע שנלקח מהתמונה (לא גוון כמעט לבן), כדי שהכרטיס והרקע ישתלבו */
   const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
-  ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
+  panel(ctx,sf,0,0,W,H);
   const card=(x,y,w,h)=>{
     ctx.save(); ctx.shadowColor='rgba(0,0,0,.10)'; ctx.shadowBlur=40; ctx.shadowOffsetY=6;
     ctx.fillStyle=WHITE; rr(ctx,x,y,w,h,18); ctx.fill(); ctx.restore();
@@ -481,7 +498,7 @@ function frame(ctx,W,H,o,p,F,lim){
    משנה וכפתור. הקבוצה כולה במרכז האזור הבטוח, כדי שלא יישאר חלל ריק בצד אחד */
 function type(ctx,W,H,o,p,F,lim){
   const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
-  ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
+  panel(ctx,sf,0,0,W,H);
   const big=Object.assign({},S,{hs:Math.round(S.hs*1.4)});
   const x0=S.M*1.2, x1=W-S.M*1.2, cw=x1-x0, xc=W/2, top=S.T||S.M*1.3, bottom=S.B||S.M*1.3;
   const m=mark(ctx,o,F,cw*0.55,S.story?W*0.26:S.land?H*0.2:H*0.16), gl=m.h?(S.story?44:30):0;
