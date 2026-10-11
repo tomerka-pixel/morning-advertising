@@ -730,7 +730,8 @@ let _ac;
 function accessCode(){
   if(_ac!==undefined)return _ac;
   let c='';
-  try{c=localStorage.getItem('morning_ac')||'';if(!c&&API_BASE){c=prompt('הזינו קוד גישה ליצירה (נשמר במחשב זה בלבד):')||'';if(c)localStorage.setItem('morning_ac',c)}}catch(e){}
+  /* הלינק הציבורי עובד בלי קוד. אם פעם נשמר קוד ישן, מוחקים אותו */
+  try{localStorage.removeItem('morning_ac')}catch(e){}
   _ac=c;return _ac;
 }
 /* קוד שגוי: שוכחים אותו, כדי שבניסיון הבא הדף ישאל שוב */
