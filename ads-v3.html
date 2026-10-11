@@ -622,13 +622,13 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
               <label class="own hidden" id="ownWrap"><input type="checkbox" id="useOwn">
                 <span><b>להשתמש בתמונה שלי כמו שהיא</b><small>בלי ליצור תמונה חדשה. הכותרת, הלוגו והכפתור יונחו עליה, ונוצר רק הקופי</small></span></label>
 
-              <div class="cgrid">
+              <div class="cgrid hidden">
                 <label class="cfield"><span class="flabel">בחירת צבע רקע</span>
                   <span class="cbox"><input class="hex" id="bgHex" dir="ltr" spellcheck="false" placeholder="אוטומטי"><span class="dot" id="bgDot"><input type="color" id="bgPick"></span></span></label>
                 <label class="cfield"><span class="flabel">בחירת צבע ראשי</span>
                   <span class="cbox"><input class="hex" id="mainHex" dir="ltr" spellcheck="false" placeholder="אוטומטי"><span class="dot" id="mainDot"><input type="color" id="mainPick"></span></span></label>
               </div>
-              <p class="fhint" id="colorNote"></p>
+              <p class="fhint hidden" id="colorNote"></p>
 
               <label class="ufield"><span>יש לכם רעיון או בקשה? <span class="opt-tag">לא חובה</span></span>
                 <textarea id="extraIn" rows="1" placeholder="לדוגמה: אמא ובת עושות פילאטיס יחד, עם חיוך"></textarea></label>
@@ -862,7 +862,8 @@ const AD_COLORS = [
   {v:'#111111', t:'שחור'},
   {v:'#F5EFE6', t:'שמנת'}
 ];
-function colorHex(){ if(S.color==='logo'){const l=chosenLogoInfo();return l?l.ink:''} return S.color||'' }
+/* v3: אין בחירת צבע. צבע המודעה נלקח מהתמונה כשהיא מורכבת (AdCompose.photoColor), ולכן גם לא נשלח למנוע */
+function colorHex(){ return '' }
 function colorLabel(){
   if(!S.color)return 'אוטומטי';
   if(S.color==='logo')return 'מהלוגו';
@@ -927,7 +928,7 @@ const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'', site:'' };
 
 const DRAFT='morning_ads_draft_v3';  /* טיוטה נפרדת מ-v2, כי הפורמטים שונים */
 function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify(S)) }catch(e){} }
-function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d); if(!TEMPLATES.some(x=>x.v===S.template))S.template=''; if(S.font&&!AdCompose.FONT_SETS.some(x=>x.v===S.font))S.font=''; S.overlay='כותרת על התמונה'; S.overlayText=''; S.cta=''; if(!TONE.includes(S.tone))S.tone=''; ['gender','ages','segs'].forEach(k=>{ if(!Array.isArray(S[k]))S[k]=[] }); S.audience=audienceText(); if(!PROMOTE.some(x=>x.v===S.promote)){S.promote='';S.promoteFree=''} S.layout=''; if(!FORMAT.some(x=>x.v===S.format))S.format='4:5' }catch(e){} }
+function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d&&typeof d==='object')Object.assign(S,d); if(!TEMPLATES.some(x=>x.v===S.template))S.template=''; if(S.font&&!AdCompose.FONT_SETS.some(x=>x.v===S.font))S.font=''; S.overlay='כותרת על התמונה'; S.overlayText=''; S.cta=''; if(!TONE.includes(S.tone))S.tone=''; ['gender','ages','segs'].forEach(k=>{ if(!Array.isArray(S[k]))S[k]=[] }); S.audience=audienceText(); if(!PROMOTE.some(x=>x.v===S.promote)){S.promote='';S.promoteFree=''} S.layout=''; S.color=''; S.bg=''; if(!FORMAT.some(x=>x.v===S.format))S.format='4:5' }catch(e){} }
 
 /* =================== גלילה לשלב הבא =================== */
 /* כל בחירה מורידה את המשתמש למקטע הבא, שכבר נמצא שם על המסך */
@@ -976,7 +977,7 @@ function styleCard(o){
 }
 function drawThumbs(){
   $$('#optsStyle canvas[data-tpl]').forEach(c=>AdCompose.render(c,{tpl:c.dataset.tpl,format:S.format,schematic:true,scale:0.24,
-    headline:'כותרת ראשית של המודעה',sub:'שורה משנית קצרה של המודעה',cta:'לפרטים',name:'שם העסק',color:adColor(),bg:S.bg,font:fontId()}));
+    headline:'כותרת ראשית של המודעה',sub:'שורה משנית קצרה של המודעה',cta:'לפרטים',name:'שם העסק',color:adColor(),bg:'',font:fontId()}));
 }
 
 /* =================== v2: פונט ותצוגה מקדימה =================== */
@@ -1505,7 +1506,7 @@ function syncPrompt(){
   }
   /* v2: צבע המודעה. גובר על הצבעוניות של התבנית */
   const hexC=colorHex();
-  if(S.bg)p.push('צבע הרקע של המודעה: '+S.bg+'.');
+
   if(hexC)p.push('צבע המודעה: '+hexC+'. זה הצבע הדומיננטי של המודעה, ברקע או במשטחים הגדולים, ואפשר לשלב גוונים בהירים וכהים שלו. בלי צבעים חזקים נוספים מלבד צבעי הלוגו.');
   /* v2: המלצת פונטים (טיוטה, ראו V2-TODO.md) */
   if(S.overlay!==OVERLAY[1]){
@@ -1542,7 +1543,6 @@ function photoPrompt(who,what,tpl,refs){
   p.push('זו רק התמונה של המודעה. בלי שום טקסט, בלי אותיות, בלי מספרים, בלי לוגו, בלי כפתורים, בלי שלטים קריאים ובלי מסגרות. הכותרת והלוגו יתווספו אחר כך.');
   p.push(PHOTO_COMPOSITION[tpl.v]||PHOTO_COMPOSITION.frame);
   p.push('צילום אמיתי וטבעי, אור רך, צבעים טבעיים. לא נראה כמו תמונת סטוק ולא כמו הדמיה ממוחשבת.');
-  p.push('אפשר לשלב בסצנה נגיעות עדינות בצבע '+adColor()+', כדי שהתמונה תתחבר לעיצוב המודעה.');
   if(refs.length){
     const kind={'מוצר':'תמונת מוצר','רקע':'תמונת רקע או נוף','אחר':'תמונה נוספת'};
     p.push('התמונות המצורפות לפי הסדר: '+refs.map((a,i)=>'תמונה '+(i+1)+': '+(kind[a.tag]||'תמונה נוספת')).join('. ')+'.');
@@ -1733,7 +1733,8 @@ async function showComposed(img,copy,fields){
   const f=fields&&!fields._err?fields:{};
   const head=(f.headline||'').trim()||headlineOf(text)||(S.promoteFree||'').trim()||S.promote||BIZ.name;
   /* כל מה שצריך כדי לצייר את המודעה מחדש. נשמר עם המודעה */
-  const D={tpl:S.template,font:fontId(),color:adColor(),bg:S.bg,format:S.format,
+  /* הצבע של המודעה מהתמונה עצמה, כדי שהפאנל ישתלב בה. בלי תמונה צבע המותג מהלוגו */
+  const D={tpl:S.template,font:fontId(),color:AdCompose.photoColor(photo)||adColor(),bg:'',format:S.format,
            headline:head,sub:(f.subline||'').trim()||composedSub(head),cta:(f.cta||'').trim()||ctaText(),
            name:BIZ.name,nameEn:BIZ.nameEn,site:BIZ.site};
   await AdCompose.ensureFonts(D.font);

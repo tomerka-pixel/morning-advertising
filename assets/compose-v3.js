@@ -147,6 +147,73 @@ function monogram(name,nameEn){
   return (pick(nameEn).toUpperCase()||pick(name)||'·');
 }
 
+/* =================== צבע מהתמונה ===================
+   הלקוח לא בוחר צבע. כמו מעצב, לוקחים את הצבע הבולט בתמונה (הבגד, חפץ מרכזי), עם משקל למרכז
+   ולרוויה, ובלי גווני עור. מזה בונים פאנל כהה (טקסט לבן) או פסטל (טקסט כהה) לפי הבהירות שלו */
+function hsl2hex(h,s,l){
+  const a=s*Math.min(l,1-l), f=n=>{ const k=(n+h/30)%12; return l-a*Math.max(-1,Math.min(k-3,9-k,1)) };
+  return hex([f(0)*255,f(8)*255,f(4)*255]);
+}
+function photoColor(img){
+  if(!img)return null;
+  try{
+    const n=48, c=document.createElement('canvas'); c.width=n; c.height=n;
+    const x=c.getContext('2d'); x.drawImage(img,0,0,n,n);
+    const d=x.getImageData(0,0,n,n).data, bins=Array.from({length:24},()=>({w:0,s:0,l:0,x:0,y:0}));
+    for(let j=0;j<n;j++)for(let i=0;i<n;i++){
+      const o=(j*n+i)*4, r=d[o]/255, g=d[o+1]/255, b=d[o+2]/255;
+      const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2, dl=mx-mn;
+      if(dl<0.06)continue;
+      const sat=dl/(1-Math.abs(2*l-1)||1);
+      if(sat<0.12||l<0.1||l>0.92)continue;
+      let h=mx===r?((g-b)/dl)%6:mx===g?(b-r)/dl+2:(r-g)/dl+4; h=(h*60+360)%360;
+      /* עור, עץ ורצפה: כתומים-חומים לא רוויים. כמעט לא נספרים, אחרת הם תמיד מנצחים בתמונות של אנשים */
+      const skin=h<=50;
+      const cx=(i+.5)/n-.5, cy=(j+.5)/n-.5, center=1-Math.min(1,Math.hypot(cx,cy)*1.3)*0.6;
+      const w=Math.pow(sat,0.8)*(1-Math.abs(l-0.5))*center*(skin?(sat>0.85?0.25:0.03):1);
+      const bn=bins[Math.floor(h/15)%24];
+      bn.w+=w; bn.s+=sat*w; bn.l+=l*w; bn.x+=Math.cos(h*Math.PI/180)*w; bn.y+=Math.sin(h*Math.PI/180)*w;
+    }
+    let best=null; bins.forEach((bn,k)=>{ const nb=bins[(k+1)%24].w*0.5+bins[(k+23)%24].w*0.5; if(!best||bn.w+nb>best.sc)best={bn,sc:bn.w+nb} });
+    if(!best||best.bn.w<0.15)return null;
+    const B=best.bn, h=(Math.atan2(B.y,B.x)*180/Math.PI+360)%360, sat=B.s/B.w, l=B.l/B.w;
+    /* כהה ועמוק, או פסטל רך. שניהם כמו במודעות הדוגמה */
+    return l<0.58 ? hsl2hex(h,Math.max(0.35,Math.min(0.7,sat)),Math.max(0.2,Math.min(0.34,l*0.75)))
+                  : hsl2hex(h,Math.max(0.45,Math.min(0.8,sat)),0.86);
+  }catch(e){ return null }
+}
+
+/* הלוגו מתאים את עצמו לרקע: החלקים הניטרליים (טקסט שחור או לבן) מתהפכים כשהם נבלעים בפאנל,
+   והחלקים הצבעוניים נשארים. אם גם אז הלוגו לא נראה, הוא נצבע כולו בצבע הטקסט */
+const ADAPT=new WeakMap();
+function adaptLogo(img,surface){
+  let m=ADAPT.get(img); if(!m){ m={}; ADAPT.set(img,m) }
+  if(m[surface])return m[surface];
+  let out=img;
+  try{
+    const w=img.width||img.naturalWidth, h=img.height||img.naturalHeight;
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    const x=c.getContext('2d'); x.drawImage(img,0,0);
+    const D=x.getImageData(0,0,w,h), d=D.data, dark=textOn(surface)===WHITE, sl=lum(surface);
+    const to=dark?[255,255,255]:rgb(TEXT_INK);
+    let total=0, weak=0, changed=0;
+    for(let i=0;i<d.length;i+=4){
+      if(d[i+3]<20)continue;
+      const r=d[i],g=d[i+1],b=d[i+2], mx=Math.max(r,g,b), mn=Math.min(r,g,b), sat=(mx-mn)/255, L=lum(hex([r,g,b]));
+      total++;
+      const neutral=sat<0.22;
+      if(neutral&&(dark?L<0.3:L>0.75)){ d[i]=to[0]; d[i+1]=to[1]; d[i+2]=to[2]; changed++; continue }
+      if((Math.max(L,sl)+.05)/(Math.min(L,sl)+.05)<1.6)weak++;
+    }
+    if(total&&weak/total>0.5){
+      for(let i=0;i<d.length;i+=4) if(d[i+3]>=20){ d[i]=to[0]; d[i+1]=to[1]; d[i+2]=to[2] }
+      changed=total;
+    }
+    if(changed){ x.putImageData(D,0,0); out=c }
+  }catch(e){}
+  m[surface]=out; return out;
+}
+
 /* =================== שפת העיצוב, לפי מודעות הדוגמה של מורנינג (11.10.2026) ===================
    פאנל צבע מלא שהטקסט ממלא אותו, בלי חללים ריקים: כותרת גדולה ומודגשת, שורת משנה רגילה מתחתיה,
    כפתור גלולה גדול, והלוגו כמו שהוא, בלי מסגרת ובלי עיגול. ביחידות של קנבס 540 (הצלע הקצרה) */
@@ -198,9 +265,10 @@ function markSize(ctx,o,F,maxW,maxH){
   const size=Math.min(22,maxH*0.62); ctx.font=css(F.head,size);
   return {w:Math.min(maxW,ctx.measureText(name).width),h:size,size,text:name};
 }
-function drawMark(ctx,m,x,y,color,schematic){
+function drawMark(ctx,m,x,y,color,schematic,surface){
   if(!m.w)return;
-  if(m.img){ if(schematic){ ctx.fillStyle=rgba(color,.5); rr(ctx,x,y,m.w,m.h,4); ctx.fill() } else ctx.drawImage(m.img,x,y,m.w,m.h); return }
+  if(m.img){ if(schematic){ ctx.fillStyle=rgba(color,.5); rr(ctx,x,y,m.w,m.h,4); ctx.fill() }
+             else ctx.drawImage(surface?adaptLogo(m.img,surface):m.img,x,y,m.w,m.h); return }
   ctx.fillStyle=color;
   if(schematic){ rr(ctx,x,y+m.h*.25,m.w,m.h*.5,m.h*.25); ctx.fill(); return }
   ctx.font=css(m.font,m.size); ctx.direction='rtl'; ctx.textAlign='right'; ctx.textBaseline='middle';
@@ -221,13 +289,13 @@ function pill(ctx,o,F,x1,y,w,S,col){
 function pillWidth(ctx,o,F,S){ ctx.font=css(ctaSpec(F),S.bs); return o.cta?ctx.measureText(o.cta).width+S.bh*1.3:0 }
 
 /* שורת הסיום: הכפתור מימין והלוגו משמאל באותה שורה (כמו בדוגמאות). full = כפתור לכל הרוחב, בלי לוגו */
-function ctaRow(ctx,o,F,S,x0,x1,y,col,ink,full){
+function ctaRow(ctx,o,F,S,x0,x1,y,col,ink,full,sf){
   const cw=x1-x0;
   if(full){ pill(ctx,o,F,x1,y,cw,S,col); return S.bh }
-  const m=mark(ctx,o,F,cw*0.36,S.bh*0.95);
-  const w=Math.min(cw-(m.w?m.w+28:0),Math.max(pillWidth(ctx,o,F,S),cw*0.52));
+  const m=mark(ctx,o,F,cw*0.4,S.bh*1.25);
+  const w=Math.min(cw-(m.w?m.w+32:0),Math.max(pillWidth(ctx,o,F,S),cw*0.5));
   pill(ctx,o,F,x1,y,w,S,col);
-  drawMark(ctx,m,x0,y+(S.bh-m.h)/2,ink,o.schematic);
+  drawMark(ctx,m,x0,y+(S.bh-m.h)/2,ink,o.schematic,sf);
   return S.bh;
 }
 
@@ -235,6 +303,19 @@ function ctaRow(ctx,o,F,S,x0,x1,y,col,ink,full){
 function textBlock(ctx,o,F,S,lim,w){
   const hd=layout(ctx,o.headline,F.head,S.hs,w,lim.hl,1.12), sb=layout(ctx,o.sub,F.body,S.ss,w,lim.sl,1.3);
   return { hd, sb, h:hd.h+(sb.lines.length?12+sb.h:0) };
+}
+/* כותרת שמתאימה את עצמה לשטח: הגודל הכי גדול שנכנס ברוחב, במספר השורות המותר ובגובה שנשאר,
+   כדי שהטקסט ימלא את הפאנל כמו אצל מעצב ולא ישאיר חלל. min/max ביחס לגודל הבסיס */
+function fitText(ctx,o,F,S,lim,w,maxH,maxK){
+  const base=S.hs, hi=Math.round(base*(maxK||1.6)), lo=Math.round(base*0.85);
+  for(let hs=hi;hs>=lo;hs-=1){
+    ctx.font=css(F.head,hs);
+    if(wrap(ctx,o.headline,w).length>lim.hl)continue;
+    const T=Object.assign({},S,{hs,ss:Math.max(S.ss,Math.min(Math.round(S.ss*1.3),Math.round(hs*0.48)))});
+    const tb=textBlock(ctx,o,F,T,lim,w); tb.S=T;
+    if(tb.h<=maxH)return tb;
+  }
+  const tb=textBlock(ctx,o,F,S,lim,w); tb.S=S; return tb;
 }
 function drawText(ctx,tb,x,y,ink,align,schematic){
   y+=drawLines(ctx,tb.hd,x,y,ink,align,schematic);
@@ -248,28 +329,40 @@ function split(ctx,W,H,o,p,F,lim){
   const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
   ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
   if(S.land){
-    const iw=Math.round(W*0.41), x0=iw+S.M*1.3, x1=W-S.M*1.3;
+    /* לרוחב: תמונה משמאל 44%, ובעמודה הימנית לוגו למעלה, כותרת גדולה, משנה וכפתור לכל רוחב העמודה */
+    const iw=Math.round(W*0.44), x0=iw+S.M*1.5, x1=W-S.M*1.5, cw=x1-x0;
     cover(ctx,o.img,0,0,iw,H,0.35);
-    const tb=textBlock(ctx,o,F,S,lim,x1-x0), total=tb.h+30+S.bh;
+    const m=mark(ctx,o,F,cw*0.42,H*0.13), lg=m.h?m.h+S.M*0.8:0;
+    const avail=H-S.M*2.4-lg-34-S.bh;
+    const tb=fitText(ctx,o,F,S,lim,cw,avail,1.5), total=lg+tb.h+34+S.bh;
     let y=(H-total)/2;
-    drawText(ctx,tb,x1,y,ink,'right',o.schematic);
-    ctaRow(ctx,o,F,S,x0,x1,y+tb.h+30,col,ink);
+    if(m.w){ drawMark(ctx,m,x1-m.w,y,ink,o.schematic,sf); y+=lg }
+    drawText(ctx,tb,x1,y,ink,'right',o.schematic); y+=tb.h+34;
+    pill(ctx,o,F,x1,y,cw,tb.S,col);
     return;
   }
-  const x0=S.M, x1=W-S.M, tb=textBlock(ctx,o,F,S,lim,x1-x0), content=tb.h+30+S.bh;
+  const x0=S.M, x1=W-S.M, cw=x1-x0;
   if(S.story){
-    const pad=S.M*1.2, ph=Math.max(H*0.54,S.T+content+pad);
-    let y=S.T+(ph-S.T-content)/2;
+    /* סטורי: הפאנל למעלה (מתחת לאזור של הממשק), לוגו, כותרת, משנה וכפתור לכל הרוחב, התמונה למטה */
+    const ph=Math.round(H*0.56), m=mark(ctx,o,F,cw*0.42,S.bh*1.3), lg=m.h?m.h+30:0;
+    const avail=ph-S.T-S.M-lg-36-S.bh;
+    const tb=fitText(ctx,o,F,S,lim,cw,avail,1.35), total=lg+tb.h+36+S.bh;
+    let y=S.T+(ph-S.T-total)/2;
     cover(ctx,o.img,0,ph,W,H-ph,0.3);
-    drawText(ctx,tb,x1,y,ink,'right',o.schematic);
-    ctaRow(ctx,o,F,S,x0,x1,y+tb.h+30,col,ink);
+    if(m.w){ drawMark(ctx,m,x1-m.w,y,ink,o.schematic,sf); y+=lg }
+    drawText(ctx,tb,x1,y,ink,'right',o.schematic); y+=tb.h+36;
+    pill(ctx,o,F,x1,y,cw,tb.S,col);
     return;
   }
-  const pad=S.M*1.1, ph=Math.max(H*(H>W*1.1?0.46:0.44),content+pad*2), ih=H-ph;
+  /* ריבוע ו-4:5: התמונה למעלה, ובפאנל כותרת, משנה, ושורה של כפתור ולוגו (כמו בדוגמאות) */
+  const tall=H>W*1.1, ph=Math.round(H*(tall?0.48:0.46)), pad=S.M*1.05;
+  const avail=ph-pad*2-30-S.bh;
+  const tb=fitText(ctx,o,F,S,lim,cw,avail,1.3), content=tb.h+30+S.bh;
+  const realPh=Math.max(ph,content+pad*2), ih=H-realPh;
   cover(ctx,o.img,0,0,W,ih,0.3);
-  const y=ih+(ph-content)/2;
+  const y=ih+(realPh-content)/2;
   drawText(ctx,tb,x1,y,ink,'right',o.schematic);
-  ctaRow(ctx,o,F,S,x0,x1,y+tb.h+30,col,ink);
+  ctaRow(ctx,o,F,tb.S,x0,x1,y+tb.h+30,col,ink,false,sf);
 }
 
 /* על התמונה: תמונה מלאה, הצללה בצבע מלמטה, הלוגו כמו שהוא בפינה העליונה, טקסט לבן וכפתור לכל הרוחב */
@@ -280,9 +373,13 @@ function overlay(ctx,W,H,o,p,F,lim){
   const g=ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0.25,rgba(shade,0)); g.addColorStop(0.62,rgba(shade,0.72)); g.addColorStop(1,rgba(shade,0.96));
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* הצללה עדינה גם למעלה, כדי שהלוגו יהיה קריא גם על חלק בהיר של התמונה */
+  const top=(S.T||S.M)+S.bh*1.6, g2=ctx.createLinearGradient(0,0,0,top*1.5);
+  g2.addColorStop(0,rgba(shade,0.62)); g2.addColorStop(1,rgba(shade,0));
+  ctx.fillStyle=g2; ctx.fillRect(0,0,W,top*1.5);
   const x0=S.M, x1=S.land?W*0.62:W-S.M;
   const m=mark(ctx,o,F,(W-S.M*2)*0.34,S.bh);
-  drawMark(ctx,m,S.M,(S.T||S.M),WHITE,o.schematic);
+  drawMark(ctx,m,S.M,(S.T||S.M),WHITE,o.schematic,mix(p.primary,'#000',0.4));
   const tb=textBlock(ctx,o,F,S,lim,(S.land?W*0.62:W)-S.M*2);
   const by=H-(S.B||S.M)-S.bh;
   drawText(ctx,tb,W-S.M,by-30-tb.h,WHITE,'right',o.schematic);
@@ -305,7 +402,7 @@ function frame(ctx,W,H,o,p,F,lim){
     const x0=S.M*2+cw+S.M*0.6, x1=W-S.M*1.3, tb=textBlock(ctx,o,F,S,lim,x1-x0);
     const total=tb.h+30+S.bh; const y=(H-total)/2;
     drawText(ctx,tb,x1,y,ink,'right',o.schematic);
-    ctaRow(ctx,o,F,S,x0,x1,y+tb.h+30,col,ink);
+    ctaRow(ctx,o,F,S,x0,x1,y+tb.h+30,col,ink,false,sf);
     return;
   }
   const m=mark(ctx,o,F,W*0.34,S.bh*0.9);
@@ -314,7 +411,7 @@ function frame(ctx,W,H,o,p,F,lim){
   const top=S.T||S.M, bottom=S.B||S.M;
   const chh=Math.max(120,Math.min(cw*(S.story?1.05:0.78),H-top-bottom-fixed));
   let y=top+Math.max(0,(H-top-bottom-fixed-chh)/2);
-  drawMark(ctx,m,(W-m.w)/2,y,ink,o.schematic); y+=m.h?m.h+gap:0;
+  drawMark(ctx,m,(W-m.w)/2,y,ink,o.schematic,sf); y+=m.h?m.h+gap:0;
   card(S.M,y,cw,chh); y+=chh+gap;
   drawText(ctx,tb,W/2,y,ink,'center',o.schematic); y+=tb.h+28;
   const pw=Math.max(pillWidth(ctx,o,F,S),cw*0.6);
@@ -328,7 +425,7 @@ function type(ctx,W,H,o,p,F,lim){
   const big=Object.assign({},S,{hs:Math.round(S.hs*(S.land?1.35:1.4))});
   const x0=S.M*1.2, x1=W-S.M*1.2, top=S.T||S.M*1.2, bottom=S.B||S.M*1.2;
   const m=mark(ctx,o,F,(x1-x0)*0.34,S.bh);
-  drawMark(ctx,m,x0,top,ink,o.schematic);
+  drawMark(ctx,m,x0,top,ink,o.schematic,sf);
   const tb=textBlock(ctx,o,F,big,lim,(x1-x0)*(S.land?0.72:1));
   const area=H-top-bottom-(m.h?m.h+24:0), total=tb.h+34+S.bh;
   const y=top+(m.h?m.h+24:0)+Math.max(0,(area-total)/2);
@@ -355,7 +452,7 @@ function render(canvas,o){
 function slotFormat(tpl,format){
   const [W,H]=SIZES[format]||SIZES['4:5'], z=scale(W,H);
   let r=W/H;
-  if(tpl==='split') r=z.land?(W*0.41)/H:W/(H*(z.story?0.46:H>W*1.1?0.54:0.56));
+  if(tpl==='split') r=z.land?(W*0.44)/H:W/(H*(z.story?0.44:H>W*1.1?0.52:0.54));
   else if(tpl==='frame') r=z.land?(W*0.44)/(H-80):(z.story?0.95:1.3);
   else if(tpl==='type') r=1;
   let best='1:1', d=Infinity;
@@ -367,5 +464,5 @@ function loadImage(url){
   return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error('טעינת התמונה נכשלה')); im.src=url });
 }
 
-window.AdCompose={ TEMPLATES, LIMITS, FONT_SETS, SIZES, render, slotFormat, fontForTone, fontSet, ensureFonts, loadImage, palette, monogram };
+window.AdCompose={ photoColor, TEMPLATES, LIMITS, FONT_SETS, SIZES, render, slotFormat, fontForTone, fontSet, ensureFonts, loadImage, palette, monogram };
 })();
