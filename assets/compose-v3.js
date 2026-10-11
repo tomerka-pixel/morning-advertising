@@ -30,7 +30,8 @@ const FONT_SETS = [
   { v:'warm',    t:'עגול וחם',      head:{f:'Rubik',w:700},            body:{f:'Rubik',w:500},     cta:{f:'Rubik',w:500} },
   { v:'clean',   t:'נקי ועכשווי',   head:{f:'Heebo',w:800},            body:{f:'Heebo',w:500},     cta:{f:'Heebo',w:500} },
   { v:'bold',    t:'בולט ואנרגטי',  head:{f:'Secular One',w:400},      body:{f:'Heebo',w:500},     cta:{f:'Secular One',w:400} },
-  { v:'elegant', t:'קלאסי ויוקרתי', head:{f:'Frank Ruhl Libre',w:700}, body:{f:'Assistant',w:600}, cta:{f:'Assistant',w:600} },
+  /* היה Frank Ruhl Libre, ותומר אמר שהוא מכוער. Noto Serif Hebrew עדין ויוקרתי יותר */
+  { v:'elegant', t:'קלאסי ויוקרתי', head:{f:'Noto Serif Hebrew',w:600}, body:{f:'Assistant',w:400}, cta:{f:'Assistant',w:600} },
   { v:'display', t:'צר ודרמטי',     head:{f:'Karantina',w:700},        body:{f:'Assistant',w:600}, cta:{f:'Assistant',w:600} }
 ];
 const FONT_BY_TONE = { 'ידידותי וחם':'warm', 'מקצועי ומהוקצע':'clean', 'אנרגטי ומניע':'bold', 'יוקרתי ורגוע':'elegant' };
