@@ -1092,10 +1092,14 @@ function renderOwn(){
 function usingOwn(){ return !!(S.template&&S.useOwn&&ownPhoto()) }
 
 /* =================== v2: מקטעים מתקפלים =================== */
+/* אקורדיון: כשפותחים שלב, השלבים האחרים נסגרים, כך שתמיד רואים רק שלב אחד והתקציר מראה את השאר */
 function setOpen(secId,open){
   const sec=document.getElementById(secId); if(!sec)return;
+  if(open) document.querySelectorAll('.sec.col.open').forEach(o=>{ if(o!==sec){ o.classList.remove('open'); o.querySelector('.sec-head').setAttribute('aria-expanded','false') } });
   sec.classList.toggle('open',open);
   sec.querySelector('.sec-head').setAttribute('aria-expanded',open?'true':'false');
+  /* שלב שנסגר מעליו מקצר את העמוד, והכותרת עלולה לברוח מעל המסך. מחזירים אותה לתצוגה */
+  if(open) setTimeout(()=>{ if(sec.getBoundingClientRect().top<70) sec.scrollIntoView({block:'start'}) },30);
 }
 /* התקציר בכותרת של "איך המודעה תיראה": התבנית והצבע יחד */
 function updateStylePick(){
