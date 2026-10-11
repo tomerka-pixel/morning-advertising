@@ -716,9 +716,20 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
 /* בלינק הציבורי (github.io) שרת היצירה רץ על המחשב של תומר מאחורי מנהרה, והכתובת שלה משתנה בכל הפעלה.
    הסקריפט שמפעיל אותה כותב את הכתובת העדכנית ל-api-base.json שליד הדף */
 let API_BASE = '';
-const API_READY = /github\.io$/.test(location.hostname)
-  ? fetch('api-base.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(j=>{API_BASE=(j&&j.url)||''}).catch(()=>{})
-  : Promise.resolve();
+const IS_PAGES = /github\.io$/.test(location.hostname);
+const loadApiBase = () => fetch('api-base.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(j=>{API_BASE=(j&&j.url)||''}).catch(()=>{});
+const API_READY = IS_PAGES ? loadApiBase() : Promise.resolve();
+/* כתובת השרת משתנה כשהוא מופעל מחדש (למשל אחרי שהמק התעורר). אם בקשה לא הגיעה בכלל,
+   קוראים שוב את הכתובת העדכנית ומנסים פעם נוספת, כדי שדף שנפתח קודם לא ייכשל */
+async function apiFetch(path,opts){
+  try{ return await fetch(API_BASE+path,opts) }
+  catch(e){
+    if(!IS_PAGES)throw e;
+    const old=API_BASE; await loadApiBase();
+    if(API_BASE===old){ await new Promise(r=>setTimeout(r,4000)); await loadApiBase() }
+    return fetch(API_BASE+path,opts);
+  }
+}
 /* תצוגה לשיתוף: כשהדף לא רץ מהשרת המקומי (למשל בלינק השיתוף), אין מנוע יצירה,
    ומציגים הסבר במקום הוראות הפעלה של השרת */
 const SHARE_PREVIEW = !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
@@ -765,7 +776,7 @@ let ASSETS=[], ADS=[];
 /* =================== בדיקת חיבור =================== */
 /* נבדק בעלייה, ושוב בלחיצה על יצירה. כך שרת שעלה אחרי טעינת הדף נתפס לבד */
 function checkHealth(){
-  return API_READY.then(()=>API_BASE||!SHARE_PREVIEW?fetch(API_BASE+'/api/health',{cache:'no-store'}):null)
+  return API_READY.then(()=>API_BASE||!SHARE_PREVIEW?apiFetch('/api/health',{cache:'no-store'}):null)
     .then(r=>r&&r.ok?r.json():null)
     .catch(()=>null)
     .then(j=>{
@@ -1635,12 +1646,12 @@ async function generate(){
     /* בתבנית הלוגו מונח בקוד, ולכן הוא לא נשלח למנוע */
     const refs=ASSETS.filter(a=>S.assets.includes(a.id)&&!(tpl&&a.tag==='לוגו')).map(a=>a.url);
 
-    const askCopy = () => fetch(API_BASE+'/api/post',{method:'POST',headers:headers(),body:JSON.stringify(copyBrief())})
+    const askCopy = () => apiFetch('/api/post',{method:'POST',headers:headers(),body:JSON.stringify(copyBrief())})
       .then(async r=>{const j=await r.json().catch(()=>({}));if(r.status===403)forgetCode();if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
       .catch(e=>({_err:e.message||String(e)}));
 
     const askImage = prompt => LIVE.image
-      ? fetch(API_BASE+'/api/generate',{method:'POST',headers:headers(),
+      ? apiFetch('/api/generate',{method:'POST',headers:headers(),
           body:JSON.stringify({kind:'image',prompt,format:tpl?AdCompose.slotFormat(tpl.v,S.format):genFormat(S.format),images:refs,
                                adFormat:layoutId(),adFormatName:S.layout})})
         .then(async r=>{const j=await r.json().catch(()=>({}));if(r.status===403)forgetCode();if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
@@ -1653,7 +1664,7 @@ async function generate(){
     /* v3: ארבעת השדות לתבנית, במגבלות התווים של המעצב. חריגה = עוד ניסיון אחד, קצר יותר */
     const askFields = async tv => {
       const lim=AdCompose.LIMITS[tv];
-      const ask=retry=>fetch(API_BASE+'/api/post',{method:'POST',headers:headers(),
+      const ask=retry=>apiFetch('/api/post',{method:'POST',headers:headers(),
           body:JSON.stringify(Object.assign(copyBrief(),{type:'fields',limits:lim,retry}))})
         .then(async r=>{const j=await r.json().catch(()=>({}));if(r.status===403)forgetCode();if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
         .then(j=>{ const m=String(j.text||'').match(/\{[\s\S]*\}/); return m?JSON.parse(m[0]):{} });
@@ -1938,7 +1949,7 @@ function copyAd(c){
    מורידים דרך השרת (/api/download), שמחזיר את הקובץ כקובץ להורדה. תמונה שכבר בדפדפן (data/blob) נשמרת ישר */
 async function fetchImage(url){
   if(/^(data|blob):/.test(url))return (await fetch(url)).blob();
-  const r=await fetch(API_BASE+'/api/download?url='+encodeURIComponent(url),{headers:{'x-access-code':accessCode()}});
+  const r=await apiFetch('/api/download?url='+encodeURIComponent(url),{headers:{'x-access-code':accessCode()}});
   if(!r.ok)throw new Error('download '+r.status);
   return r.blob();
 }
