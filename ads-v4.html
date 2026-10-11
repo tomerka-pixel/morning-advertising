@@ -467,16 +467,41 @@ async function next(){
 /* השאלות הקבועות של המערכת. שאלות התוכן מגיעות מסופיה, עם אפשרויות שמותאמות לעסק */
 const Q={
   detail:()=>({qk:'detail',q:'מה בדיוק תרצו לקדם? משפט אחד מספיק',free:true,options:[],set:v=>{S.detail=v}}),
-  goal:()=>({qk:'goal',q:'מה הכי חשוב שיקרה בעקבות המודעה?',options:GOALS,set:v=>{S.goal=v}}),
-  tone:()=>({qk:'tone',q:'איזו אווירה תתאים למודעה?',options:TONE,set:v=>{S.tone=v;S.font=AdCompose.fontForTone(v)}}),
+  goal:()=>({qk:'goal',q:'מה הכי חשוב שיקרה בעקבות המודעה?',free:true,options:GOALS,set:v=>{S.goal=v}}),
+  tone:()=>({qk:'tone',q:'איזו אווירה תתאים למודעה?',free:true,options:TONE,set:v=>{S.tone=v;S.font=fontFor(v)}}),
   audience:()=>({qk:'audience',q:'למי המודעה מיועדת?',free:true,
                  options:S.audOpts||['קהל רחב','נשים','גברים','הורים צעירים','צעירים 20 פלוס'],set:v=>{S.audience=v==='קהל רחב'?'':v}}),
-  format:()=>({qk:'format',q:'איפה המודעה תתפרסם?',options:FORMAT.map(f=>({t:f.t,d:f.px,v:f.v})),set:v=>{S.format=v;renderStage()}}),
-  template:()=>({qk:'template',q:'איזה עיצוב? הסקיצה מתעדכנת משמאל',
+  format:()=>({qk:'format',q:'איפה המודעה תתפרסם?',free:true,match:matchFormat,options:FORMAT.map(f=>({t:f.t,d:f.px,v:f.v})),set:v=>{S.format=v;renderStage()}}),
+  template:()=>({qk:'template',q:'איזה עיצוב? הסקיצה מתעדכנת משמאל',free:true,match:matchTemplate,
                  options:TEMPLATES.map(t=>({t:t.t,d:t.d,v:t.v})),set:v=>{S.template=v;renderStage()}}),
-  image:()=>({qk:'image',q:'ואיזו תמונה?',options:[{t:'שהמערכת תיצור תמונה',d:'צילום שמתאים בדיוק לעיצוב',v:'gen'},{t:'להעלות תמונה משלי',d:'צילום של המקום, הצוות או המוצר',v:'own'}],
+  image:()=>({qk:'image',q:'ואיזו תמונה?',free:true,match:matchImage,options:[{t:'שהמערכת תיצור תמונה',d:'צילום שמתאים בדיוק לעיצוב',v:'gen'},{t:'להעלות תמונה משלי',d:'צילום של המקום, הצוות או המוצר',v:'own'}],
               set:async v=>{ if(v==='own'){ S.useOwn=null; await pickOwn() } else { S.own=null; S.useOwn=false } }})
 };
+/* תומר: בכל שאלה אפשר לכתוב תשובה משלכם. בשאלות שהתשובה שלהן חייבת להיות מדויקת (גודל, עיצוב, תמונה)
+   מתרגמים את מה שכתבו לאפשרות הקרובה, ואם אין כזו סופיה מסבירה ושואלת שוב */
+function fontFor(tone){
+  if(TONE.includes(tone))return AdCompose.fontForTone(tone);
+  if(/יוקר|אלגנט|קלאס|שקט|רגוע|עדין/.test(tone))return 'elegant';
+  if(/אנרג|צעיר|כיף|קומי|מצחיק|הומור|שובב|נועז|בולט/.test(tone))return 'bold';
+  if(/מקצוע|רציני|עסקי|נקי|מודרני/.test(tone))return 'clean';
+  if(/דרמט|חזק|קולנוע/.test(tone))return 'display';
+  return 'warm';
+}
+function matchFormat(t){
+  const r=[[/רילס|ריל|טיקטוק|tiktok|reels/i,'reels'],[/סטורי|story|9:16|אנכי/i,'9:16'],[/פייסבוק|facebook|fb/i,'fb'],
+           [/לינקדאין|linkedin/i,'li'],[/ריבוע|1:1|פיד/i,'1:1'],[/אינסטגרם|instagram|4:5|לאורך/i,'4:5'],[/רוחב|רחב/i,'fb']];
+  const hit=r.find(([re])=>re.test(t)); return hit?hit[1]:null;
+}
+function matchTemplate(t){
+  const r=[[/מפוצל|חצי|מחולק|למעלה|למטה/,'split'],[/על התמונה|מלאה|על גבי|שכבה/,'overlay'],[/מסגרת|כרטיס|ממוסגר/,'frame'],[/סולידי|בלי תמונה|רק טקסט|צבע|טיפוגרפ/,'type']];
+  const hit=r.find(([re])=>re.test(t)); return hit?hit[1]:null;
+}
+function matchImage(t){
+  if(/להעלות|משלי|יש לי|אעלה|תמונה שלי|שלנו|נעלה/.test(t))return 'own';
+  if(/תיצ|תצר|צר[יוה]|ליצור|ייצר|תייצ|אוטומט|בלי תמונה|לא משנה|תבחר|תחליט|מה שבא|שהמערכת/.test(t))return 'gen';
+  return null;
+}
+
 /* שאלה שסופיה ניסחה: הנושא שלה (detail/goal/tone/audience/offer) מגיע בשדה קבוע מהשרת */
 function extraQuestion(pq){
   const topic=pq['key']||'detail';
@@ -486,7 +511,7 @@ function extraQuestion(pq){
   const base=Q[qk]();
   const opts=(qk==='goal')?GOALS:(qk==='tone')?TONE:(pq.options||[]).slice(0,5);
   const set=topic==='offer'?(v=>{S.detail=[S.detail,v].filter(Boolean).join(', ')}):base.set;
-  return Object.assign(base,{q:pq.q||base.q,options:opts,free:qk!=='goal'&&qk!=='tone',set});
+  return Object.assign(base,{q:pq.q||base.q,options:opts,free:true,set});
 }
 
 /* התחלה: ההודעה הראשונה של בעל העסק, ואז סופיה מבינה ושואלת */
@@ -790,11 +815,18 @@ async function send(){
   const t=$('#cIn').value.trim(); if(!t)return;
   $('#cIn').value=''; $('#cSend').disabled=true;
   if(PENDING){
-    if(PENDING.free)return answer(t);
-    /* שאלה עם אפשרויות קבועות: אם מה שהקלידו תואם אפשרות, בוחרים אותה. אחרת שואלים שוב */
-    const hit=PENDING.options.map(o=>typeof o==='string'?{t:o,v:o}:o).find(o=>o.t===t||String(o.v)===t);
-    if(hit)return answer(hit.v,hit.t);
-    say('me',esc(t)); return aiSay('כאן צריך לבחור אחת מהאפשרויות שלמעלה',350);
+    const opts=PENDING.options.map(o=>typeof o==='string'?{t:o,v:o}:o);
+    const exact=opts.find(o=>o.t===t||String(o.v)===t);
+    if(exact)return answer(exact.v,t);
+    if(PENDING.match){
+      const v=PENDING.match(t);
+      if(v)return answer(v,t);
+      say('me',esc(t));
+      const hint={format:'איפה תתפרסם המודעה, למשל סטורי, פייסבוק או פוסט בפיד',template:'איזה סגנון עיצוב, למשל תמונה למעלה וטקסט למטה, או טקסט על התמונה',
+                  image:'אם תרצו להעלות תמונה משלכם, או שהמערכת תיצור אחת'}[PENDING.qk]||'';
+      return aiSay('לא הצלחתי להבין את זה עד הסוף. אפשר לכתוב '+esc(hint)+', או לבחור למעלה',350);
+    }
+    return answer(t);
   }
   if(S.result&&!S.busy){ say('me',esc(t)); return editRequest(t) }
   say('me',esc(t)); aiSay('רגע, אני באמצע. נמשיך מיד');
