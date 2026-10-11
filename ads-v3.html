@@ -440,6 +440,8 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
 .sec.col .sec-toggle{display:grid!important;order:-1;width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:#F5F6FA;color:#033841}
 
 .sec.col.open .sec-toggle svg{transform:rotate(180deg)}
+.sec.col.closing .sec-toggle svg{transform:none}
+.sec.col .sec-toggle svg{transition:transform .3s cubic-bezier(.22,.7,.2,1)}
 
 /* v3.3: הבר העליון לפי פיגמה, והכותרת הכפולה ירדה */
 .topbar.ftop{height:60px;flex:0 0 60px;padding:0 40px;gap:24px;border-bottom:0;box-shadow:0 1px 0 #EFF1F6}
@@ -1046,14 +1048,49 @@ function renderOwn(){
 function usingOwn(){ return !!(S.template&&S.useOwn&&ownPhoto()) }
 
 /* =================== v2: מקטעים מתקפלים =================== */
-/* אקורדיון: כשפותחים שלב, השלבים האחרים נסגרים, כך שתמיד רואים רק שלב אחד והתקציר מראה את השאר */
+/* אקורדיון עם תנועה: השלב הפתוח נסגר בהחלקה והחדש נפתח בהחלקה, באותו זמן.
+   כדי שהעמוד לא "יקפוץ", הכותרת שלחצו עליה נשארת באותו מקום על המסך בזמן שהשלב שמעליה מתקפל,
+   ובסוף, אם צריך, גוללים אותה בעדינות לראש המסך. בלי תנועה למי שביקש להפחית תנועה */
+let ANIM=false;
+const SEC_MS=340, SEC_EASE='cubic-bezier(.22,.7,.2,1)';
+function animBody(sec,opening){
+  const body=sec.querySelector('.sec-body'); if(!body)return;
+  if(opening)sec.classList.add('open');
+  const cs=getComputedStyle(body), h=body.offsetHeight, pt=cs.paddingTop, pb=cs.paddingBottom;
+  const shut={height:'0px',paddingTop:'0px',paddingBottom:'0px',opacity:0}, full={height:h+'px',paddingTop:pt,paddingBottom:pb,opacity:1};
+  body.style.overflow='hidden';
+  const a=body.animate(opening?[shut,full]:[full,shut],{duration:SEC_MS,easing:SEC_EASE});
+  if(!opening)sec.classList.add('closing');
+  a.onfinish=a.oncancel=()=>{ body.style.overflow=''; if(!opening){ sec.classList.remove('open','closing') } };
+}
 function setOpen(secId,open){
   const sec=document.getElementById(secId); if(!sec)return;
-  if(open) document.querySelectorAll('.sec.col.open').forEach(o=>{ if(o!==sec){ o.classList.remove('open'); o.querySelector('.sec-head').setAttribute('aria-expanded','false') } });
-  sec.classList.toggle('open',open);
-  sec.querySelector('.sec-head').setAttribute('aria-expanded',open?'true':'false');
-  /* שלב שנסגר מעליו מקצר את העמוד, והכותרת עלולה לברוח מעל המסך. מחזירים אותה לתצוגה */
-  if(open) setTimeout(()=>{ if(sec.getBoundingClientRect().top<70) sec.scrollIntoView({block:'start'}) },30);
+  const head=sec.querySelector('.sec-head'), main=document.getElementById('main');
+  const calm=!ANIM||matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const others=open?$$('.sec.col.open').filter(o=>o!==sec):[];
+  others.forEach(o=>o.querySelector('.sec-head').setAttribute('aria-expanded','false'));
+  head.setAttribute('aria-expanded',open?'true':'false');
+  if(calm){
+    others.forEach(o=>o.classList.remove('open'));
+    sec.classList.toggle('open',open);
+    return;
+  }
+  const y0=head.getBoundingClientRect().top;
+  others.forEach(o=>animBody(o,false));
+  if(open!==sec.classList.contains('open')||sec.classList.contains('closing')){ sec.classList.remove('closing'); animBody(sec,open) }
+  if(!open)return;
+  /* מחזיקים את הכותרת במקום בזמן ההחלקה (setTimeout ולא rAF, כדי שיעבוד גם בלשונית ברקע) */
+  const t0=Date.now();
+  const hold=()=>{
+    const dy=head.getBoundingClientRect().top-y0;
+    if(Math.abs(dy)>0.5)main.scrollTop+=dy;
+    if(Date.now()-t0<SEC_MS+40)setTimeout(hold,12);
+    else{
+      const top=head.getBoundingClientRect().top-main.getBoundingClientRect().top;
+      if(top<0||top>main.clientHeight*0.45)main.scrollTo({top:main.scrollTop+top-16,behavior:'smooth'});
+    }
+  };
+  hold();
 }
 /* התקציר בכותרת של "איך המודעה תיראה": התבנית והצבע יחד */
 function updateStylePick(){
@@ -2143,6 +2180,7 @@ $('#useOwn').onchange=e=>{ S.useOwn=e.target.checked; saveDraft() };
   buildSections(); renderAssetPick(); wireCollapse(); applyState(); openFirstOpenable(); renderBizSwitch();
   renderCounts(); renderLib(); renderGallery();
   analyzeLogos();
+  setTimeout(()=>{ ANIM=true },300);
 })();
 </script>
 </body>
