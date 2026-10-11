@@ -170,7 +170,7 @@ function photoColor(img){
       /* עור, עץ ורצפה: כתומים-חומים לא רוויים. כמעט לא נספרים, אחרת הם תמיד מנצחים בתמונות של אנשים */
       const skin=h<=50;
       const cx=(i+.5)/n-.5, cy=(j+.5)/n-.5, center=1-Math.min(1,Math.hypot(cx,cy)*1.3)*0.6;
-      const w=Math.pow(sat,0.8)*(1-Math.abs(l-0.5))*center*(skin?(sat>0.85?0.25:0.03):1);
+      const w=Math.pow(sat,0.8)*(1-Math.abs(l-0.5))*center*(skin?0.002:1);
       const bn=bins[Math.floor(h/15)%24];
       bn.w+=w; bn.s+=sat*w; bn.l+=l*w; bn.x+=Math.cos(h*Math.PI/180)*w; bn.y+=Math.sin(h*Math.PI/180)*w;
     }
@@ -329,29 +329,31 @@ function split(ctx,W,H,o,p,F,lim){
   const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
   ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
   if(S.land){
-    /* לרוחב: תמונה משמאל 44%, ובעמודה הימנית לוגו למעלה, כותרת גדולה, משנה וכפתור לכל רוחב העמודה */
-    const iw=Math.round(W*0.44), x0=iw+S.M*1.5, x1=W-S.M*1.5, cw=x1-x0;
+    /* לרוחב: תמונה משמאל 44%, ובעמודה הימנית הכל ממורכז: לוגו גדול למעלה, כותרת גדולה, משנה וכפתור */
+    const iw=Math.round(W*0.44), x0=iw+S.M*1.5, x1=W-S.M*1.5, cw=x1-x0, xc=(x0+x1)/2;
     cover(ctx,o.img,0,0,iw,H,0.35);
-    const m=mark(ctx,o,F,cw*0.42,H*0.13), lg=m.h?m.h+S.M*0.8:0;
+    const m=mark(ctx,o,F,cw*0.5,H*0.2), lg=m.h?m.h+S.M*0.7:0;
     const avail=H-S.M*2.4-lg-34-S.bh;
     const tb=fitText(ctx,o,F,S,lim,cw,avail,1.5), total=lg+tb.h+34+S.bh;
     let y=(H-total)/2;
-    if(m.w){ drawMark(ctx,m,x1-m.w,y,ink,o.schematic,sf); y+=lg }
-    drawText(ctx,tb,x1,y,ink,'right',o.schematic); y+=tb.h+34;
-    pill(ctx,o,F,x1,y,cw,tb.S,col);
+    if(m.w){ drawMark(ctx,m,xc-m.w/2,y,ink,o.schematic,sf); y+=lg }
+    drawText(ctx,tb,xc,y,ink,'center',o.schematic); y+=tb.h+34;
+    const pw=Math.max(pillWidth(ctx,o,F,tb.S),cw*0.78);
+    pill(ctx,o,F,xc+pw/2,y,pw,tb.S,col);
     return;
   }
   const x0=S.M, x1=W-S.M, cw=x1-x0;
   if(S.story){
     /* סטורי: הפאנל למעלה (מתחת לאזור של הממשק), לוגו, כותרת, משנה וכפתור לכל הרוחב, התמונה למטה */
-    const ph=Math.round(H*0.56), m=mark(ctx,o,F,cw*0.42,S.bh*1.3), lg=m.h?m.h+30:0;
+    const ph=Math.round(H*0.56), m=mark(ctx,o,F,cw*0.5,S.bh*1.8), lg=m.h?m.h+30:0;
     const avail=ph-S.T-S.M-lg-36-S.bh;
     const tb=fitText(ctx,o,F,S,lim,cw,avail,1.35), total=lg+tb.h+36+S.bh;
     let y=S.T+(ph-S.T-total)/2;
     cover(ctx,o.img,0,ph,W,H-ph,0.3);
-    if(m.w){ drawMark(ctx,m,x1-m.w,y,ink,o.schematic,sf); y+=lg }
-    drawText(ctx,tb,x1,y,ink,'right',o.schematic); y+=tb.h+36;
-    pill(ctx,o,F,x1,y,cw,tb.S,col);
+    if(m.w){ drawMark(ctx,m,(W-m.w)/2,y,ink,o.schematic,sf); y+=lg }
+    drawText(ctx,tb,W/2,y,ink,'center',o.schematic); y+=tb.h+36;
+    const pw=Math.max(pillWidth(ctx,o,F,tb.S),cw*0.8);
+    pill(ctx,o,F,(W+pw)/2,y,pw,tb.S,col);
     return;
   }
   /* ריבוע ו-4:5: התמונה למעלה, ובפאנל כותרת, משנה, ושורה של כפתור ולוגו (כמו בדוגמאות) */
