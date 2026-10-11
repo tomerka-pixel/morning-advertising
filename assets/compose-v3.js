@@ -83,16 +83,17 @@ function wrap(ctx,text,w){
   if(cur)lines.push(cur);
   return lines;
 }
-/* שורות מאוזנות בגודל קבוע. מעבר למספר השורות נחתך בשלוש נקודות, לעולם לא מוקטן */
+/* שורות מאוזנות. אף פעם לא חותכים בשלוש נקודות (תומר: "שלא יהיה מצב של 3 נקודות"):
+   טקסט ארוך מדי מוקטן עד 78% מהגודל, ואם גם זה לא מספיק הוא מקבל עוד שורה */
 function layout(ctx,text,spec,size,w,maxLines,lh){
   ctx.font=css(spec,size); ctx.letterSpacing='0px';
   let lines=wrap(ctx,text,w), over=false;
   if(lines.length>maxLines){
-    over=true; lines=lines.slice(0,maxLines);
-    let last=lines[maxLines-1];
-    while(last.includes(' ')&&ctx.measureText(last+'…').width>w)last=last.slice(0,last.lastIndexOf(' '));
-    lines[maxLines-1]=last+'…';
-  }else if(lines.length>1){
+    over=true;
+    const min=size*0.78;
+    while(size>min&&lines.length>maxLines){ size-=0.5; ctx.font=css(spec,size); lines=wrap(ctx,text,w) }
+  }
+  if(lines.length>1){
     let lo=w*0.5, hi=w;
     for(let i=0;i<14;i++){ const m=(lo+hi)/2; if(wrap(ctx,text,m).length>lines.length)lo=m; else hi=m }
     lines=wrap(ctx,text,hi);
@@ -134,12 +135,13 @@ function focus(img){
     const mean=(R+G+B)/3, kr=mean/(R||1), kg=mean/(G||1), kb=mean/(B||1);
     const skinAt=o=>{ const r=Math.min(255,d[o]*kr), g=Math.min(255,d[o+1]*kg), b=Math.min(255,d[o+2]*kb);
       return r>95&&g>40&&b>20&&r>g&&g>b&&(r-b)/r>0.18&&r-g>10&&r<250 };
-    for(let j=0;j<n;j++)for(let i=0;i<n;i++){ if(skinAt((j*n+i)*4))rows[j]++ }
+    const mask=new Uint8Array(n*n);
+    for(let j=0;j<n;j++)for(let i=0;i<n;i++){ if(skinAt((j*n+i)*4)){ rows[j]++; mask[j*n+i]=1 } }
     let top=-1; for(let j=0;j<n-1;j++) if(rows[j]>=n*0.08&&rows[j+1]>=n*0.08){ top=j; break }
     if(top>=0){
       let sx=0,cnt=0;
       for(let j=top;j<Math.min(n,top+18);j++)for(let i=0;i<n;i++){ if(skinAt((j*n+i)*4)){ sx+=i; cnt++ } }
-      f={ top:Math.max(0,top/n-0.08), cx:cnt?(sx/cnt+.5)/n:0.5 };
+      f={ top:Math.max(0,top/n-0.08), cx:cnt?(sx/cnt+.5)/n:0.5, mask, n };
     }
   }catch(e){}
   FOCUS.set(img,f); return f;
@@ -153,6 +155,20 @@ function cover(ctx,img,x,y,w,h,fy){
   const sy=Math.max(0,Math.min(ih-sh,want));
   const sx=Math.max(0,Math.min(iw-sw,f?f.cx*iw-sw/2:(iw-sw)/2));
   ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
+  return { img, f, sx, sy, k:sw/w, x, y, iw, ih };
+}
+/* כמה עור (פנים, ידיים) יש מתחת למלבן על הקנבס, לפי החיתוך שבוצע. 0 = נקי, 1 = כולו עור */
+function skinUnder(cv,rx,ry,rw,rh){
+  if(!cv||!cv.f||!cv.f.mask)return 0;
+  const {f,sx,sy,k,x,y,iw,ih}=cv, n=f.n;
+  let hit=0, tot=0;
+  for(let j=0;j<8;j++)for(let i=0;i<8;i++){
+    const px=sx+(rx+(i+.5)*rw/8-x)*k, py=sy+(ry+(j+.5)*rh/8-y)*k;
+    const gx=Math.floor(px/iw*n), gy=Math.floor(py/ih*n);
+    if(gx<0||gy<0||gx>=n||gy>=n)continue;
+    tot++; if(f.mask[gy*n+gx])hit++;
+  }
+  return tot?hit/tot:0;
 }
 
 /* כפתור: גובה 49, ריפוד 32, רדיוס מלא, טקסט 20 (כמו בפיגמה). x = הקצה לפי align */
@@ -403,7 +419,7 @@ function split(ctx,W,H,o,p,F,lim){
 /* על התמונה: תמונה מלאה, הצללה בצבע מלמטה, הלוגו כמו שהוא בפינה העליונה, טקסט לבן וכפתור לכל הרוחב */
 function overlay(ctx,W,H,o,p,F,lim){
   const S=scale(W,H);
-  cover(ctx,o.img,0,0,W,H);
+  const cv=cover(ctx,o.img,0,0,W,H);
   const shade=lum(p.primary)>0.12?mix(p.primary,'#000',0.5):p.primary;
   const g=ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0.25,rgba(shade,0)); g.addColorStop(0.62,rgba(shade,0.72)); g.addColorStop(1,rgba(shade,0.96));
@@ -414,7 +430,11 @@ function overlay(ctx,W,H,o,p,F,lim){
   ctx.fillStyle=g2; ctx.fillRect(0,0,W,top*1.5);
   const x0=S.M, x1=S.land?W*0.62:W-S.M;
   const m=mark(ctx,o,F,(W-S.M*2)*0.4,S.bh*1.4);
-  drawMark(ctx,m,S.M,(S.T||S.M),WHITE,o.schematic,mix(p.primary,'#000',0.4));
+  /* הלוגו לא מסתיר פנים: בודקים שמאל, מרכז וימין למעלה, ובוחרים את המקום עם הכי מעט עור מתחתיו */
+  const ly=S.T||S.M, spots=[S.M,(W-m.w)/2,W-S.M-m.w];
+  let lx=spots[0], best=Infinity;
+  spots.forEach((sx,i)=>{ const sk=skinUnder(cv,sx-8,ly-8,m.w+16,m.h+16)+i*0.02; if(sk<best){best=sk;lx=sx} });
+  drawMark(ctx,m,lx,ly,WHITE,o.schematic,mix(p.primary,'#000',0.4));
   const tb=textBlock(ctx,o,F,S,lim,(S.land?W*0.62:W)-S.M*2);
   const by=H-(S.B||S.M)-S.bh;
   drawText(ctx,tb,W-S.M,by-30-tb.h,WHITE,'right',o.schematic);
