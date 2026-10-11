@@ -53,6 +53,38 @@ h1,h2,h3{margin:0}
 .ft-chev{width:24px;height:24px;display:grid;place-items:center}
 .ft-chev img{width:8px;height:4.5px}
 .view{flex:1;min-height:0;position:relative}
+/* בורר העסק למעלה משמאל: מעבר בין עסקים, עריכה והוספה */
+.ft-biz{cursor:pointer;transition:border-color .15s}
+.ft-biz:hover{border-color:var(--ink)}
+.ft-biz .lg{width:24px;height:24px;border-radius:5px;background:#F3F5F8 center/contain no-repeat;flex:0 0 24px}
+.biz-menu{position:absolute;top:54px;left:40px;width:300px;background:#fff;border:1px solid #E3E7EE;border-radius:14px;box-shadow:0 14px 40px rgba(3,56,65,.16);padding:8px;z-index:30;animation:rise .2s cubic-bezier(.22,.7,.2,1) both}
+.bm-item{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:10px;border-radius:10px;cursor:pointer;text-align:right;font-size:15px;color:var(--ink)}
+.bm-item:hover{background:#F5F7F9}
+.bm-item .lg{width:32px;height:32px;border-radius:7px;background:#F3F5F8 center/contain no-repeat;flex:0 0 32px;display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--muted)}
+.bm-item .nm{flex:1;min-width:0}
+.bm-item .nm b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bm-item .nm small{display:block;color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bm-item .ok{width:18px;height:18px;fill:none;stroke:var(--green);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.bm-sep{height:1px;background:#EFF1F6;margin:6px 4px}
+.bm-act{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:10px;border-radius:10px;cursor:pointer;font-size:15px;color:var(--ink);text-align:right}
+.bm-act:hover{background:#F5F7F9}
+.bm-act svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.modal{position:fixed;inset:0;background:rgba(3,56,65,.32);display:grid;place-items:center;z-index:40;animation:fadein .2s ease both}
+.m-card{width:min(520px,92vw);background:#fff;border-radius:18px;padding:26px;box-shadow:0 20px 60px rgba(3,56,65,.25);animation:rise .25s cubic-bezier(.22,.7,.2,1) both}
+.m-card h3{font-size:22px;margin-bottom:4px}
+.m-card p{margin:0 0 16px;color:var(--muted);font-size:14px}
+.m-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.m-grid label{display:flex;flex-direction:column;gap:5px;font-size:13.5px;color:var(--muted)}
+.m-grid label.wide{grid-column:1/-1}
+.m-grid input{border:1px solid #D5DCE3;border-radius:8px;padding:10px 12px;font-size:15px;color:var(--ink);outline:none}
+.m-grid input:focus{border-color:var(--ink)}
+.m-logo{display:flex;align-items:center;gap:12px;border:1px dashed #C4CDD5;border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--ink)}
+.m-logo:hover{border-color:var(--ink)}
+.m-logo .lg{width:44px;height:44px;border-radius:8px;background:#F3F5F8 center/contain no-repeat;flex:0 0 44px}
+.m-acts{display:flex;gap:10px;justify-content:flex-start;margin-top:20px}
+.m-btn{height:46px;padding:0 24px;border-radius:100px;border:0;background:var(--ink);color:#fff;font-size:16px;font-weight:600;cursor:pointer}
+.m-btn.ghost{background:#fff;color:var(--ink);border:1px solid #D5DCE3}
+@media (max-width:980px){.biz-menu{left:16px}}
 
 /* ===== מסך הפתיחה ===== */
 .landing{position:absolute;inset:0;overflow:auto;background:radial-gradient(ellipse 70% 45% at 50% 0%,#E2F6EF 0%,rgba(226,246,239,0) 70%),var(--bg);padding:0 40px 80px}
@@ -210,7 +242,8 @@ h1,h2,h3{margin:0}
     <header class="topbar">
       <div class="top-spacer"></div>
       <button class="ft-a11y" title="נגישות" aria-label="נגישות"><img src="assets/topbar/accessibility.svg" alt=""></button>
-      <div class="ft-biz"><span id="bizName">העסק שלי</span><span class="ft-chev"><img src="assets/topbar/chevron-down.svg" alt=""></span></div>
+      <button class="ft-biz" id="bizBtn" aria-haspopup="true" aria-expanded="false"><span class="lg" id="bizLg"></span><span id="bizName" style="flex:1;text-align:right">העסק שלי</span><span class="ft-chev"><img src="assets/topbar/chevron-down.svg" alt=""></span></button>
+      <div class="biz-menu hidden" id="bizMenu" role="menu"></div>
     </header>
 
     <div class="view">
@@ -260,6 +293,22 @@ h1,h2,h3{margin:0}
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<div class="modal hidden" id="bizModal">
+  <div class="m-card" role="dialog" aria-modal="true" aria-labelledby="bmTitle">
+    <h3 id="bmTitle">עסק חדש</h3>
+    <p>הפרטים והלוגו נכנסים לכל מודעה של העסק הזה</p>
+    <div class="m-grid">
+      <label class="wide">שם העסק<input id="bfName" placeholder="לדוגמה: לק ג׳ל קלרה"></label>
+      <label>שם באנגלית<input id="bfEn" dir="ltr" placeholder="KLARA NAILS"></label>
+      <label>תחום<input id="bfField" placeholder="מניקור ולק ג׳ל"></label>
+      <label>עיר<input id="bfCity" placeholder="רמת גן"></label>
+      <label>אתר<input id="bfSite" dir="ltr" placeholder="klara.co.il"></label>
+      <label class="wide">לוגו<span class="m-logo" id="bfLogoBtn"><span class="lg" id="bfLogoPrev"></span><span id="bfLogoTxt">העלאת לוגו (PNG או SVG, עדיף עם רקע שקוף)</span></span></label>
+    </div>
+    <input type="file" id="bfLogo" accept="image/*" hidden>
+    <div class="m-acts"><button class="m-btn" id="bfSave">שמירה</button><button class="m-btn ghost" id="bfCancel">ביטול</button></div>
+  </div>
+</div>
 
 <script src="assets/compose-v3.js?v=3de32895"></script>
 <script>
@@ -316,6 +365,11 @@ const DB={
 };
 const BIZ={id:'biz',name:'',nameEn:'',field:'',city:'',site:''};
 let ASSETS=[], ADS=[];
+/* כמה עסקים: רשימה ב-settings/bizList, וכל עסק עם הלוגו שלו (bid = מזהה העסק, logoId = הלוגו בנכסים).
+   העסק הנוכחי נשמר גם ב-settings/biz, כדי ש-v3 ימשיך לעבוד עם אותו עסק */
+let BIZLIST={id:'bizList',list:[],current:''};
+const curBiz=()=>BIZLIST.list.find(b=>b.bid===BIZLIST.current)||BIZLIST.list[0]||null;
+const logoAsset=b=>b&&b.logoId?ASSETS.find(a=>a.id===b.logoId):null;
 
 /* =================== האפשרויות =================== */
 const FORMAT=[
@@ -519,7 +573,7 @@ async function changeMenu(){
 let LOGO=null;
 async function logoForAd(){
   if(LOGO!==null)return LOGO||null;
-  const a=ASSETS.find(x=>x.tag==='לוגו');
+  const a=logoAsset(curBiz());
   if(!a){ LOGO=false; return null }
   try{ LOGO={img:await AdCompose.loadImage(a.url),info:null} }catch(e){ LOGO=false }
   return LOGO||null;
@@ -769,10 +823,102 @@ $('#sCopy').onclick=()=>{ try{ navigator.clipboard.writeText((S.result&&S.result
     if(!BIZ.name){ Object.assign(BIZ,{name:'סטודיו מוב',nameEn:'STUDIO MOVE',field:'סטודיו לפילאטיס מכשירים',city:'תל אביב',site:'studiomove.co.il'});
       await DB.put('settings',Object.assign({},BIZ)) }
   }catch(e){}
-  $('#bizName').textContent=BIZ.name||'העסק שלי';
-  $('#railInitials').textContent=(BIZ.name||'עס').split(/\s+/).map(w=>w[0]).join('').slice(0,2);
+  try{ const saved=await DB.get('settings','bizList'); if(saved&&Array.isArray(saved.list)&&saved.list.length)BIZLIST=saved }catch(e){}
+  if(!BIZLIST.list.length){
+    /* פעם ראשונה: העסק הנוכחי עם הלוגו האחרון שהועלה, וסטודיו מוב לדוגמה עם הלוגו שלו */
+    const logos=ASSETS.filter(a=>a.tag==='לוגו');
+    const own=[...logos].reverse().find(a=>a.id!=='seed-logo');
+    const cur={bid:'b'+Date.now(),name:BIZ.name,nameEn:BIZ.nameEn,field:BIZ.field,city:BIZ.city,site:BIZ.site,
+               logoId:/סטודיו מוב/.test(BIZ.name)?'seed-logo':(own?own.id:'')};
+    BIZLIST.list.push(cur); BIZLIST.current=cur.bid;
+    if(!/סטודיו מוב/.test(BIZ.name)&&logos.some(a=>a.id==='seed-logo'))
+      BIZLIST.list.push({bid:'b'+(Date.now()+1),name:'סטודיו מוב',nameEn:'STUDIO MOVE',field:'סטודיו לפילאטיס מכשירים',city:'תל אביב',site:'studiomove.co.il',logoId:'seed-logo'});
+    try{ await DB.put('settings',BIZLIST) }catch(e){}
+  }
+  applyBiz();
   showLanding();
 })();
+
+/* =================== בורר העסק =================== */
+function applyBiz(){
+  const b=curBiz(); if(!b)return;
+  Object.assign(BIZ,{name:b.name,nameEn:b.nameEn,field:b.field,city:b.city,site:b.site});
+  LOGO=null;
+  $('#bizName').textContent=BIZ.name||'העסק שלי';
+  const a=logoAsset(b); $('#bizLg').style.backgroundImage=a?`url("${a.url}")`:'';
+  $('#railInitials').textContent=(BIZ.name||'עס').split(/\s+/).map(w=>w[0]).join('').slice(0,2);
+}
+async function switchBiz(bid){
+  BIZLIST.current=bid; applyBiz();
+  try{ await DB.put('settings',BIZLIST); await DB.put('settings',Object.assign({},BIZ,{id:'biz'})) }catch(e){}
+  closeBizMenu();
+  toast('עברנו ל'+BIZ.name);
+  if(!$('#builder').classList.contains('hidden'))showLanding();
+}
+function renderBizMenu(){
+  const cur=curBiz();
+  $('#bizMenu').innerHTML=BIZLIST.list.map(b=>{ const a=logoAsset(b);
+    return `<button class="bm-item" role="menuitem" data-bid="${attr(b.bid)}"><span class="lg" style="${a?`background-image:url('${a.url}')`:''}">${a?'':esc((b.name||'?').slice(0,1))}</span>`+
+      `<span class="nm"><b>${esc(b.name||'עסק בלי שם')}</b><small>${esc([b.field,b.city].filter(Boolean).join(' · '))}</small></span>`+
+      (cur&&b.bid===cur.bid?'<svg class="ok" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>':'')+`</button>` }).join('')+
+    `<div class="bm-sep"></div>`+
+    `<button class="bm-act" id="bmEdit"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4"/></svg>עריכת פרטי העסק</button>`+
+    `<button class="bm-act" id="bmAdd"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>הוספת עסק</button>`;
+  $$('#bizMenu .bm-item').forEach(x=>x.onclick=()=>switchBiz(x.dataset.bid));
+  $('#bmEdit').onclick=()=>{ closeBizMenu(); openBizForm(curBiz()) };
+  $('#bmAdd').onclick=()=>{ closeBizMenu(); openBizForm(null) };
+}
+function closeBizMenu(){ $('#bizMenu').classList.add('hidden'); $('#bizBtn').setAttribute('aria-expanded','false') }
+$('#bizBtn').onclick=e=>{ e.stopPropagation(); const m=$('#bizMenu');
+  if(m.classList.contains('hidden')){ renderBizMenu(); m.classList.remove('hidden'); $('#bizBtn').setAttribute('aria-expanded','true') } else closeBizMenu() };
+document.addEventListener('click',e=>{ if(!e.target.closest('#bizMenu')&&!e.target.closest('#bizBtn'))closeBizMenu() });
+document.addEventListener('keydown',e=>{ if(keyOf(e)==='Escape'){ closeBizMenu(); $('#bizModal').classList.add('hidden') } });
+
+/* טופס עסק: חדש או עריכה. הלוגו נשמר כ-PNG כדי לשמור על השקיפות */
+let FORM=null;
+function openBizForm(b){
+  FORM={bid:b?b.bid:'',logoUrl:null};
+  $('#bmTitle').textContent=b?'עריכת פרטי העסק':'עסק חדש';
+  $('#bfName').value=b?b.name:''; $('#bfEn').value=b?b.nameEn||'':''; $('#bfField').value=b?b.field||'':'';
+  $('#bfCity').value=b?b.city||'':''; $('#bfSite').value=b?b.site||'':'';
+  const a=b?logoAsset(b):null;
+  $('#bfLogoPrev').style.backgroundImage=a?`url("${a.url}")`:''; $('#bfLogoTxt').textContent=a?'החלפת לוגו':'העלאת לוגו (PNG או SVG, עדיף עם רקע שקוף)';
+  $('#bizModal').classList.remove('hidden'); setTimeout(()=>$('#bfName').focus(),60);
+}
+$('#bfLogoBtn').onclick=()=>$('#bfLogo').click();
+$('#bfLogo').onchange=async()=>{
+  const f=$('#bfLogo').files[0]; $('#bfLogo').value=''; if(!f)return;
+  try{ FORM.logoUrl=await logoData(f); $('#bfLogoPrev').style.backgroundImage=`url("${FORM.logoUrl}")`; $('#bfLogoTxt').textContent=f.name }
+  catch(e){ toast(e.message) }
+};
+function logoData(file){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader(); fr.onerror=()=>rej(new Error('קריאת הקובץ נכשלה'));
+    fr.onload=()=>{
+      if(file.type==='image/svg+xml'){ res(String(fr.result)); return }
+      const im=new Image(); im.onerror=()=>rej(new Error('הקובץ אינו תמונה'));
+      im.onload=()=>{ const k=Math.min(1,900/Math.max(im.width,im.height)), c=document.createElement('canvas');
+        c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+        res(c.toDataURL('image/png')) };
+      im.src=fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+$('#bfCancel').onclick=()=>$('#bizModal').classList.add('hidden');
+$('#bizModal').onclick=e=>{ if(e.target.id==='bizModal')$('#bizModal').classList.add('hidden') };
+$('#bfSave').onclick=async()=>{
+  const name=$('#bfName').value.trim(); if(!name){ $('#bfName').focus(); toast('צריך שם לעסק'); return }
+  let b=BIZLIST.list.find(x=>x.bid===FORM.bid);
+  if(!b){ b={bid:'b'+Date.now(),logoId:''}; BIZLIST.list.push(b) }
+  Object.assign(b,{name,nameEn:$('#bfEn').value.trim(),field:$('#bfField').value.trim(),city:$('#bfCity').value.trim(),site:$('#bfSite').value.trim()});
+  if(FORM.logoUrl){
+    const rec={id:'logo'+Date.now(),name:name+' לוגו',tag:'לוגו',url:FORM.logoUrl,bizId:b.bid,date:new Date().toLocaleString('he-IL')};
+    try{ await DB.put('assets',rec); ASSETS.push(rec); b.logoId=rec.id }catch(e){ toast('שמירת הלוגו נכשלה') }
+  }
+  $('#bizModal').classList.add('hidden');
+  await switchBiz(b.bid);
+};
 </script>
 </body>
 </html>
