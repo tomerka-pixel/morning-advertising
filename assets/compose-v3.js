@@ -119,11 +119,39 @@ function placeholder(ctx,x,y,w,h){
   g.addColorStop(0,'#BCC4CC'); g.addColorStop(1,'#949DA8');
   ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
 }
+/* איפה האנשים בתמונה: השורה העליונה שיש בה עור (בערך קצה הראש) ומרכז האנשים לרוחב.
+   החיתוך שומר על הראש ולא חותך אותו, ובחיתוך לרוחב מתמרכז על האנשים */
+const FOCUS=new WeakMap();
+function focus(img){
+  if(FOCUS.has(img))return FOCUS.get(img);
+  let f=null;
+  try{
+    const n=64, c=document.createElement('canvas'); c.width=n; c.height=n;
+    const x=c.getContext('2d'); x.drawImage(img,0,0,n,n);
+    const d=x.getImageData(0,0,n,n).data, rows=new Array(n).fill(0);
+    /* איזון לבן (gray world) לפני זיהוי העור: בתמונה עם תאורה חמה כל הקירות נראים כמו עור */
+    let R=0,G=0,B=0; for(let o=0;o<d.length;o+=4){ R+=d[o]; G+=d[o+1]; B+=d[o+2] }
+    const mean=(R+G+B)/3, kr=mean/(R||1), kg=mean/(G||1), kb=mean/(B||1);
+    const skinAt=o=>{ const r=Math.min(255,d[o]*kr), g=Math.min(255,d[o+1]*kg), b=Math.min(255,d[o+2]*kb);
+      return r>95&&g>40&&b>20&&r>g&&g>b&&(r-b)/r>0.18&&r-g>10&&r<250 };
+    for(let j=0;j<n;j++)for(let i=0;i<n;i++){ if(skinAt((j*n+i)*4))rows[j]++ }
+    let top=-1; for(let j=0;j<n-1;j++) if(rows[j]>=n*0.08&&rows[j+1]>=n*0.08){ top=j; break }
+    if(top>=0){
+      let sx=0,cnt=0;
+      for(let j=top;j<Math.min(n,top+18);j++)for(let i=0;i<n;i++){ if(skinAt((j*n+i)*4)){ sx+=i; cnt++ } }
+      f={ top:Math.max(0,top/n-0.08), cx:cnt?(sx/cnt+.5)/n:0.5 };
+    }
+  }catch(e){}
+  FOCUS.set(img,f); return f;
+}
 function cover(ctx,img,x,y,w,h,fy){
   if(!img){ placeholder(ctx,x,y,w,h); return }
   const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
-  const s=Math.max(w/iw,h/ih), sw=w/s, sh=h/s;
-  const sx=(iw-sw)/2, sy=Math.max(0,Math.min(ih-sh,(ih-sh)*(fy==null?0.3:fy)));
+  const s=Math.max(w/iw,h/ih), sw=w/s, sh=h/s, f=focus(img);
+  /* חיתוך מלמעלה ולמטה: מתחילים מעט מעל הראש. בלי אנשים, קרוב לחלק העליון */
+  const want=f?f.top*ih-sh*0.05:(ih-sh)*(fy==null?0.2:Math.min(fy,0.2));
+  const sy=Math.max(0,Math.min(ih-sh,want));
+  const sx=Math.max(0,Math.min(iw-sw,f?f.cx*iw-sw/2:(iw-sw)/2));
   ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
 }
 
@@ -407,17 +435,19 @@ function frame(ctx,W,H,o,p,F,lim){
     ctaRow(ctx,o,F,S,x0,x1,y+tb.h+30,col,ink,false,sf);
     return;
   }
-  const m=mark(ctx,o,F,W*0.34,S.bh*0.9);
-  const tb=textBlock(ctx,o,F,S,lim,W-S.M*2);
-  const gap=22, cw=W-S.M*2, fixed=(m.h?m.h+gap:0)+gap+tb.h+28+S.bh;
+  /* בריבוע ו-4:5 הכל קצת יותר צפוף, כדי שהתמונה בכרטיס לא תהיה רצועה צרה */
+  const C=S.story?S:Object.assign({},S,{hs:Math.round(S.hs*0.86),ss:21,bh:54,bs:20});
+  const m=mark(ctx,o,F,W*0.3,S.story?S.bh*0.9:36);
+  const tb=textBlock(ctx,o,F,C,lim,W-S.M*2);
+  const gap=S.story?22:16, cw=W-S.M*2, fixed=(m.h?m.h+gap:0)+gap+tb.h+22+C.bh;
   const top=S.T||S.M, bottom=S.B||S.M;
   const chh=Math.max(120,Math.min(cw*(S.story?1.05:0.78),H-top-bottom-fixed));
   let y=top+Math.max(0,(H-top-bottom-fixed-chh)/2);
   drawMark(ctx,m,(W-m.w)/2,y,ink,o.schematic,sf); y+=m.h?m.h+gap:0;
   card(S.M,y,cw,chh); y+=chh+gap;
-  drawText(ctx,tb,W/2,y,ink,'center',o.schematic); y+=tb.h+28;
-  const pw=Math.max(pillWidth(ctx,o,F,S),cw*0.6);
-  pill(ctx,o,F,(W+pw)/2,y,pw,S,col);
+  drawText(ctx,tb,W/2,y,ink,'center',o.schematic); y+=tb.h+22;
+  const pw=Math.max(pillWidth(ctx,o,F,C),cw*0.6);
+  pill(ctx,o,F,(W+pw)/2,y,pw,C,col);
 }
 
 /* סולידי: רק צבע וטקסט. הלוגו כמו שהוא בפינה העליונה, כותרת ענקית, ומשנה וכפתור מתחתיה */
@@ -455,7 +485,7 @@ function slotFormat(tpl,format){
   const [W,H]=SIZES[format]||SIZES['4:5'], z=scale(W,H);
   let r=W/H;
   if(tpl==='split') r=z.land?(W*0.44)/H:W/(H*(z.story?0.44:H>W*1.1?0.52:0.54));
-  else if(tpl==='frame') r=z.land?(W*0.44)/(H-80):(z.story?0.95:1.3);
+  else if(tpl==='frame') r=z.land?(W*0.44)/(H-80):(z.story?0.95:H>W*1.1?1.5:2.2);
   else if(tpl==='type') r=1;
   let best='1:1', d=Infinity;
   for(const [k,v] of Object.entries(GEN_FORMATS)){ const x=Math.abs(Math.log(v/r)); if(x<d){d=x;best=k} }

@@ -105,6 +105,7 @@ a{color:inherit}
 .sec-num{width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:var(--surface);color:var(--muted);display:grid;place-items:center;font-size:14px;font-weight:700}
 .sec.done .sec-num{background:var(--primary);color:#fff}
 .sec-head h2{font-size:20px}
+.step-n{flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;line-height:1}
 .sec-pick{margin-inline-start:auto;background:var(--ok-bg);color:var(--deep);border-radius:100px;padding:5px 14px;font-size:14px;font-weight:500;display:none}
 .sec.done .sec-pick{display:inline-block}
 .sec-sub{color:var(--muted);font-size:15px;margin:0 0 16px;padding-inline-start:40px}
@@ -580,12 +581,12 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
           </div>
 
           <section class="sec col" id="sec-format">
-            <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><h2>פורמט</h2><span class="sec-pick" id="pick-format"></span><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
+            <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><span class="step-n">1</span><h2>פורמט</h2><span class="sec-pick" id="pick-format"></span><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
             <div class="sec-body"><div class="fmt-grid" id="optsFormat"></div></div>
           </section>
 
           <section class="sec col" id="sec-style">
-            <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><h2>תבנית</h2><span class="sec-pick" id="pick-style"></span><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
+            <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><span class="step-n">2</span><h2>תבנית</h2><span class="sec-pick" id="pick-style"></span><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
             <div class="sec-body">
               <div class="tpl-grid" id="optsStyle"></div>
               <div class="style-row">
@@ -596,7 +597,7 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
           </section>
 
           <section class="sec col" id="sec-content">
-            <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><h2>תוכן ועיצוב</h2><span class="sec-pick" id="pick-promote"></span><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
+            <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><span class="step-n">3</span><h2>תוכן ועיצוב</h2><span class="sec-pick" id="pick-promote"></span><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
             <div class="sec-body">
               <div class="flabel">מה מקדמים? <b class="req">*</b></div>
               <p class="fhint">לא צריך לכתוב כותרת או טקסט. בוחרים ומדייקים במשפט, והקופי נכתב לבד</p>
@@ -636,7 +637,7 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
           </section>
 
           <section class="sec col" id="sec-aud">
-            <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><h2>קהל יעד</h2><span class="sec-pick" id="pick-aud"></span><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
+            <div class="sec-head" role="button" tabindex="0" aria-expanded="false"><span class="step-n">4</span><h2>קהל יעד</h2><span class="sec-pick" id="pick-aud"></span><span class="sec-toggle" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
             <div class="sec-body">
               <div class="aud-top">
                 <div><div class="flabel" style="margin-top:0">מגדר</div><div class="seg" id="segGender"></div></div>
@@ -1542,6 +1543,7 @@ function photoPrompt(who,what,tpl,refs){
   if(S.tone)p.push('האווירה: '+S.tone+'.');
   p.push('זו רק התמונה של המודעה. בלי שום טקסט, בלי אותיות, בלי מספרים, בלי לוגו, בלי כפתורים, בלי שלטים קריאים ובלי מסגרות. הכותרת והלוגו יתווספו אחר כך.');
   p.push(PHOTO_COMPOSITION[tpl.v]||PHOTO_COMPOSITION.frame);
+  p.push('אם יש בתמונה אנשים: ראשים ופנים שלמים בתוך הפריים, עם מרווח מעל הראש. אף ראש, פנים או יד לא נחתכים בקצה התמונה.');
   p.push('צילום אמיתי וטבעי, אור רך, צבעים טבעיים. לא נראה כמו תמונת סטוק ולא כמו הדמיה ממוחשבת.');
   if(refs.length){
     const kind={'מוצר':'תמונת מוצר','רקע':'תמונת רקע או נוף','אחר':'תמונה נוספת'};
