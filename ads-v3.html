@@ -709,7 +709,12 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
    פרטי העסק, נכסי המותג והמודעות נשמרים ב-IndexedDB של הדפדפן הזה בלבד.
    =================================================================== */
 
-const API_BASE = /github\.io$/.test(location.hostname) ? 'https://REPLACE_WITH_VERCEL_URL' : '';
+/* בלינק הציבורי (github.io) שרת היצירה רץ על המחשב של תומר מאחורי מנהרה, והכתובת שלה משתנה בכל הפעלה.
+   הסקריפט שמפעיל אותה כותב את הכתובת העדכנית ל-api-base.json שליד הדף */
+let API_BASE = '';
+const API_READY = /github\.io$/.test(location.hostname)
+  ? fetch('api-base.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(j=>{API_BASE=(j&&j.url)||''}).catch(()=>{})
+  : Promise.resolve();
 /* תצוגה לשיתוף: כשהדף לא רץ מהשרת המקומי (למשל בלינק השיתוף), אין מנוע יצירה,
    ומציגים הסבר במקום הוראות הפעלה של השרת */
 const SHARE_PREVIEW = !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
@@ -728,6 +733,8 @@ function accessCode(){
   try{c=localStorage.getItem('morning_ac')||'';if(!c&&API_BASE){c=prompt('הזינו קוד גישה ליצירה (נשמר במחשב זה בלבד):')||'';if(c)localStorage.setItem('morning_ac',c)}}catch(e){}
   _ac=c;return _ac;
 }
+/* קוד שגוי: שוכחים אותו, כדי שבניסיון הבא הדף ישאל שוב */
+function forgetCode(){ _ac=undefined; try{localStorage.removeItem('morning_ac')}catch(e){} }
 const headers = () => ({'Content-Type':'application/json','x-access-code':accessCode()});
 
 /* =================== אחסון מקומי =================== */
@@ -753,8 +760,9 @@ let ASSETS=[], ADS=[];
 /* =================== בדיקת חיבור =================== */
 /* נבדק בעלייה, ושוב בלחיצה על יצירה. כך שרת שעלה אחרי טעינת הדף נתפס לבד */
 function checkHealth(){
-  return fetch(API_BASE+'/api/health',{cache:'no-store'})
-    .then(r=>r.ok?r.json():null)
+  return API_READY.then(()=>API_BASE||!SHARE_PREVIEW?fetch(API_BASE+'/api/health',{cache:'no-store'}):null)
+    .then(r=>r&&r.ok?r.json():null)
+    .catch(()=>null)
     .then(j=>{
       if(!j){ offline('לא הצלחנו להגיע לשרת היצירה'); return null }
       LIVE.info=j; LIVE.text=j.text||null; LIVE.image=j.image||null;
@@ -777,8 +785,8 @@ function offline(why){
   LIVE.on=false; LIVE.text=null; LIVE.image=null;
   $('#statusSlot').innerHTML='<span class="live-badge" style="background:var(--warn-bg);color:#8a5f00"><i style="background:#ffaf00;box-shadow:none"></i>'+(SHARE_PREVIEW?'תצוגה בלבד':'לא מחובר')+'</span>';
   if(SHARE_PREVIEW){
-    $('#notice').innerHTML='<div class="notice warn"><b>זו תצוגה לשיתוף.</b> '+
-      'אפשר לעבור על כל השלבים, לבחור ולהעלות קבצים, אבל יצירת המודעה עצמה פועלת רק בהפעלה המקומית של הכלי</div>';
+    $('#notice').innerHTML='<div class="notice warn"><b>שרת היצירה כבוי כרגע.</b> '+
+      'אפשר לעבור על כל השלבים, לבחור ולהעלות קבצים. היצירה תחזור לעבוד כשהשרת יעלה שוב</div>';
     renderCost(); return;
   }
   $('#notice').innerHTML='<div class="notice warn"><b>מצב לא מחובר.</b> '+esc(why)+
@@ -1567,7 +1575,7 @@ async function preflight(){
   if(!LIVE.on){
     /* אולי השרת עלה אחרי שהדף נטען. בודקים שוב לפני שמסרבים */
     await checkHealth();
-    if(!LIVE.on&&SHARE_PREVIEW) return {msg:'בתצוגה לשיתוף אי אפשר ליצור מודעה. היצירה פועלת רק בהפעלה המקומית של הכלי'};
+    if(!LIVE.on&&SHARE_PREVIEW) return {msg:'שרת היצירה כבוי כרגע, ולכן אי אפשר ליצור מודעה. נסו שוב מאוחר יותר'};
     if(!LIVE.on) return {msg:'אין חיבור לשרת היצירה. ודאו שהשרת המקומי רץ, ואז רעננו את הדף',
                          hint:'node ~/morning-advertising/server.js'};
   }
@@ -1614,14 +1622,14 @@ async function generate(){
     const refs=ASSETS.filter(a=>S.assets.includes(a.id)&&!(tpl&&a.tag==='לוגו')).map(a=>a.url);
 
     const askCopy = () => fetch(API_BASE+'/api/post',{method:'POST',headers:headers(),body:JSON.stringify(copyBrief())})
-      .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
+      .then(async r=>{const j=await r.json().catch(()=>({}));if(r.status===403)forgetCode();if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
       .catch(e=>({_err:e.message||String(e)}));
 
     const askImage = prompt => LIVE.image
       ? fetch(API_BASE+'/api/generate',{method:'POST',headers:headers(),
           body:JSON.stringify({kind:'image',prompt,format:tpl?AdCompose.slotFormat(tpl.v,S.format):genFormat(S.format),images:refs,
                                adFormat:layoutId(),adFormatName:S.layout})})
-        .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
+        .then(async r=>{const j=await r.json().catch(()=>({}));if(r.status===403)forgetCode();if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
         .catch(e=>({_err:e.message||String(e)}))
       : Promise.resolve({_skipped:true});
 
@@ -1633,7 +1641,7 @@ async function generate(){
       const lim=AdCompose.LIMITS[tv];
       const ask=retry=>fetch(API_BASE+'/api/post',{method:'POST',headers:headers(),
           body:JSON.stringify(Object.assign(copyBrief(),{type:'fields',limits:lim,retry}))})
-        .then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
+        .then(async r=>{const j=await r.json().catch(()=>({}));if(r.status===403)forgetCode();if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));return j})
         .then(j=>{ const m=String(j.text||'').match(/\{[\s\S]*\}/); return m?JSON.parse(m[0]):{} });
       const over=f=>[['headline',lim.h,'הכותרת'],['subline',lim.s,'שורת המשנה'],['cta',lim.c,'הכפתור']]
         .filter(([k,n])=>String(f[k]||'').length>n);
@@ -1914,7 +1922,7 @@ function copyAd(c){
    מורידים דרך השרת (/api/download), שמחזיר את הקובץ כקובץ להורדה. תמונה שכבר בדפדפן (data/blob) נשמרת ישר */
 async function fetchImage(url){
   if(/^(data|blob):/.test(url))return (await fetch(url)).blob();
-  const r=await fetch('/api/download?url='+encodeURIComponent(url));
+  const r=await fetch(API_BASE+'/api/download?url='+encodeURIComponent(url),{headers:{'x-access-code':accessCode()}});
   if(!r.ok)throw new Error('download '+r.status);
   return r.blob();
 }
