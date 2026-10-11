@@ -507,20 +507,6 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
 .chips.pills .chip.on{background:#E6FBF4;border-color:#0DAC81;color:#033841}
 .chips.pills .chip.on::before{content:"✓";margin-inline-end:6px;color:#0DAC81;font-weight:700}
 .actions{display:flex;gap:12px;justify-content:center;margin:26px 0 8px}
-/* תקציר לפני יצירה: כל מה שייכנס למודעה בעמוד אחד, כדי שלא יישאר משהו מיצירה קודמת בלי לשים לב */
-.sum{background:#fff;border:1px solid #E3E7EE;border-radius:16px;padding:18px 22px;margin-top:18px}
-.sum h3{font-size:17px;margin:0 0 2px}
-.sum .sub{font-size:13.5px;color:var(--muted);margin:0 0 10px}
-.sum-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid #F0F2F6;cursor:pointer}
-.sum-row:first-of-type{border-top:0}
-.sum-row:hover .sum-v{text-decoration:underline}
-.sum-k{flex:0 0 110px;font-size:14px;color:var(--muted)}
-.sum-v{flex:1;font-size:15px;color:var(--ink);font-weight:600;min-width:0;overflow-wrap:anywhere}
-.sum-v.empty{color:#9AA6B2;font-weight:400}
-.sum-row.free{background:#FFF8E1;margin:0 -12px;padding:9px 12px;border-radius:10px;border-top-color:transparent}
-.sum-x{border:1px solid #D9DEE6;background:#fff;border-radius:100px;padding:3px 12px;font-size:13px;cursor:pointer;color:var(--ink)}
-.sum-x:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
-@media (max-width:560px){.sum-k{flex-basis:84px}}
 .actions .btn{min-width:130px}
 .costline{text-align:center}
 @media (max-width:760px){.pro-grid{grid-template-columns:repeat(2,1fr)}.cgrid{grid-template-columns:1fr}.page-head h1{font-size:24px}}
@@ -665,8 +651,6 @@ details.adv summary{cursor:pointer;font-size:14px;color:var(--muted);font-weight
               <div class="flabel">הטון</div><div class="chips" id="chipsTone"></div>
             </div>
           </section>
-
-          <section class="sum" id="summary" aria-live="polite"></section>
 
           <div class="actions">
             <button class="btn btn-primary btn-lg" id="go">צור מודעה</button>
@@ -955,38 +939,8 @@ const S = { promote:'', promoteFree:'', template:'', color:'', bg:'', font:'', u
 const BIZ = { id:'biz', name:'', nameEn:'', field:'', city:'', site:'' };
 
 const DRAFT='morning_ads_draft_v3';  /* טיוטה נפרדת מ-v2, כי הפורמטים שונים */
-function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify(S)) }catch(e){} try{ renderSummary() }catch(e){} }
+function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify(S)) }catch(e){} }
 
-/* =================== מה ייכנס למודעה =================== */
-/* תומר: "לא ברור מה כתבתי כבר ומה נשאר מהיצירה הקודמת". התקציר מציג הכל בשורות, לחיצה פותחת את השלב,
-   ושדות טקסט חופשי (שמשפיעים על כל המודעה) מודגשים ואפשר למחוק אותם בלחיצה */
-function renderSummary(){
-  const box=document.getElementById('summary'); if(!box)return;
-  const fmt=FORMAT.find(x=>x.v===S.format), tpl=templateMeta();
-  const img=usingOwn()?'התמונה שלכם, כמו שהיא':ownPhoto()?'התמונה שהעליתם, כהשראה':'תיווצר אוטומטית';
-  const rows=[
-    {k:'פורמט', v:fmt?fmt.t:'', sec:'sec-format'},
-    {k:'תבנית', v:tpl?tpl.t+' · '+AdCompose.fontSet(fontId()).t:'', sec:'sec-style'},
-    {k:'מה מקדמים', v:S.promote||'', sec:'sec-content'},
-    {k:'פירוט', v:(S.promoteFree||'').trim(), sec:'sec-content', free:'promoteFree'},
-    {k:'מטרה', v:S.goal||'', sec:'sec-content'},
-    {k:'תמונה', v:img, sec:'sec-content'},
-    {k:'רעיון או בקשה', v:(S.extra||'').trim(), sec:'sec-content', free:'extraIn'},
-    {k:'קהל יעד', v:S.audience||'', sec:'sec-aud'},
-    {k:'טון', v:S.tone||'', sec:'sec-aud'}
-  ];
-  box.innerHTML='<h3>מה ייכנס למודעה</h3><p class="sub">כדאי לעבור לפני היצירה. לחיצה על שורה פותחת אותה לעריכה, ושורות צהובות הן טקסט חופשי שמשפיע על כל המודעה</p>'+
-    rows.map((r,i)=>`<div class="sum-row${r.free&&r.v?' free':''}" data-i="${i}"><span class="sum-k">${esc(r.k)}</span>`+
-      `<span class="sum-v${r.v?'':' empty'}">${r.v?esc(r.v):(r.free?'אין':'לא נבחר')}</span>`+
-      (r.free&&r.v?`<button class="sum-x" data-x="${r.free}">מחיקה</button>`:'')+`</div>`).join('');
-  box.querySelectorAll('.sum-row').forEach(el=>el.onclick=e=>{
-    const x=e.target.closest('[data-x]');
-    if(x){ e.stopPropagation(); const f=document.getElementById(x.dataset.x); f.value=''; f.oninput&&f.oninput(); return }
-    const r=rows[+el.dataset.i]; setOpen(r.sec,true);
-    const sec=document.getElementById(r.sec); sec.scrollIntoView({behavior:'smooth',block:'start'});
-    if(r.free)setTimeout(()=>document.getElementById(r.free).focus(),400);
-  });
-}
 /* מודעה חדשה: מנקה את מה שהיה ספציפי למודעה הקודמת (פירוט, רעיון, מטרה, תמונה), ושומר את העסק, הפורמט, התבנית והקהל */
 function newAd(){
   ['promoteFree','extraIn'].forEach(id=>{ const f=document.getElementById(id); f.value=''; f.oninput&&f.oninput() });
@@ -1118,15 +1072,8 @@ function updateAudPick(){
   if(t)markDone('sec-aud','pick-aud',esc(t));
   else{ document.getElementById('sec-aud').classList.remove('done'); $('#pick-aud').textContent='' }
 }
-/* סוגרים את הכרטיס ופותחים את הבא שעוד לא מולא, כדי שהעמוד יישאר קצר */
-function closeSoon(secId){
-  setTimeout(()=>{
-    setOpen(secId,false);
-    const all=$$('.sec.col'), i=all.findIndex(x=>x.id===secId);
-    const nx=all.slice(i+1).find(x=>!x.classList.contains('done'));
-    if(nx&&!$$('.sec.col.open').length)setOpen(nx.id,true);
-  },320);
-}
+/* תומר: שלב לא נסגר לבד אחרי בחירה. הוא נסגר רק כשפותחים שלב אחר (האקורדיון ב-setOpen) */
+function closeSoon(secId){}
 function openFirstOpenable(){
   const first=$$('.sec.col').find(x=>!x.classList.contains('done'));
   if(first)setOpen(first.id,true);
@@ -2195,7 +2142,7 @@ $('#useOwn').onchange=e=>{ S.useOwn=e.target.checked; saveDraft() };
   ASSETS.filter(a=>a.tag==='לוגו').forEach(a=>{ if(!S.assets.includes(a.id))S.assets.push(a.id) });
   $('#b_name').value=BIZ.name||''; $('#b_nameEn').value=BIZ.nameEn||''; $('#b_field').value=BIZ.field||''; $('#b_city').value=BIZ.city||''; $('#b_site').value=BIZ.site||'';
   buildSections(); renderAssetPick(); wireCollapse(); applyState(); openFirstOpenable(); renderBizSwitch();
-  renderCounts(); renderLib(); renderGallery(); renderSummary();
+  renderCounts(); renderLib(); renderGallery();
   analyzeLogos();
 })();
 </script>
