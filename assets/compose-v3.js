@@ -373,7 +373,7 @@ function split(ctx,W,H,o,p,F,lim){
   const x0=S.M, x1=W-S.M, cw=x1-x0;
   if(S.story){
     /* סטורי: הפאנל למעלה (מתחת לאזור של הממשק), לוגו, כותרת, משנה וכפתור לכל הרוחב, התמונה למטה */
-    const ph=Math.round(H*0.56), m=mark(ctx,o,F,cw*0.5,S.bh*1.8), lg=m.h?m.h+30:0;
+    const ph=Math.round(H*0.56), m=mark(ctx,o,F,cw*0.5,W*0.26), lg=m.h?m.h+30:0;
     const avail=ph-S.T-S.M-lg-36-S.bh;
     const tb=fitText(ctx,o,F,S,lim,cw,avail,1.35), total=lg+tb.h+36+S.bh;
     let y=S.T+(ph-S.T-total)/2;
@@ -388,7 +388,7 @@ function split(ctx,W,H,o,p,F,lim){
   /* בריבוע אין הרבה גובה, ולכן הכל קצת יותר צפוף כדי שהתמונה לא תהפוך לרצועה */
   const tall=H>W*1.1, ph=Math.round(H*(tall?0.52:0.56)), pad=S.M*(tall?0.9:0.62), xc=W/2;
   const B=tall?S:Object.assign({},S,{ss:21,bh:54,bs:20});
-  const m=mark(ctx,o,F,cw*0.45,S.bh*(tall?1.25:0.92)), lg=m.h?m.h+(tall?18:12):0, g2=tall?26:20;
+  const m=mark(ctx,o,F,cw*0.45,S.bh*(tall?1.45:1.1)), lg=m.h?m.h+(tall?18:12):0, g2=tall?26:20;
   const avail=ph-pad*2-lg-g2-B.bh;
   const tb=fitText(ctx,o,F,B,lim,cw,avail,tall?1.25:1.1), content=lg+tb.h+g2+tb.S.bh;
   const realPh=Math.max(ph,content+pad*2), ih=H-realPh;
@@ -443,9 +443,9 @@ function frame(ctx,W,H,o,p,F,lim){
   }
   /* בריבוע ו-4:5 הכל קצת יותר צפוף, כדי שהתמונה בכרטיס לא תהיה רצועה צרה. הלוגו גדול וממורכז */
   const C=S.story?S:Object.assign({},S,{hs:Math.round(S.hs*0.86),ss:21,bh:54,bs:20});
-  const m=mark(ctx,o,F,W*0.45,S.story?W*0.17:H*0.11);
+  const m=mark(ctx,o,F,W*0.5,S.story?W*0.26:H*0.14);
   const gap=S.story?26:14, cw=W-S.M*2, top=S.T||S.M, bottom=S.B||S.M;
-  const tb=S.story?fitText(ctx,o,F,S,lim,cw,H*0.17,1.2):textBlock(ctx,o,F,C,lim,cw); if(!tb.S)tb.S=C;
+  const tb=S.story?fitText(ctx,o,F,S,lim,cw,H*0.16,1.2):textBlock(ctx,o,F,C,lim,cw); if(!tb.S)tb.S=C;
   const fixed=(m.h?m.h+gap:0)+gap+tb.h+22+tb.S.bh;
   const chh=Math.max(120,Math.min(cw*(S.story?1.15:0.8),H-top-bottom-fixed));
   let y=top+Math.max(0,(H-top-bottom-fixed-chh)/2);
