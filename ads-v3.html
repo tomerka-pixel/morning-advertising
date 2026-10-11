@@ -279,7 +279,10 @@ a{color:inherit}
 .stage{background:var(--surface);border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:center;min-height:240px}
 .stage img{max-width:100%;max-height:520px;border-radius:10px;box-shadow:0 8px 26px rgba(3,56,65,.14);display:block;cursor:zoom-in}
 .stage canvas{max-width:100%;max-height:560px;width:auto;height:auto;border-radius:6px;box-shadow:0 8px 26px rgba(3,56,65,.14);display:block;cursor:zoom-in}
-.ed-grid{display:grid;grid-template-columns:2fr 1.4fr 1fr;gap:12px;margin-top:16px}
+.ed-head{margin-top:20px;padding:14px 16px;border-radius:12px;background:#E9F7F2;border:1px solid #BFE8DA}
+.ed-head b{display:block;font-size:16px;color:var(--ink)}
+.ed-head span{display:block;font-size:13.5px;color:var(--muted);margin-top:2px;line-height:1.5}
+.ed-grid{display:grid;grid-template-columns:2fr 1.4fr 1fr;gap:12px;margin-top:12px}
 .ed-grid .field{margin-bottom:0}
 .ed-grid .cnt{font-style:normal;font-size:12px;color:#607684;margin-inline-start:6px}
 .ed-grid .cnt.over{color:var(--err);font-weight:600}
@@ -1695,7 +1698,7 @@ function showResult(img,copy){
   const text=(copy&&copy.text)?copy.text.trim():'';
   $('#result').innerHTML=`
     ${img&&img.url?`<div class="stage"><img src="${img.url}" alt="המודעה שנוצרה" id="resImg"></div>`:''}
-    <label class="field" style="margin-top:16px"><span>הקופי למודעה</span><textarea id="resText" rows="6">${esc(text)}</textarea></label>
+    <label class="field" style="margin-top:16px"><span>הקופי שמתפרסם עם המודעה (אפשר לערוך)</span><textarea id="resText" rows="6">${esc(text)}</textarea></label>
     ${copy&&copy._err?'<div class="notice err">כתיבת הקופי נכשלה: '+esc(copy._err)+'</div>':''}
     ${img&&img._err?'<div class="notice err">יצירת התמונה נכשלה: '+esc(img._err)+'</div>':''}
     ${img&&img._skipped?'<div class="notice warn">התמונה לא נוצרה כי מנוע התמונות לא מחובר. הקופי למעלה אמיתי ומוכן לשימוש</div>':''}
@@ -1738,6 +1741,7 @@ async function showComposed(img,copy,fields){
   const chips=(list,key)=>list.map(x=>`<button class="chip ${D[key]===x.v?'on':''}" data-k="${key}" data-v="${attr(x.v)}">${esc(x.t)}</button>`).join('');
   $('#result').innerHTML=`
     <div class="stage"><canvas id="resCanvas"></canvas></div>
+    <div class="ed-head"><b>✏️ אפשר לערוך את הטקסט במודעה</b><span>משנים כאן את הכותרת, השורה המשנית והכפתור, והמודעה מתעדכנת מיד, בלי יצירה חדשה ובלי עלות</span></div>
     <div class="ed-grid">
       <label class="field"><span>כותרת <em class="cnt" id="cntHead"></em></span><input id="edHead" value="${attr(D.headline)}"></label>
       <label class="field"><span>שורה משנית <em class="cnt" id="cntSub"></em></span><input id="edSub" value="${attr(D.sub)}"></label>
@@ -1745,8 +1749,8 @@ async function showComposed(img,copy,fields){
     </div>
     <div class="ed-row"><span class="lbl">תבנית</span>${chips(TEMPLATES,'tpl')}</div>
     <div class="ed-row"><span class="lbl">פונט</span>${chips(AdCompose.FONT_SETS,'font')}</div>
-    <p class="chip-note">שינויים בטקסט, בתבנית ובפונט מתעדכנים במודעה מיד, בלי יצירה חדשה ובלי עלות</p>
-    <label class="field" style="margin-top:16px"><span>הקופי למודעה</span><textarea id="resText" rows="6">${esc(text)}</textarea></label>
+    <p class="chip-note">גם החלפת תבנית ופונט מתעדכנת במודעה מיד, בלי עלות</p>
+    <label class="field" style="margin-top:16px"><span>הקופי שמתפרסם עם המודעה (אפשר לערוך)</span><textarea id="resText" rows="6">${esc(text)}</textarea></label>
     ${copy&&copy._err?'<div class="notice err">כתיבת הקופי נכשלה: '+esc(copy._err)+'</div>':''}
     ${fields&&fields._err?'<div class="notice warn">כתיבת שדות המודעה נכשלה, ולכן הכותרת נלקחה מהקופי: '+esc(fields._err)+'</div>':''}
     <div class="meta">נוצר עכשיו · ${esc(img.model||'')}${img.took?' · '+img.took+' שניות':''} · הטקסט והלוגו מונחים בקוד, לפי חוקי התבנית</div>

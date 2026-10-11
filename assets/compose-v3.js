@@ -14,7 +14,7 @@ const TEMPLATES = [
   { v:'split',   t:'מפוצל',     d:'תמונה למעלה, טקסט למטה' },
   { v:'overlay', t:'על התמונה', d:'תמונה מלאה עם טקסט מעליה' },
   { v:'frame',   t:'מסגרת',     d:'תמונה ממוסגרת במרכז' },
-  { v:'type',    t:'סולידי',    d:'כותרת גדולה, לוגו בעיגול' }
+  { v:'type',    t:'סולידי',    d:'כותרת גדולה על צבע, בלי תמונה' }
 ];
 
 /* מגבלות התווים מהחוקים של המעצב. h = כותרת, hl = שורות כותרת, s = שורת משנה, c = כפתור */
@@ -141,166 +141,200 @@ function button(ctx,o,F,x,y,align,col){
   return w;
 }
 
-/* מונוגרם משם העסק, כשאין לוגו (מהחוקים). באנגלית אם יש שם באנגלית */
+/* מונוגרם משם העסק. נשאר לייצוא, התבניות עצמן משתמשות בשם העסק כסימן כשאין לוגו */
 function monogram(name,nameEn){
   const pick=s=>String(s||'').trim().split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('');
   return (pick(nameEn).toUpperCase()||pick(name)||'·');
 }
 
-/* עיגול הלוגו: הלוגו של העסק על רקע לבן (או הרקע שלו), תמונה, או מונוגרם בצבע הראשי */
-function disc(ctx,o,p,cx,cy,r,photo,around){
-  ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.closePath();
-  if(photo&&o.img){ ctx.clip(); cover(ctx,o.img,cx-r,cy-r,r*2,r*2); ctx.restore(); return }
+/* =================== שפת העיצוב, לפי מודעות הדוגמה של מורנינג (11.10.2026) ===================
+   פאנל צבע מלא שהטקסט ממלא אותו, בלי חללים ריקים: כותרת גדולה ומודגשת, שורת משנה רגילה מתחתיה,
+   כפתור גלולה גדול, והלוגו כמו שהוא, בלי מסגרת ובלי עיגול. ביחידות של קנבס 540 (הצלע הקצרה) */
+const TEXT_INK='#262626';
+function scale(W,H){
+  const story=H>W*1.5, land=W>H*1.25, tall=!story&&H>W*1.1;
+  return { story, land,
+    M: story?44:40,                                  /* שוליים */
+    hs: story?56:land?50:tall?44:42,                  /* כותרת */
+    ss: story?28:24,                                  /* שורת משנה */
+    bh: story?64:60, bs: story?23:21,                 /* כפתור */
+    T: story?120:0, B: story?140:0 };                 /* בסטורי הממשק של הרשת מכסה למעלה ולמטה */
+}
+/* הכפתור מנוגד לפאנל: על פאנל כהה גלולה בהירה בגוון של הצבע, על פאנל בהיר גלולה כהה */
+function ctaColors(sf,p){
+  if(textOn(sf)===WHITE){ const b=mix(p.primary,WHITE,0.82); return {bg:contrast(b,TEXT_INK)>=4.5?b:'#FFF6B8',fg:TEXT_INK} }
+  return {bg:'#1F1F1F',fg:WHITE};
+}
+function inkOn(sf){ return textOn(sf)===WHITE?WHITE:TEXT_INK }
+function ctaSpec(F){ return F.v==='display'?F.body:F.head }
+
+/* הרבה קובצי לוגו מגיעים עם שוליים שקופים רחבים, והלוגו יוצא זעיר. חותכים אותם פעם אחת */
+const TRIM=new WeakMap();
+function trimmed(img){
+  if(TRIM.has(img))return TRIM.get(img);
+  let out=img;
+  try{
+    const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height, k=Math.min(1,600/Math.max(iw,ih));
+    const w=Math.max(1,Math.round(iw*k)), h=Math.max(1,Math.round(ih*k));
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    const x=c.getContext('2d'); x.drawImage(img,0,0,w,h);
+    const d=x.getImageData(0,0,w,h).data;
+    let x0=w,y0=h,x1=-1,y1=-1;
+    for(let y=0;y<h;y++)for(let i=0;i<w;i++) if(d[(y*w+i)*4+3]>12){ if(i<x0)x0=i; if(i>x1)x1=i; if(y<y0)y0=y; if(y>y1)y1=y }
+    if(x1>=x0&&(x1-x0+1<w*0.97||y1-y0+1<h*0.97)){
+      const t=document.createElement('canvas'); t.width=Math.round((x1-x0+1)/k); t.height=Math.round((y1-y0+1)/k);
+      t.getContext('2d').drawImage(img,x0/k,y0/k,(x1-x0+1)/k,(y1-y0+1)/k,0,0,t.width,t.height);
+      out=t;
+    }
+  }catch(e){}
+  TRIM.set(img,out); return out;
+}
+/* הלוגו כמו שהוא, בתוך תיבה מקסימלית ובלי רקע. בלי לוגו: שם העסק בכתב מודגש במקומו */
+function markSize(ctx,o,F,maxW,maxH){
   const L=o.logo&&o.logo.img?o.logo:null;
-  if(L){
-    const info=L.info||{};
-    ctx.fillStyle=info.transparent===false&&info.bg?info.bg:WHITE; ctx.fill(); ctx.clip();
-    const iw=L.img.naturalWidth||L.img.width, ih=L.img.naturalHeight||L.img.height;
-    const box=r*1.36, s=Math.min(box/iw,box/ih);
-    ctx.drawImage(L.img,cx-iw*s/2,cy-ih*s/2,iw*s,ih*s);
-    ctx.restore(); return;
-  }
-  /* מונוגרם בצבע הראשי. על רקע באותו צבע (סולידי) העיגול לבן והאותיות בצבע הראשי */
-  let c=contrast(p.primary,WHITE)>=3?p.primary:p.deep, t=textOn(c);
-  if(around&&contrast(c,around)<1.6){ t=contrast(p.primary,WHITE)>=3?p.primary:p.deep; c=WHITE }
-  ctx.fillStyle=c; ctx.fill(); ctx.restore();
-  if(o.schematic)return;
-  ctx.font=css(MONO,r*0.875); ctx.fillStyle=t; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.direction='ltr';
-  ctx.fillText(monogram(o.name,o.nameEn),cx,cy+r*0.04);
+  if(L){ const im=trimmed(L.img), iw=im.naturalWidth||im.width, ih=im.naturalHeight||im.height, k=Math.min(maxW/iw,maxH/ih);
+         return {w:iw*k,h:ih*k,img:im} }
+  const name=o.name||''; if(!name)return {w:0,h:0};
+  const size=Math.min(22,maxH*0.62); ctx.font=css(F.head,size);
+  return {w:Math.min(maxW,ctx.measureText(name).width),h:size,size,text:name};
+}
+function drawMark(ctx,m,x,y,color,schematic){
+  if(!m.w)return;
+  if(m.img){ if(schematic){ ctx.fillStyle=rgba(color,.5); rr(ctx,x,y,m.w,m.h,4); ctx.fill() } else ctx.drawImage(m.img,x,y,m.w,m.h); return }
+  ctx.fillStyle=color;
+  if(schematic){ rr(ctx,x,y+m.h*.25,m.w,m.h*.5,m.h*.25); ctx.fill(); return }
+  ctx.font=css(m.font,m.size); ctx.direction='rtl'; ctx.textAlign='right'; ctx.textBaseline='middle';
+  ctx.fillText(m.text,x+m.w,y+m.h/2+1,m.w);
+}
+function mark(ctx,o,F,maxW,maxH){ const m=markSize(ctx,o,F,maxW,maxH); m.font=F.head; return m }
+
+/* כפתור גלולה. x1 = הקצה הימני (תחילת השורה בעברית), w = הרוחב */
+function pill(ctx,o,F,x1,y,w,S,col){
+  if(!o.cta)return;
+  const x0=x1-w;
+  ctx.fillStyle=col.bg; rr(ctx,x0,y,w,S.bh,S.bh/2); ctx.fill();
+  ctx.fillStyle=col.fg;
+  if(o.schematic){ rr(ctx,x0+w*0.24,y+S.bh*0.4,w*0.52,S.bh*0.2,S.bh*0.1); ctx.fill(); return }
+  ctx.font=css(ctaSpec(F),S.bs); ctx.direction='rtl'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(o.cta,x0+w/2,y+S.bh/2+1,w-40);
+}
+function pillWidth(ctx,o,F,S){ ctx.font=css(ctaSpec(F),S.bs); return o.cta?ctx.measureText(o.cta).width+S.bh*1.3:0 }
+
+/* שורת הסיום: הכפתור מימין והלוגו משמאל באותה שורה (כמו בדוגמאות). full = כפתור לכל הרוחב, בלי לוגו */
+function ctaRow(ctx,o,F,S,x0,x1,y,col,ink,full){
+  const cw=x1-x0;
+  if(full){ pill(ctx,o,F,x1,y,cw,S,col); return S.bh }
+  const m=mark(ctx,o,F,cw*0.36,S.bh*0.95);
+  const w=Math.min(cw-(m.w?m.w+28:0),Math.max(pillWidth(ctx,o,F,S),cw*0.52));
+  pill(ctx,o,F,x1,y,w,S,col);
+  drawMark(ctx,m,x0,y+(S.bh-m.h)/2,ink,o.schematic);
+  return S.bh;
 }
 
-/* גלולת הלוגו ושם העסק: לבנה, הלוגו בעיגול 32 מימין והשם משמאלו (Logo + business name) */
-function brandPill(ctx,o,p,F,x,y,align){
-  ctx.font=css(F.body,15);
-  const name=o.name||'', tw=name?ctx.measureText(name).width:0;
-  const w=6+32+(name?8+tw:0)+14, h=44;
-  const x0=align==='center'?x-w/2:align==='left'?x:x-w;
-  ctx.save(); ctx.shadowColor='rgba(3,56,65,.10)'; ctx.shadowBlur=12; ctx.shadowOffsetY=2;
-  ctx.fillStyle=WHITE; rr(ctx,x0,y,w,h,h/2); ctx.fill(); ctx.restore();
-  disc(ctx,o,p,x0+w-6-16,y+h/2,16,false);
-  if(!name)return w;
-  ctx.fillStyle=p.ink(WHITE);
-  if(o.schematic){ rr(ctx,x0+14,y+h/2-4,tw,8,4); ctx.fill(); return w }
-  ctx.font=css(F.body,15); ctx.direction='rtl'; ctx.textAlign='right'; ctx.textBaseline='middle';
-  ctx.fillText(name,x0+w-6-32-8,y+h/2+1);
-  return w;
+/* בלוק הטקסט: כותרת ומשנה. מחזיר את הגובה, ובלי y רק מודד */
+function textBlock(ctx,o,F,S,lim,w){
+  const hd=layout(ctx,o.headline,F.head,S.hs,w,lim.hl,1.12), sb=layout(ctx,o.sub,F.body,S.ss,w,lim.sl,1.3);
+  return { hd, sb, h:hd.h+(sb.lines.length?12+sb.h:0) };
+}
+function drawText(ctx,tb,x,y,ink,align,schematic){
+  y+=drawLines(ctx,tb.hd,x,y,ink,align,schematic);
+  if(tb.sb.lines.length) drawLines(ctx,tb.sb,x,y+12,ink===WHITE?'rgba(255,255,255,.9)':rgba(ink,.86),align,schematic);
 }
 
-/* =================== התבניות (ביחידות של קנבס 540) =================== */
-/* בסטורי הממשק של הרשת מכסה את החלק העליון והתחתון, ולכן הלוגו והכפתור נכנסים פנימה */
-function zones(W,H){
-  const story=H>W*1.5, land=W>H*1.25;
-  return { story, land, P:story?40:32, T:story?110:0, B:story?130:0 };
-}
-
-/* מפוצל: תמונה 54% למעלה (בסטורי 67%), פאנל צבע עם כותרת 34, משנה 24 וכפתור בפינה */
+/* =================== התבניות =================== */
+/* מפוצל: פאנל צבע + תמונה. ריבוע ו-4:5 תמונה למעלה, סטורי פאנל למעלה ותמונה למטה, לרוחב תמונה משמאל.
+   גובה הפאנל לפי התוכן (מינימום לפי היחסים של הדוגמאות), והתוכן במרכז שלו */
 function split(ctx,W,H,o,p,F,lim){
-  const {story,land,P,T,B}=zones(W,H), sf=p.bg||p.light, btn=p.btn(sf);
-  if(land){
-    const iw=Math.round(W*0.48);
-    ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
-    cover(ctx,o.img,0,0,iw,H);
-    const x=W-40, tw=W-iw-80;
-    brandPill(ctx,o,p,F,x,40,'right');
-    const hd=layout(ctx,o.headline,F.head,34,tw,lim.hl,1.18), sb=layout(ctx,o.sub,F.body,24,tw,lim.sl,1.25);
-    let y=40+44+28;
-    y+=drawLines(ctx,hd,x,y,p.ink(sf),'right',o.schematic)+8;
-    drawLines(ctx,sb,x,y,p.sub(sf),'right',o.schematic);
-    button(ctx,o,F,iw+40,H-40-49,'left',btn);
+  const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
+  ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
+  if(S.land){
+    const iw=Math.round(W*0.41), x0=iw+S.M*1.3, x1=W-S.M*1.3;
+    cover(ctx,o.img,0,0,iw,H,0.35);
+    const tb=textBlock(ctx,o,F,S,lim,x1-x0), total=tb.h+30+S.bh;
+    let y=(H-total)/2;
+    drawText(ctx,tb,x1,y,ink,'right',o.schematic);
+    ctaRow(ctx,o,F,S,x0,x1,y+tb.h+30,col,ink);
     return;
   }
-  const tw=W-P*2;
-  const hd=layout(ctx,o.headline,F.head,34,tw,lim.hl,1.18), sb=layout(ctx,o.sub,F.body,24,tw,lim.sl,1.25);
-  const need=24+hd.h+8+sb.h+20+49+(B||24);
-  const ih=Math.round(Math.min(H*(story?0.67:0.54),H-need));
-  ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
-  cover(ctx,o.img,0,0,W,ih);
-  brandPill(ctx,o,p,F,W-24,T||24,'right');
-  let y=ih+24;
-  y+=drawLines(ctx,hd,W-P,y,p.ink(sf),'right',o.schematic)+8;
-  drawLines(ctx,sb,W-P,y,p.sub(sf),'right',o.schematic);
-  button(ctx,o,F,P,H-(B||24)-49,'left',btn);
+  const x0=S.M, x1=W-S.M, tb=textBlock(ctx,o,F,S,lim,x1-x0), content=tb.h+30+S.bh;
+  if(S.story){
+    const pad=S.M*1.2, ph=Math.max(H*0.54,S.T+content+pad);
+    let y=S.T+(ph-S.T-content)/2;
+    cover(ctx,o.img,0,ph,W,H-ph,0.3);
+    drawText(ctx,tb,x1,y,ink,'right',o.schematic);
+    ctaRow(ctx,o,F,S,x0,x1,y+tb.h+30,col,ink);
+    return;
+  }
+  const pad=S.M*1.1, ph=Math.max(H*(H>W*1.1?0.46:0.44),content+pad*2), ih=H-ph;
+  cover(ctx,o.img,0,0,W,ih,0.3);
+  const y=ih+(ph-content)/2;
+  drawText(ctx,tb,x1,y,ink,'right',o.schematic);
+  ctaRow(ctx,o,F,S,x0,x1,y+tb.h+30,col,ink);
 }
 
-/* על התמונה: תמונה מלאה, הצללה בצבע הראשי מ-30% ועד 95% בתחתית, טקסט לבן 40/24 */
+/* על התמונה: תמונה מלאה, הצללה בצבע מלמטה, הלוגו כמו שהוא בפינה העליונה, טקסט לבן וכפתור לכל הרוחב */
 function overlay(ctx,W,H,o,p,F,lim){
-  const {land,P,T,B}=zones(W,H);
+  const S=scale(W,H);
   cover(ctx,o.img,0,0,W,H);
-  /* שכבת הצבע תמיד בצבע הראשי (מהחוקים), מוכהה מספיק כדי שהטקסט הלבן יעמוד ב-AA */
-  const shade=lum(p.primary)>0.12?mix(p.primary,'#000',0.45):p.primary;
+  const shade=lum(p.primary)>0.12?mix(p.primary,'#000',0.5):p.primary;
   const g=ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0.3,rgba(shade,0)); g.addColorStop(1,rgba(shade,0.95));
+  g.addColorStop(0.25,rgba(shade,0)); g.addColorStop(0.62,rgba(shade,0.72)); g.addColorStop(1,rgba(shade,0.96));
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  brandPill(ctx,o,p,F,W-P,T||P,'right');
-  const tw=land?W*0.6:W-P*2;
-  const hd=layout(ctx,o.headline,F.head,40,tw,lim.hl,1.15), sb=layout(ctx,o.sub,F.body,24,tw,lim.sl,1.25);
-  const by=H-(B||P)-49;
-  let y=by-20-sb.h-10-hd.h;
-  y+=drawLines(ctx,hd,W-P,y,WHITE,'right',o.schematic)+10;
-  drawLines(ctx,sb,W-P,y,'rgba(255,255,255,.92)','right',o.schematic);
-  button(ctx,o,F,P,by,'left',p.btn(shade));
+  const x0=S.M, x1=S.land?W*0.62:W-S.M;
+  const m=mark(ctx,o,F,(W-S.M*2)*0.34,S.bh);
+  drawMark(ctx,m,S.M,(S.T||S.M),WHITE,o.schematic);
+  const tb=textBlock(ctx,o,F,S,lim,(S.land?W*0.62:W)-S.M*2);
+  const by=H-(S.B||S.M)-S.bh;
+  drawText(ctx,tb,W-S.M,by-30-tb.h,WHITE,'right',o.schematic);
+  const col={bg:mix(p.primary,WHITE,0.85),fg:TEXT_INK};
+  if(contrast(col.bg,TEXT_INK)<4.5)col.bg='#FFFFFF';
+  pill(ctx,o,F,W-S.M,by,S.land?Math.max(pillWidth(ctx,o,F,S),W*0.3):W-S.M*2,S,col);
 }
 
-/* מסגרת: רקע בהיר, הכל במרכז במרווח 24: גלולה, תמונה בכרטיס לבן (ריפוד 8, רדיוס 16), כותרת, משנה, כפתור */
+/* מסגרת: רקע בצבע, הלוגו כמו שהוא למעלה במרכז, התמונה בכרטיס לבן, ואז כותרת, משנה וכפתור במרכז */
 function frame(ctx,W,H,o,p,F,lim){
-  const {story,land,P,T,B}=zones(W,H), sf=p.bg||p.light, btn=p.btn(sf);
+  const S=scale(W,H), sf=p.bg||p.light, ink=inkOn(sf), col=ctaColors(sf,p);
   ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
   const card=(x,y,w,h)=>{
-    ctx.save(); ctx.shadowColor='rgba(3,65,62,.08)'; ctx.shadowBlur=60;
-    ctx.fillStyle=WHITE; rr(ctx,x,y,w,h,16); ctx.fill(); ctx.restore();
-    ctx.save(); rr(ctx,x+8,y+8,w-16,h-16,10); ctx.clip(); cover(ctx,o.img,x+8,y+8,w-16,h-16); ctx.restore();
+    ctx.save(); ctx.shadowColor='rgba(0,0,0,.10)'; ctx.shadowBlur=40; ctx.shadowOffsetY=6;
+    ctx.fillStyle=WHITE; rr(ctx,x,y,w,h,18); ctx.fill(); ctx.restore();
+    ctx.save(); rr(ctx,x+8,y+8,w-16,h-16,12); ctx.clip(); cover(ctx,o.img,x+8,y+8,w-16,h-16); ctx.restore();
   };
-  if(land){
-    const cw=Math.round(W*0.46);
-    card(40,40,cw,H-80);
-    const cx=(40+cw+W)/2, tw=W-cw-120;
-    const hd=layout(ctx,o.headline,F.head,34,tw,lim.hl,1.18), sb=layout(ctx,o.sub,F.body,24,tw,lim.sl,1.25);
-    let y=(H-(44+24+hd.h+24+sb.h+24+49))/2;
-    brandPill(ctx,o,p,F,cx,y,'center'); y+=44+24;
-    y+=drawLines(ctx,hd,cx,y,p.ink(sf),'center',o.schematic)+24;
-    y+=drawLines(ctx,sb,cx,y,p.sub(sf),'center',o.schematic)+24;
-    button(ctx,o,F,cx,y,'center',btn);
+  if(S.land){
+    const cw=Math.round(W*0.44); card(S.M,S.M,cw,H-S.M*2);
+    const x0=S.M*2+cw+S.M*0.6, x1=W-S.M*1.3, tb=textBlock(ctx,o,F,S,lim,x1-x0);
+    const total=tb.h+30+S.bh; const y=(H-total)/2;
+    drawText(ctx,tb,x1,y,ink,'right',o.schematic);
+    ctaRow(ctx,o,F,S,x0,x1,y+tb.h+30,col,ink);
     return;
   }
-  const cw=W-112, ratio=story?1:H/W>1.15?1.6:2.2, chh=Math.round((cw-16)/ratio)+16;
-  const hd=layout(ctx,o.headline,F.head,34,W-64,lim.hl,1.18), sb=layout(ctx,o.sub,F.body,24,W-96,lim.sl,1.25);
-  const total=44+24+chh+24+hd.h+24+sb.h+24+49;
-  let y=Math.max(T||P,(H-total)/2);
-  brandPill(ctx,o,p,F,W/2,y,'center'); y+=44+24;
-  card((W-cw)/2,y,cw,chh); y+=chh+24;
-  y+=drawLines(ctx,hd,W/2,y,p.ink(sf),'center',o.schematic)+24;
-  y+=drawLines(ctx,sb,W/2,y,p.sub(sf),'center',o.schematic)+24;
-  button(ctx,o,F,W/2,y,'center',btn);
+  const m=mark(ctx,o,F,W*0.34,S.bh*0.9);
+  const tb=textBlock(ctx,o,F,S,lim,W-S.M*2);
+  const gap=22, cw=W-S.M*2, fixed=(m.h?m.h+gap:0)+gap+tb.h+28+S.bh;
+  const top=S.T||S.M, bottom=S.B||S.M;
+  const chh=Math.max(120,Math.min(cw*(S.story?1.05:0.78),H-top-bottom-fixed));
+  let y=top+Math.max(0,(H-top-bottom-fixed-chh)/2);
+  drawMark(ctx,m,(W-m.w)/2,y,ink,o.schematic); y+=m.h?m.h+gap:0;
+  card(S.M,y,cw,chh); y+=chh+gap;
+  drawText(ctx,tb,W/2,y,ink,'center',o.schematic); y+=tb.h+28;
+  const pw=Math.max(pillWidth(ctx,o,F,S),cw*0.6);
+  pill(ctx,o,F,(W+pw)/2,y,pw,S,col);
 }
 
-/* סולידי: כותרת ענקית (56) על הצבע הראשי, עיגול לוגו 100 (בסטורי 140) למעלה משמאל, קו מפריד וכפתור למטה */
+/* סולידי: רק צבע וטקסט. הלוגו כמו שהוא בפינה העליונה, כותרת ענקית, ומשנה וכפתור מתחתיה */
 function type(ctx,W,H,o,p,F,lim){
-  const {story,land,T,B}=zones(W,H), P=40, sf=p.bg||p.primary, fg=p.bg?p.ink(sf):textOn(sf);
+  const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
   ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
-  const btn=p.bg?p.btn(sf):{bg:fg,fg:sf};
-  const d=story?140:100, top=T||P, by=H-(B||P)-49;
-  if(land){
-    const r=H*0.27; disc(ctx,o,p,W-P-r,H/2,r,false,sf);
-    const tw=W-P*3-r*2, x=W-P*2-r*2;
-    const hd=layout(ctx,o.headline,F.head,56,tw,lim.hl,1.1), sb=layout(ctx,o.sub,F.body,24,tw,lim.sl,1.25);
-    let y=(by-20-(hd.h+14+sb.h))/2+10;
-    y+=drawLines(ctx,hd,x,y,fg,'right',o.schematic)+14;
-    drawLines(ctx,sb,x,y,rgba(fg,0.92),'right',o.schematic);
-    ctx.fillStyle=rgba(fg,0.9); ctx.fillRect(P,by-20,x-P,1);
-    button(ctx,o,F,P,by,'left',btn);
-    return;
-  }
-  /* בעיגול תמיד הלוגו של העסק (ובלי לוגו, מונוגרם), לא תמונה */
-  disc(ctx,o,p,P+d/2,top+d/2,d/2,false,sf);
-  const tw=W-P*2;
-  const hd=layout(ctx,o.headline,F.head,56,tw,lim.hl,1.1), sb=layout(ctx,o.sub,F.body,24,tw,lim.sl,1.25);
-  /* justify-between: ההודעה במרכז הרווח שבין העיגול לפוטר */
-  const fy=by-20, mh=hd.h+14+sb.h, space=fy-(top+d);
-  let y=top+d+Math.max(16,(space-mh)/2);
-  y+=drawLines(ctx,hd,W-P,y,fg,'right',o.schematic)+14;
-  drawLines(ctx,sb,W-P,y,rgba(fg,0.92),'right',o.schematic);
-  ctx.fillStyle=rgba(fg,0.9); ctx.fillRect(P,fy,W-P*2,1);
-  button(ctx,o,F,P,by,'left',btn);
+  const big=Object.assign({},S,{hs:Math.round(S.hs*(S.land?1.35:1.4))});
+  const x0=S.M*1.2, x1=W-S.M*1.2, top=S.T||S.M*1.2, bottom=S.B||S.M*1.2;
+  const m=mark(ctx,o,F,(x1-x0)*0.34,S.bh);
+  drawMark(ctx,m,x0,top,ink,o.schematic);
+  const tb=textBlock(ctx,o,F,big,lim,(x1-x0)*(S.land?0.72:1));
+  const area=H-top-bottom-(m.h?m.h+24:0), total=tb.h+34+S.bh;
+  const y=top+(m.h?m.h+24:0)+Math.max(0,(area-total)/2);
+  drawText(ctx,tb,x1,y,ink,'right',o.schematic);
+  const pw=Math.max(pillWidth(ctx,o,F,S),(x1-x0)*(S.land?0.36:0.6));
+  pill(ctx,o,F,x1,y+tb.h+34,pw,S,col);
 }
 
 const DRAW={ split, overlay, frame, type };
@@ -319,10 +353,10 @@ function render(canvas,o){
 
 /* היחס של אזור התמונה בתבנית, כדי לבקש מהמנוע תמונה שלא תיחתך יותר מדי */
 function slotFormat(tpl,format){
-  const [W,H]=SIZES[format]||SIZES['4:5'], z=zones(W,H);
+  const [W,H]=SIZES[format]||SIZES['4:5'], z=scale(W,H);
   let r=W/H;
-  if(tpl==='split') r=z.land?(W*0.48)/H:W/(H*(z.story?0.67:0.54));
-  else if(tpl==='frame') r=z.land?(W*0.46)/(H-80):(z.story?1:H/W>1.15?1.6:2.2);
+  if(tpl==='split') r=z.land?(W*0.41)/H:W/(H*(z.story?0.46:H>W*1.1?0.54:0.56));
+  else if(tpl==='frame') r=z.land?(W*0.44)/(H-80):(z.story?0.95:1.3);
   else if(tpl==='type') r=1;
   let best='1:1', d=Infinity;
   for(const [k,v] of Object.entries(GEN_FORMATS)){ const x=Math.abs(Math.log(v/r)); if(x<d){d=x;best=k} }
