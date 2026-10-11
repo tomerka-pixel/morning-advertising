@@ -14,7 +14,7 @@ const TEMPLATES = [
   { v:'split',   t:'מפוצל',     d:'תמונה למעלה, טקסט למטה' },
   { v:'overlay', t:'על התמונה', d:'תמונה מלאה עם טקסט מעליה' },
   { v:'frame',   t:'מסגרת',     d:'תמונה ממוסגרת במרכז' },
-  { v:'type',    t:'סולידי',    d:'כותרת גדולה על צבע, בלי תמונה' }
+  { v:'type',    t:'סולידי',    d:'לוגו וכותרת גדולה על צבע, בלי תמונה' }
 ];
 
 /* מגבלות התווים מהחוקים של המעצב. h = כותרת, hl = שורות כותרת, s = שורת משנה, c = כפתור */
@@ -450,20 +450,21 @@ function frame(ctx,W,H,o,p,F,lim){
   pill(ctx,o,F,(W+pw)/2,y,pw,C,col);
 }
 
-/* סולידי: רק צבע וטקסט. הלוגו כמו שהוא בפינה העליונה, כותרת ענקית, ומשנה וכפתור מתחתיה */
+/* סולידי: רק צבע וטקסט, הכל ממורכז כמו במפוצל לרוחב: לוגו גדול למעלה, כותרת ענקית שממלאת את הרוחב,
+   משנה וכפתור. הקבוצה כולה במרכז האזור הבטוח, כדי שלא יישאר חלל ריק בצד אחד */
 function type(ctx,W,H,o,p,F,lim){
   const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
   ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
-  const big=Object.assign({},S,{hs:Math.round(S.hs*(S.land?1.35:1.4))});
-  const x0=S.M*1.2, x1=W-S.M*1.2, top=S.T||S.M*1.2, bottom=S.B||S.M*1.2;
-  const m=mark(ctx,o,F,(x1-x0)*0.34,S.bh);
-  drawMark(ctx,m,x0,top,ink,o.schematic,sf);
-  const tb=textBlock(ctx,o,F,big,lim,(x1-x0)*(S.land?0.72:1));
-  const area=H-top-bottom-(m.h?m.h+24:0), total=tb.h+34+S.bh;
-  const y=top+(m.h?m.h+24:0)+Math.max(0,(area-total)/2);
-  drawText(ctx,tb,x1,y,ink,'right',o.schematic);
-  const pw=Math.max(pillWidth(ctx,o,F,S),(x1-x0)*(S.land?0.36:0.6));
-  pill(ctx,o,F,x1,y+tb.h+34,pw,S,col);
+  const big=Object.assign({},S,{hs:Math.round(S.hs*1.4)});
+  const x0=S.M*1.2, x1=W-S.M*1.2, cw=x1-x0, xc=W/2, top=S.T||S.M*1.3, bottom=S.B||S.M*1.3;
+  const m=mark(ctx,o,F,cw*0.55,S.story?W*0.26:S.land?H*0.2:H*0.16), gl=m.h?(S.story?44:30):0;
+  const tw=cw*(S.land?0.72:1), avail=H-top-bottom-m.h-gl-36-S.bh;
+  const tb=fitText(ctx,o,F,big,lim,tw,avail*0.9,1.35), total=m.h+gl+tb.h+36+tb.S.bh;
+  let y=top+Math.max(0,(H-top-bottom-total)/2);
+  if(m.w){ drawMark(ctx,m,xc-m.w/2,y,ink,o.schematic,sf); y+=m.h+gl }
+  drawText(ctx,tb,xc,y,ink,'center',o.schematic); y+=tb.h+36;
+  const pw=Math.max(pillWidth(ctx,o,F,tb.S),cw*(S.land?0.36:0.62));
+  pill(ctx,o,F,xc+pw/2,y,pw,tb.S,col);
 }
 
 const DRAW={ split, overlay, frame, type };
