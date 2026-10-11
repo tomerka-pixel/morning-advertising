@@ -349,6 +349,33 @@ async function api(path,payload){
   if(!r.ok)throw new Error(j.error||('שגיאה '+r.status));
   return j;
 }
+/* השיחה עם סופיה בהזרמה: הטקסט מגיע תוך כדי כתיבה, ומשפט הפתיחה (reply) מוצג ומוקלד חי,
+   בלי לחכות לשאלות. onReply(טקסט עד עכשיו, האם המשפט הושלם) */
+async function planStream(payload,onReply){
+  const r=await apiFetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({stream:true},payload))});
+  if(!r.ok||!r.body||!/event-stream/.test(r.headers.get('content-type')||''))throw new Error('stream '+r.status);
+  const rd=r.body.getReader(), dec=new TextDecoder();
+  let buf='', acc='', final='', shown='', doneReply=false;
+  for(;;){
+    const {value,done}=await rd.read(); if(done)break;
+    buf+=dec.decode(value,{stream:true});
+    let i;
+    while((i=buf.indexOf('\n\n'))>=0){
+      const ev=buf.slice(0,i); buf=buf.slice(i+2);
+      const line=ev.split('\n').find(l=>l.startsWith('data: ')); if(!line)continue;
+      let j; try{ j=JSON.parse(line.slice(6)) }catch(e){ continue }
+      if(j.error)throw new Error(j.error);
+      if(j.done){ final=j.text||acc; continue }
+      acc+=j.d||'';
+      if(!doneReply){
+        const m=acc.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)("?)/);
+        if(m){ let t=m[1]; try{ t=JSON.parse('"'+t.replace(/\\$/,'')+'"') }catch(e){}
+               doneReply=!!m[2]; if(t!==shown||doneReply){ shown=t; onReply(t,doneReply) } }
+      }
+    }
+  }
+  return final||acc;
+}
 const jsonOf=t=>{ const m=String(t||'').match(/\{[\s\S]*\}/); return m?JSON.parse(m[0]):{} };
 
 /* =================== אחסון (משותף עם v3) =================== */
@@ -522,15 +549,31 @@ async function start(prompt){
   chatBody().innerHTML=`<div class="c-day">היום · ${new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</div>`;
   renderStage();
   say('me',esc(prompt));
-  const stop=typing();
+  let stop=typing(), bub=null, stop2=null;
   let plan={};
-  try{ plan=jsonOf((await api('/api/plan',{business:BIZ,prompt})).text) }
-  catch(e){ stop(); await aiSay('לא הצלחתי להתחבר לשרת היצירה כרגע ('+esc(e.message)+'). אפשר לנסות שוב בעוד רגע.',0);
+  try{
+    let text;
+    try{
+      text=await planStream({business:BIZ,prompt},(rep,done)=>{
+        if(!bub){ stop(); stop=()=>{}; bub=say('ai','').querySelector('.bub') }
+        bub.innerHTML='<span class="nm">Sofia</span>'+esc(rep);
+        if(done&&!stop2)stop2=typing();
+        scrollChat();
+      });
+    }catch(e){
+      /* בלי הזרמה (למשל שרת ישן): בקשה רגילה */
+      if(bub)throw e;
+      text=(await api('/api/plan',{business:BIZ,prompt})).text;
+    }
+    plan=jsonOf(text);
+  }
+  catch(e){ stop(); stop2&&stop2(); await aiSay('לא הצלחתי להתחבר לשרת היצירה כרגע ('+esc(e.message)+'). אפשר לנסות שוב בעוד רגע.',0);
             options([{t:'לנסות שוב',primary:true}],()=>start(prompt)); return }
-  stop();
+  stop(); stop2&&stop2();
   S.promote=plan.promote||''; S.detail=plan.detail||prompt; S.goal=GOALS.includes(plan.goal)?plan.goal:'';
   S.audience=plan.audience||''; S.tone=TONE.includes(plan.tone)?plan.tone:''; if(S.tone)S.font=AdCompose.fontForTone(S.tone);
-  say('ai',esc(plan.reply||'הבנתי, בואו נבנה את המודעה'));
+  if(!bub)say('ai',esc(plan.reply||'הבנתי, בואו נבנה את המודעה'));
+  else if(plan.reply)bub.innerHTML='<span class="nm">Sofia</span>'+esc(plan.reply);
   QUEUE=(Array.isArray(plan.questions)?plan.questions:[]).slice(0,3).map(extraQuestion);
   const has=k=>QUEUE.some(q=>q.qk===k);
   if(!S.goal&&!has('goal'))QUEUE.push(Q.goal());
