@@ -384,15 +384,20 @@ function split(ctx,W,H,o,p,F,lim){
     pill(ctx,o,F,(W+pw)/2,y,pw,tb.S,col);
     return;
   }
-  /* ריבוע ו-4:5: התמונה למעלה, ובפאנל כותרת, משנה, ושורה של כפתור ולוגו (כמו בדוגמאות) */
-  const tall=H>W*1.1, ph=Math.round(H*(tall?0.48:0.46)), pad=S.M*1.05;
-  const avail=ph-pad*2-30-S.bh;
-  const tb=fitText(ctx,o,F,S,lim,cw,avail,1.3), content=tb.h+30+S.bh;
+  /* ריבוע ו-4:5: התמונה למעלה, ובפאנל הכל ממורכז כמו בלרוחב: לוגו גדול, כותרת, משנה וכפתור */
+  /* בריבוע אין הרבה גובה, ולכן הכל קצת יותר צפוף כדי שהתמונה לא תהפוך לרצועה */
+  const tall=H>W*1.1, ph=Math.round(H*(tall?0.52:0.56)), pad=S.M*(tall?0.9:0.62), xc=W/2;
+  const B=tall?S:Object.assign({},S,{ss:21,bh:54,bs:20});
+  const m=mark(ctx,o,F,cw*0.45,S.bh*(tall?1.25:0.92)), lg=m.h?m.h+(tall?18:12):0, g2=tall?26:20;
+  const avail=ph-pad*2-lg-g2-B.bh;
+  const tb=fitText(ctx,o,F,B,lim,cw,avail,tall?1.25:1.1), content=lg+tb.h+g2+tb.S.bh;
   const realPh=Math.max(ph,content+pad*2), ih=H-realPh;
   cover(ctx,o.img,0,0,W,ih,0.3);
-  const y=ih+(realPh-content)/2;
-  drawText(ctx,tb,x1,y,ink,'right',o.schematic);
-  ctaRow(ctx,o,F,tb.S,x0,x1,y+tb.h+30,col,ink,false,sf);
+  let y=ih+(realPh-content)/2;
+  if(m.w){ drawMark(ctx,m,xc-m.w/2,y,ink,o.schematic,sf); y+=lg }
+  drawText(ctx,tb,xc,y,ink,'center',o.schematic); y+=tb.h+g2;
+  const pw=Math.max(pillWidth(ctx,o,F,tb.S),cw*0.62);
+  pill(ctx,o,F,xc+pw/2,y,pw,tb.S,col);
 }
 
 /* על התמונה: תמונה מלאה, הצללה בצבע מלמטה, הלוגו כמו שהוא בפינה העליונה, טקסט לבן וכפתור לכל הרוחב */
@@ -408,7 +413,7 @@ function overlay(ctx,W,H,o,p,F,lim){
   g2.addColorStop(0,rgba(shade,0.62)); g2.addColorStop(1,rgba(shade,0));
   ctx.fillStyle=g2; ctx.fillRect(0,0,W,top*1.5);
   const x0=S.M, x1=S.land?W*0.62:W-S.M;
-  const m=mark(ctx,o,F,(W-S.M*2)*0.34,S.bh);
+  const m=mark(ctx,o,F,(W-S.M*2)*0.4,S.bh*1.4);
   drawMark(ctx,m,S.M,(S.T||S.M),WHITE,o.schematic,mix(p.primary,'#000',0.4));
   const tb=textBlock(ctx,o,F,S,lim,(S.land?W*0.62:W)-S.M*2);
   const by=H-(S.B||S.M)-S.bh;
@@ -420,7 +425,8 @@ function overlay(ctx,W,H,o,p,F,lim){
 
 /* מסגרת: רקע בצבע, הלוגו כמו שהוא למעלה במרכז, התמונה בכרטיס לבן, ואז כותרת, משנה וכפתור במרכז */
 function frame(ctx,W,H,o,p,F,lim){
-  const S=scale(W,H), sf=p.bg||p.light, ink=inkOn(sf), col=ctaColors(sf,p);
+  /* הרקע בצבע שנלקח מהתמונה (לא גוון כמעט לבן), כדי שהכרטיס והרקע ישתלבו */
+  const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
   ctx.fillStyle=sf; ctx.fillRect(0,0,W,H);
   const card=(x,y,w,h)=>{
     ctx.save(); ctx.shadowColor='rgba(0,0,0,.10)'; ctx.shadowBlur=40; ctx.shadowOffsetY=6;
@@ -435,19 +441,19 @@ function frame(ctx,W,H,o,p,F,lim){
     ctaRow(ctx,o,F,S,x0,x1,y+tb.h+30,col,ink,false,sf);
     return;
   }
-  /* בריבוע ו-4:5 הכל קצת יותר צפוף, כדי שהתמונה בכרטיס לא תהיה רצועה צרה */
+  /* בריבוע ו-4:5 הכל קצת יותר צפוף, כדי שהתמונה בכרטיס לא תהיה רצועה צרה. הלוגו גדול וממורכז */
   const C=S.story?S:Object.assign({},S,{hs:Math.round(S.hs*0.86),ss:21,bh:54,bs:20});
-  const m=mark(ctx,o,F,W*0.3,S.story?S.bh*0.9:36);
-  const tb=textBlock(ctx,o,F,C,lim,W-S.M*2);
-  const gap=S.story?22:16, cw=W-S.M*2, fixed=(m.h?m.h+gap:0)+gap+tb.h+22+C.bh;
-  const top=S.T||S.M, bottom=S.B||S.M;
-  const chh=Math.max(120,Math.min(cw*(S.story?1.05:0.78),H-top-bottom-fixed));
+  const m=mark(ctx,o,F,W*0.45,S.story?W*0.17:H*0.11);
+  const gap=S.story?26:14, cw=W-S.M*2, top=S.T||S.M, bottom=S.B||S.M;
+  const tb=S.story?fitText(ctx,o,F,S,lim,cw,H*0.17,1.2):textBlock(ctx,o,F,C,lim,cw); if(!tb.S)tb.S=C;
+  const fixed=(m.h?m.h+gap:0)+gap+tb.h+22+tb.S.bh;
+  const chh=Math.max(120,Math.min(cw*(S.story?1.15:0.8),H-top-bottom-fixed));
   let y=top+Math.max(0,(H-top-bottom-fixed-chh)/2);
   drawMark(ctx,m,(W-m.w)/2,y,ink,o.schematic,sf); y+=m.h?m.h+gap:0;
   card(S.M,y,cw,chh); y+=chh+gap;
   drawText(ctx,tb,W/2,y,ink,'center',o.schematic); y+=tb.h+22;
-  const pw=Math.max(pillWidth(ctx,o,F,C),cw*0.6);
-  pill(ctx,o,F,(W+pw)/2,y,pw,C,col);
+  const pw=Math.max(pillWidth(ctx,o,F,tb.S),cw*0.6);
+  pill(ctx,o,F,(W+pw)/2,y,pw,tb.S,col);
 }
 
 /* סולידי: רק צבע וטקסט, הכל ממורכז כמו במפוצל לרוחב: לוגו גדול למעלה, כותרת ענקית שממלאת את הרוחב,
@@ -485,8 +491,8 @@ function render(canvas,o){
 function slotFormat(tpl,format){
   const [W,H]=SIZES[format]||SIZES['4:5'], z=scale(W,H);
   let r=W/H;
-  if(tpl==='split') r=z.land?(W*0.44)/H:W/(H*(z.story?0.44:H>W*1.1?0.52:0.54));
-  else if(tpl==='frame') r=z.land?(W*0.44)/(H-80):(z.story?0.95:H>W*1.1?1.5:2.2);
+  if(tpl==='split') r=z.land?(W*0.44)/H:W/(H*(z.story?0.44:H>W*1.1?0.48:0.44));
+  else if(tpl==='frame') r=z.land?(W*0.44)/(H-80):(z.story?0.9:H>W*1.1?1.5:2.2);
   else if(tpl==='type') r=1;
   let best='1:1', d=Infinity;
   for(const [k,v] of Object.entries(GEN_FORMATS)){ const x=Math.abs(Math.log(v/r)); if(x<d){d=x;best=k} }
