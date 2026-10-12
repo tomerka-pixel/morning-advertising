@@ -159,7 +159,7 @@ function cover(ctx,img,x,y,w,h,fy){
   return { img, f, sx, sy, k:sw/w, x, y, iw, ih };
 }
 /* כמה עור (פנים, ידיים) יש מתחת למלבן על הקנבס, לפי החיתוך שבוצע. 0 = נקי, 1 = כולו עור */
-function skinUnder(cv,rx,ry,rw,rh){
+function skinUnder(cv,rx,ry,rw,rh,below){
   if(!cv||!cv.f||!cv.f.mask)return 0;
   const {f,sx,sy,k,x,y,iw,ih}=cv, n=f.n;
   let hit=0, tot=0;
@@ -167,7 +167,10 @@ function skinUnder(cv,rx,ry,rw,rh){
     const px=sx+(rx+(i+.5)*rw/8-x)*k, py=sy+(ry+(j+.5)*rh/8-y)*k;
     const gx=Math.floor(px/iw*n), gy=Math.floor(py/ih*n);
     if(gx<0||gy<0||gx>=n||gy>=n)continue;
-    tot++; if(f.mask[gy*n+gx])hit++;
+    tot++;
+    /* below: גם עור שנמצא קצת מתחת לנקודה נחשב, כדי לתפוס את השיער והראש שמעל הפנים */
+    let on=false; for(let d=0;d<=(below||0)&&!on;d++){ const yy=gy+d; if(yy<n&&f.mask[yy*n+gx])on=true }
+    if(on)hit++;
   }
   return tot?hit/tot:0;
 }
@@ -436,6 +439,36 @@ function split(ctx,W,H,o,p,F,lim){
 }
 
 /* על התמונה: תמונה מלאה, הצללה בצבע מלמטה, הלוגו כמו שהוא בפינה העליונה, טקסט לבן וכפתור לכל הרוחב */
+/* מה יש מתחת למלבן על הקנבס, אחרי שהתמונה וההצללות כבר צוירו: צבע ממוצע, בהירות, וכמה "עמוס" (פיזור הבהירות) */
+function regionStats(ctx,x,y,w,h){
+  try{
+    const t=ctx.getTransform(), k=t.a;
+    const X=Math.max(0,Math.round(x*k)), Y=Math.max(0,Math.round(y*k));
+    const Wd=Math.max(1,Math.min(ctx.canvas.width-X,Math.round(w*k))), Hd=Math.max(1,Math.min(ctx.canvas.height-Y,Math.round(h*k)));
+    const d=ctx.getImageData(X,Y,Wd,Hd).data, step=Math.max(4,Math.floor(d.length/4/1600))*4;
+    let r=0,g=0,b=0,n=0,L=[];
+    for(let i=0;i<d.length;i+=step){ r+=d[i]; g+=d[i+1]; b+=d[i+2]; n++; L.push(lum(hex([d[i],d[i+1],d[i+2]]))) }
+    const c=hex([r/n,g/n,b/n]), m=L.reduce((s,v)=>s+v,0)/L.length;
+    const sd=Math.sqrt(L.reduce((s,v)=>s+(v-m)*(v-m),0)/L.length);
+    return {hex:c,lum:lum(c),sd};
+  }catch(e){ return null }
+}
+/* הבהירות הממוצעת של הלוגו (רק הפיקסלים הנראים), כדי לדעת אם הוא יבלוט על הרקע שמתחתיו */
+const LOGO_LUM=new WeakMap();
+function logoLum(img){
+  if(LOGO_LUM.has(img))return LOGO_LUM.get(img);
+  let v=0.5;
+  try{
+    const n=64, c=document.createElement('canvas'); c.width=n; c.height=n;
+    const x=c.getContext('2d'); x.drawImage(img,0,0,n,n);
+    const d=x.getImageData(0,0,n,n).data; let s=0,w=0;
+    for(let i=0;i<d.length;i+=4){ const a=d[i+3]/255; if(a<0.1)continue; s+=lum(hex([d[i],d[i+1],d[i+2]]))*a; w+=a }
+    if(w)v=s/w;
+  }catch(e){}
+  LOGO_LUM.set(img,v); return v;
+}
+const lumContrast=(a,b)=>(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+
 function overlay(ctx,W,H,o,p,F,lim){
   const S=scale(W,H);
   const cv=cover(ctx,o.img,0,0,W,H);
@@ -449,11 +482,35 @@ function overlay(ctx,W,H,o,p,F,lim){
   ctx.fillStyle=g2; ctx.fillRect(0,0,W,top*1.5);
   const x0=S.M, x1=S.land?W*0.62:W-S.M;
   const m=mark(ctx,o,F,(W-S.M*2)*0.4,S.bh*1.4);
-  /* הלוגו לא מסתיר פנים: בודקים שמאל, מרכז וימין למעלה, ובוחרים את המקום עם הכי מעט עור מתחתיו */
-  const ly=S.T||S.M, spots=[S.M,(W-m.w)/2,W-S.M-m.w];
-  let lx=spots[0], best=Infinity;
-  spots.forEach((sx,i)=>{ const sk=skinUnder(cv,sx-8,ly-8,m.w+16,m.h+16)+i*0.02; if(sk<best){best=sk;lx=sx} });
-  drawMark(ctx,m,lx,ly,WHITE,o.schematic,mix(p.primary,'#000',0.4));
+  /* בדיקה אחרי שהתמונה צוירה: לכל מקום אפשרי למעלה (שמאל, מרכז, ימין) בודקים מה יש מתחתיו בפועל.
+     מעדיפים מקום רגוע (לא עמוס), בלי פנים, ושהלוגו בולט עליו. הלוגו מתאים את עצמו לבהירות של המקום שנבחר,
+     ואם עדיין אין מספיק ניגוד, מתחתיו נכנסת הצללה רכה ועגולה (לא מסגרת) */
+  /* מקומות אפשריים: שלוש עמדות לרוחב, בשני גבהים, ובגודל מלא או קטן מעט. עדיפות קלה לגודל המלא ולמעלה */
+  const ly=S.T||S.M, full={w:m.w,h:m.h}, small={w:m.w*0.78,h:m.h*0.78};
+  const spots=[];
+  [[full,0],[small,0.6]].forEach(([sz,pen])=>[0,1].forEach(row=>[S.M,(W-sz.w)/2,W-S.M-sz.w].forEach((x,i)=>
+    spots.push({x,y:ly+row*full.h*0.85,sz,pen:pen+row*0.5+i*0.05}))));
+  let pick={x:S.M,y:ly,sz:full,st:null,c:1,score:-Infinity};
+  if(!o.schematic&&m.img){
+    spots.forEach(sp=>{
+      const st=regionStats(ctx,sp.x-6,sp.y-6,sp.sz.w+12,sp.sz.h+12); if(!st)return;
+      const sk=skinUnder(cv,sp.x-8,sp.y-8,sp.sz.w+16,sp.sz.h+16,7);
+      const c=Math.max(lumContrast(logoLum(m.img),st.lum),lumContrast(logoLum(adaptLogo(m.img,st.hex)),st.lum));
+      const score=Math.min(c,6)-st.sd*14-sk*10-sp.pen;
+      if(score>pick.score)pick=Object.assign({},sp,{st,c,score});
+    });
+  }
+  if(pick.sz!==full){ m.w=pick.sz.w; m.h=pick.sz.h }
+  const surf=pick.st?pick.st.hex:mix(p.primary,'#000',0.4);
+  if(pick.st&&pick.c<3){
+    const lightLogo=logoLum(adaptLogo(m.img,surf))>pick.st.lum;
+    const cx=pick.x+m.w/2, cy=pick.y+m.h/2, r=Math.max(m.w,m.h)*0.95;
+    const sg=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+    const tint=lightLogo?mix(shade,'#000',0.3):'#FFFFFF';
+    sg.addColorStop(0,rgba(tint,lightLogo?0.5:0.6)); sg.addColorStop(0.6,rgba(tint,lightLogo?0.3:0.38)); sg.addColorStop(1,rgba(tint,0));
+    ctx.fillStyle=sg; ctx.fillRect(cx-r,cy-r,r*2,r*2);
+  }
+  drawMark(ctx,m,pick.x,pick.y,WHITE,o.schematic,surf);
   const tb=textBlock(ctx,o,F,S,lim,(S.land?W*0.62:W)-S.M*2);
   const by=H-(S.B||S.M)-S.bh;
   drawText(ctx,tb,W-S.M,by-30-tb.h,WARM_WHITE,'right',o.schematic);
