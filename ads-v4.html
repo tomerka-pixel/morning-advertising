@@ -572,7 +572,7 @@ async function start(prompt){
   stop(); stop2&&stop2();
   S.promote=plan.promote||''; S.detail=plan.detail||prompt; S.goal=GOALS.includes(plan.goal)?plan.goal:'';
   S.audience=plan.audience||''; S.tone=TONE.includes(plan.tone)?plan.tone:''; if(S.tone)S.font=AdCompose.fontForTone(S.tone);
-  if(!bub)say('ai',esc(plan.reply||'הבנתי, בואו נבנה את המודעה'));
+  if(!bub)say('ai',esc(plan.reply||'הבנתי, בואו ניצור את המודעה'));
   else if(plan.reply)bub.innerHTML='<span class="nm">Sofia</span>'+esc(plan.reply);
   QUEUE=(Array.isArray(plan.questions)?plan.questions:[]).slice(0,3).map(extraQuestion);
   const has=k=>QUEUE.some(q=>q.qk===k);
