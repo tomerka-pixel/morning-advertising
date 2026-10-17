@@ -489,8 +489,10 @@ let ideasReq=0;
 async function loadIdeas(){
   const b=curBiz(); if(!b)return renderIdeas(IDEAS_GENERIC);
   const sig=[b.name,b.field,b.city].join('|');
-  if(Array.isArray(b.ideas)&&b.ideas.length&&b.ideasFor===sig)return renderIdeas(b.ideas);
-  renderIdeas(IDEAS_GENERIC);
+  /* רעיונות ששמורים מלפני שהיו 6 (היו 4) נכתבים מחדש */
+  if(Array.isArray(b.ideas)&&b.ideas.length>=6&&b.ideasFor===sig)return renderIdeas(b.ideas);
+  if(Array.isArray(b.ideas)&&b.ideas.length)renderIdeas(b.ideas);
+  else renderIdeas(IDEAS_GENERIC);
   const my=++ideasReq;
   try{
     const j=jsonOf((await api('/api/plan',{mode:'ideas',business:{name:b.name,field:b.field,city:b.city,site:b.site},profile:b.profile||[]})).text);
