@@ -417,7 +417,9 @@ const PHOTO_COMPOSITION={
   frame:'הנושא המרכזי באמצע הפריים, קומפוזיציה נקייה ומאוזנת.',
   type:'נושא אחד ברור וקרוב, באמצע הפריים, על רקע פשוט.'
 };
-const IDEAS=['20% הנחה על מנוי שנתי עד סוף החודש','סדנת סוף שבוע לזוגות','שיעור ניסיון ראשון במתנה','השקה של שירות חדש'];
+/* רעיונות במסך הפתיחה: Claude כותב 4 לכל עסק לפי התחום שלו, והם נשמרים עם העסק (ideas + ideasFor).
+   עד שהם מגיעים, ואם השרת לא זמין, מוצגים רעיונות כלליים שמתאימים לכל עסק */
+const IDEAS_GENERIC=['מבצע לזמן מוגבל','הטבה ללקוחות חדשים','השקה של שירות חדש','מבצע לקראת החגים'];
 
 /* =================== המצב =================== */
 const fresh=()=>({prompt:'',promote:'',detail:'',goal:'',audience:'',tone:'',format:'',template:'',font:'',
@@ -442,8 +444,26 @@ function renderList(){
 $('#lPrompt').oninput=()=>{ $('#lGo').disabled=!$('#lPrompt').value.trim() };
 $('#lPrompt').onkeydown=e=>{ if(keyOf(e)==='Enter'&&(e.metaKey||e.ctrlKey)&&$('#lPrompt').value.trim()){ e.preventDefault(); start($('#lPrompt').value.trim()) } };
 $('#lGo').onclick=()=>start($('#lPrompt').value.trim());
-$('#lIdeas').innerHTML=IDEAS.map(x=>`<button class="l-idea">${esc(x)}</button>`).join('');
-$$('#lIdeas .l-idea').forEach(b=>b.onclick=()=>{ $('#lPrompt').value=b.textContent; $('#lPrompt').oninput(); $('#lPrompt').focus() });
+function renderIdeas(list){
+  $('#lIdeas').innerHTML=list.map(x=>`<button class="l-idea fade-in">${esc(x)}</button>`).join('');
+  $$('#lIdeas .l-idea').forEach(b=>b.onclick=()=>{ $('#lPrompt').value=b.textContent; $('#lPrompt').oninput(); $('#lPrompt').focus() });
+}
+let ideasReq=0;
+async function loadIdeas(){
+  const b=curBiz(); if(!b)return renderIdeas(IDEAS_GENERIC);
+  const sig=[b.name,b.field,b.city].join('|');
+  if(Array.isArray(b.ideas)&&b.ideas.length&&b.ideasFor===sig)return renderIdeas(b.ideas);
+  renderIdeas(IDEAS_GENERIC);
+  const my=++ideasReq;
+  try{
+    const j=jsonOf((await api('/api/plan',{mode:'ideas',business:{name:b.name,field:b.field,city:b.city,site:b.site}})).text);
+    const ideas=(Array.isArray(j.ideas)?j.ideas:[]).map(x=>String(x).trim()).filter(Boolean).slice(0,4);
+    if(!ideas.length)return;
+    b.ideas=ideas; b.ideasFor=sig;
+    try{ await DB.put('settings',BIZLIST) }catch(e){}
+    if(my===ideasReq&&curBiz()===b)renderIdeas(ideas);
+  }catch(e){ /* נשארים עם הרעיונות הכלליים */ }
+}
 $('#cBack').onclick=showLanding;
 
 /* =================== השיחה =================== */
@@ -922,6 +942,7 @@ function applyBiz(){
   $('#bizName').textContent=BIZ.name||'העסק שלי';
   const a=logoAsset(b); $('#bizLg').style.backgroundImage=a?`url("${a.url}")`:'';
   $('#railInitials').textContent=(BIZ.name||'עס').split(/\s+/).map(w=>w[0]).join('').slice(0,2);
+  loadIdeas();
 }
 async function switchBiz(bid){
   BIZLIST.current=bid; applyBiz();
