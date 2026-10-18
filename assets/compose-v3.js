@@ -400,8 +400,8 @@ function textBlock(ctx,o,F,S,lim,w){
 }
 /* כותרת שמתאימה את עצמה לשטח: הגודל הכי גדול שנכנס ברוחב, במספר השורות המותר ובגובה שנשאר,
    כדי שהטקסט ימלא את הפאנל כמו אצל מעצב ולא ישאיר חלל. min/max ביחס לגודל הבסיס */
-function fitText(ctx,o,F,S,lim,w,maxH,maxK){
-  const base=S.hs, hi=Math.round(base*(maxK||1.6)), lo=Math.round(base*0.85);
+function fitText(ctx,o,F,S,lim,w,maxH,maxK,minK){
+  const base=S.hs, hi=Math.round(base*(maxK||1.6)), lo=Math.round(base*(minK||0.85));
   for(let hs=hi;hs>=lo;hs-=1){
     ctx.font=css(F.head,hs);
     if(wrap(ctx,o.headline,w).length>lim.hl)continue;
@@ -442,16 +442,20 @@ function split(ctx,W,H,o,p,F,lim){
   if(S.story){
     /* סטורי: הפאנל למעלה והתמונה למטה. התמונה מקבלת יותר מחצי (תומר: הראש נחתך כשהיא קטנה),
        והפאנל גדל רק אם הטקסט באמת צריך, כך שהכפתור לעולם לא עולה על התמונה */
-    const m=mark(ctx,o,F,cw*0.42,W*0.19), lg=m.h?m.h+20:0, pad=S.M*0.6;
-    const C=Object.assign({},S,{hs:44,ss:25,bh:58,bs:21});
-    const target=Math.round(H*0.5), avail=target-S.T-pad-lg-28-C.bh;
-    const tb=fitText(ctx,o,F,C,lim,cw,avail,1.15), total=lg+tb.h+28+tb.S.bh;
-    const ph=Math.max(target,Math.round(S.T+total+pad*1.2));
+    /* איזון: לוגו וטקסט בגודל נדיב (תומר: כשהפאנל נדחס הכל יצא קטן), והתמונה לפחות 42% מהגובה.
+       הראש נשמר בזכות החיתוך לפי הפנים, לא בזכות פאנל קטן */
+    const T=Math.min(S.T,100);   /* הממשק של הסטורי מכסה כ-10% למעלה */
+    const m=mark(ctx,o,F,cw*0.5,W*0.22), lg=m.h?m.h+22:0, pad=S.M*0.7;
+    const C=Object.assign({},S,{hs:52,ss:27,bh:62,bs:22});
+    const maxPh=Math.round(H*0.62), avail=maxPh-T-pad*1.4-lg-30-C.bh;
+    const tb=fitText(ctx,o,F,C,lim,cw,avail,1.3,0.72), total=lg+tb.h+30+tb.S.bh;
+    /* בלי תקרה: אם הטקסט ארוך במיוחד הפאנל גדל, כי כפתור שעולה על התמונה גרוע יותר */
+    const ph=Math.max(Math.round(H*0.5),Math.round(T+total+pad*1.4));
     cover(ctx,o.img,0,ph,W,H-ph,0.3);
     gradPanel(ctx,sf,blendEnd(sf,edge(0,ph,W,H*0.07)),0,0,W,ph,0,0,0,ph);
-    let y=S.T+(ph-S.T-total)/2;
+    let y=T+(ph-T-total)/2;
     if(m.w){ drawMark(ctx,m,(W-m.w)/2,y,ink,o.schematic,sf); y+=lg }
-    drawText(ctx,tb,W/2,y,ink,'center',o.schematic); y+=tb.h+28;
+    drawText(ctx,tb,W/2,y,ink,'center',o.schematic); y+=tb.h+30;
     const pw=Math.max(pillWidth(ctx,o,F,tb.S),cw*0.8);
     pill(ctx,o,F,(W+pw)/2,y,pw,tb.S,col);
     return;
@@ -619,7 +623,7 @@ function render(canvas,o){
 function slotFormat(tpl,format){
   const [W,H]=SIZES[format]||SIZES['4:5'], z=scale(W,H);
   let r=W/H;
-  if(tpl==='split') r=z.land?(W*0.44)/H:W/(H*(z.story?0.5:H>W*1.1?0.54:0.5));
+  if(tpl==='split') r=z.land?(W*0.44)/H:W/(H*(z.story?0.45:H>W*1.1?0.54:0.5));
   else if(tpl==='frame') r=z.land?(W*0.44)/(H-80):(z.story?0.9:H>W*1.1?1.5:2.2);
   else if(tpl==='type') r=1;
   let best='1:1', d=Infinity;
