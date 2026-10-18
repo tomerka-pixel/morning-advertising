@@ -426,7 +426,7 @@ const PHOTO_COMPOSITION={
 };
 /* רעיונות במסך הפתיחה: Claude כותב 4 לכל עסק לפי התחום שלו, והם נשמרים עם העסק (ideas + ideasFor).
    עד שהם מגיעים, ואם השרת לא זמין, מוצגים רעיונות כלליים שמתאימים לכל עסק */
-const IDEAS_GENERIC=['מבצע לזמן מוגבל','הטבה ללקוחות חדשים','השקה של שירות חדש','מבצע לקראת החגים','שירות שהכי מבקשים אצלנו','אירוע או סדנה קרובה'];
+const IDEAS_GENERIC=['מבצע לזמן מוגבל','הטבה ללקוחות חדשים','השקה של שירות חדש','מבצע לקראת החגים'];
 
 /* =================== המצב =================== */
 const fresh=()=>({edits:[],prompt:'',promote:'',detail:'',goal:'',audience:'',tone:'',format:'',template:'',font:'',
@@ -452,11 +452,12 @@ $('#lPrompt').oninput=()=>{ $('#lGo').disabled=!$('#lPrompt').value.trim() };
 $('#lPrompt').onkeydown=e=>{ if(keyOf(e)==='Enter'&&(e.metaKey||e.ctrlKey)&&$('#lPrompt').value.trim()){ e.preventDefault(); start($('#lPrompt').value.trim()) } };
 $('#lGo').onclick=()=>start($('#lPrompt').value.trim());
 function renderIdeas(list){
-  $('#lIdeas').innerHTML=list.map(x=>`<button class="l-idea fade-in">${esc(x)}</button>`).join('');
+  /* 4 הצעות: יותר מזה נראה עמוס (תומר) */
+  $('#lIdeas').innerHTML=list.slice(0,4).map(x=>`<button class="l-idea fade-in">${esc(x)}</button>`).join('');
   $$('#lIdeas .l-idea').forEach(b=>b.onclick=()=>{ $('#lPrompt').value=b.textContent; $('#lPrompt').oninput(); $('#lPrompt').focus() });
 }
 /* =================== סופיה לומדת את העסק ===================
-   לכל עסק: profile (מה שסופיה יודעת עליו, עד 8 משפטים), history (המודעות האחרונות) ו-ideas (6 רעיונות).
+   לכל עסק: profile (מה שסופיה יודעת עליו, עד 8 משפטים), history (המודעות האחרונות) ו-ideas (4 רעיונות).
    אחרי כל מודעה ובקשת שינוי סופיה מעדכנת את הפרופיל ואת הרעיונות, והפרופיל נשלח איתה לכל שיחה.
    הכל נשמר בדפדפן הזה (IndexedDB), עם העסק */
 const profileOf=()=>{ const b=curBiz(); return b&&Array.isArray(b.profile)?b.profile:[] };
@@ -477,7 +478,7 @@ async function learn(){
     const j=jsonOf((await api('/api/plan',{mode:'learn',business:{name:b.name,field:b.field,city:b.city,site:b.site},
       profile:b.profile||[],history:b.history||[],edits:(b.edits||[]).concat(S.edits).slice(-10)})).text);
     if(Array.isArray(j.profile))b.profile=j.profile.map(x=>String(x).trim()).filter(Boolean).slice(0,8);
-    const ideas=(Array.isArray(j.ideas)?j.ideas:[]).map(x=>String(x).trim()).filter(Boolean).slice(0,6);
+    const ideas=(Array.isArray(j.ideas)?j.ideas:[]).map(x=>String(x).trim()).filter(Boolean).slice(0,4);
     if(ideas.length){ b.ideas=ideas; b.ideasFor=[b.name,b.field,b.city].join('|') }
     b.edits=(b.edits||[]).concat(S.edits).slice(-10); S.edits=[];
     try{ await DB.put('settings',BIZLIST) }catch(e){}
@@ -489,14 +490,13 @@ let ideasReq=0;
 async function loadIdeas(){
   const b=curBiz(); if(!b)return renderIdeas(IDEAS_GENERIC);
   const sig=[b.name,b.field,b.city].join('|');
-  /* רעיונות ששמורים מלפני שהיו 6 (היו 4) נכתבים מחדש */
-  if(Array.isArray(b.ideas)&&b.ideas.length>=6&&b.ideasFor===sig)return renderIdeas(b.ideas);
+  if(Array.isArray(b.ideas)&&b.ideas.length>=4&&b.ideasFor===sig)return renderIdeas(b.ideas);
   if(Array.isArray(b.ideas)&&b.ideas.length)renderIdeas(b.ideas);
   else renderIdeas(IDEAS_GENERIC);
   const my=++ideasReq;
   try{
     const j=jsonOf((await api('/api/plan',{mode:'ideas',business:{name:b.name,field:b.field,city:b.city,site:b.site},profile:b.profile||[]})).text);
-    const ideas=(Array.isArray(j.ideas)?j.ideas:[]).map(x=>String(x).trim()).filter(Boolean).slice(0,6);
+    const ideas=(Array.isArray(j.ideas)?j.ideas:[]).map(x=>String(x).trim()).filter(Boolean).slice(0,4);
     if(!ideas.length)return;
     b.ideas=ideas; b.ideasFor=sig;
     try{ await DB.put('settings',BIZLIST) }catch(e){}
