@@ -319,7 +319,7 @@ h1,h2,h3{margin:0}
   </div>
 </div>
 
-<script src="assets/compose-v3.js?v=2bcb5592"></script>
+<script src="assets/compose-v3.js?v=4a8ddc67"></script>
 <script>
 /* ===================================================================
    יוצר המודעות v4: בונים מודעה משיחה.
@@ -431,7 +431,7 @@ const PHOTO_COMPOSITION={
 const IDEAS_GENERIC=['מבצע לזמן מוגבל','הטבה ללקוחות חדשים','השקה של שירות חדש','מבצע לקראת החגים'];
 
 /* =================== המצב =================== */
-const fresh=()=>({edits:[],prompt:'',promote:'',detail:'',goal:'',audience:'',tone:'',format:'',template:'',font:'',
+const fresh=()=>({edits:[],concept:null,conceptsSeen:[],prompt:'',promote:'',detail:'',goal:'',audience:'',tone:'',format:'',template:'',font:'',
                   own:null,useOwn:false,audOpts:null,result:null,busy:false});
 let S=fresh();
 let PENDING=null;   /* השאלה שמחכה לתשובה */
@@ -562,6 +562,10 @@ const Q={
   format:()=>({qk:'format',q:'איפה המודעה תתפרסם?',free:true,match:matchFormat,options:lastFirst(FORMAT.map(f=>({t:f.t,d:f.px,v:f.v})),'fmtV'),set:v=>{S.format=v;renderStage()}}),
   template:()=>({qk:'template',q:'איזה עיצוב? הסקיצה מתעדכנת משמאל',free:true,match:matchTemplate,
                  options:lastFirst(TEMPLATES.map(t=>({t:t.t,d:t.d,v:t.v})),'tplV'),set:v=>{S.template=v;renderStage()}}),
+  /* ישיר או רעיון יצירתי: במודעה ישירה מצלמים את השירות עצמו, ברעיון יצירתי מטאפורה חזותית שעוצרת גלילה */
+  approach:()=>({qk:'approach',q:'איך להציג את המסר בתמונה?',free:true,match:matchApproach,
+    options:[{t:'ישיר',d:'מראים את השירות או המוצר כמו שהוא',v:'literal'},{t:'רעיון יצירתי',d:'מטאפורה חזותית מפתיעה שעוצרת גלילה',v:'concept'}],
+    set:async v=>{ if(v==='concept')await pickConcept(); else S.concept=null }}),
   image:()=>({qk:'image',q:'ואיזו תמונה?',free:true,match:matchImage,options:[{t:'שהמערכת תיצור תמונה',d:'צילום שמתאים בדיוק לעיצוב',v:'gen'},{t:'להעלות תמונה משלי',d:'צילום של המקום, הצוות או המוצר',v:'own'}],
               set:async v=>{ if(v==='own'){ S.useOwn=null; await pickOwn() } else { S.own=null; S.useOwn=false } }})
 };
@@ -590,6 +594,30 @@ function matchFormat(t){
 function matchTemplate(t){
   const r=[[/מפוצל|חצי|מחולק|למעלה|למטה/,'split'],[/על התמונה|מלאה|על גבי|שכבה/,'overlay'],[/מסגרת|כרטיס|ממוסגר/,'frame'],[/סולידי|בלי תמונה|רק טקסט|צבע|טיפוגרפ/,'type']];
   const hit=r.find(([re])=>re.test(t)); return hit?hit[1]:null;
+}
+function matchApproach(t){
+  if(/יצירת|רעיון|מטאפור|מפתיע|מקורי|קריאייטיב/.test(t))return 'concept';
+  if(/ישיר|רגיל|פשוט|מילולי|כמו שהוא/.test(t))return 'literal';
+  return null;
+}
+/* רעיון יצירתי: סופיה (כמנהלת קריאייטיב) מציעה מטאפורה. אפשר לאשר, לבקש רעיון אחר, או לחזור לישיר */
+async function pickConcept(){
+  const stop=typing();
+  let j={};
+  try{ j=jsonOf((await api('/api/plan',{mode:'concept',business:BIZ,profile:profileOf(),detail:S.detail||S.promote,audience:S.audience,tone:S.tone,previous:S.conceptsSeen})).text) }
+  catch(e){ stop(); await aiSay('לא הצלחתי להביא רעיון כרגע, אז נלך על ישיר',0); S.concept=null; return }
+  stop();
+  if(!j.idea||!j.scene){ S.concept=null; return }
+  S.conceptsSeen.push(j.idea);
+  say('ai','הרעיון: '+esc(j.idea));
+  await new Promise(res=>{
+    options([{t:'אהבתי',primary:true,v:'ok'},{t:'רעיון אחר',v:'again'},{t:'בעצם ישיר',v:'literal'}],async o=>{
+      say('me',esc(o.t));
+      if(o.v==='ok'){ S.concept={idea:j.idea,scene:j.scene}; res() }
+      else if(o.v==='again'){ await pickConcept(); res() }
+      else { S.concept=null; res() }
+    });
+  });
 }
 function matchImage(t){
   if(/להעלות|משלי|יש לי|אעלה|תמונה שלי|שלנו|נעלה/.test(t))return 'own';
@@ -646,7 +674,7 @@ async function start(prompt){
   const has=k=>QUEUE.some(q=>q.qk===k);
   if(!S.goal&&!has('goal'))QUEUE.push(Q.goal());
   if(!S.tone&&!has('tone'))QUEUE.push(Q.tone());
-  QUEUE.push(Q.format(),Q.template(),Q.image());
+  QUEUE.push(Q.approach(),Q.format(),Q.template(),Q.image());
   await wait(250); next();
 }
 
@@ -688,7 +716,7 @@ function shrink(file,max){
 function summaryHtml(){
   const f=FORMAT.find(x=>x.v===S.format), t=TEMPLATES.find(x=>x.v===S.template);
   const rows=[['מקדמים',S.detail||S.promote],['מטרה',S.goal],['קהל',S.audience||'קהל רחב'],['אווירה',S.tone],
-              ['פורמט',f&&f.t],['עיצוב',t&&t.t],['תמונה',S.own?(S.useOwn?'התמונה שלכם':'בהשראת התמונה שלכם'):'המערכת תיצור']];
+              ['רעיון',S.concept?S.concept.idea:'ישיר'],['פורמט',f&&f.t],['עיצוב',t&&t.t],['תמונה',S.own?(S.useOwn?'התמונה שלכם':'בהשראת התמונה שלכם'):'המערכת תיצור']];
   return '<ul class="sumlist">'+rows.filter(r=>r[1]).map(r=>`<li><b>${esc(r[0])}</b>${esc(r[1])}</li>`).join('')+'</ul>';
 }
 async function confirmStep(){
@@ -701,7 +729,7 @@ async function confirmStep(){
 }
 async function changeMenu(){
   await aiSay('מה לשנות?',350);
-  const items=[['detail','מה מקדמים'],['goal','מטרה'],['audience','קהל'],['tone','אווירה'],['format','פורמט'],['template','עיצוב'],['image','תמונה']];
+  const items=[['detail','מה מקדמים'],['goal','מטרה'],['audience','קהל'],['tone','אווירה'],['approach','רעיון לתמונה'],['format','פורמט'],['template','עיצוב'],['image','תמונה']];
   options(items.map(([v,t])=>({t,v})),o=>{ say('me',esc(o.t)); QUEUE=[Q[o.v]()]; next() });
 }
 
@@ -747,6 +775,7 @@ function photoPrompt(note){
   const p=[];
   p.push('צילום פרסומי עבור '+[BIZ.name,BIZ.field,BIZ.city].filter(Boolean).join(', ')+'.');
   p.push('מה שמקדמים: '+(S.detail||S.promote)+'.');
+  if(S.concept)p.push('רעיון חזותי למודעה, חובה לצלם אותו ולא לתאר את השירות באופן מילולי: '+S.concept.scene+'. הצילום מבטא את הרעיון: '+S.concept.idea+'.');
   if(note)p.push('שינוי מבוקש בתמונה, חובה לבצע: '+note+'.');
   if(S.audience)p.push('קהל היעד: '+S.audience+'.');
   if(S.tone)p.push('האווירה: '+S.tone+'.');

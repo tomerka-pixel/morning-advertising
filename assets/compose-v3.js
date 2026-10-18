@@ -14,7 +14,8 @@ const TEMPLATES = [
   { v:'split',   t:'מפוצל',     d:'תמונה למעלה, טקסט למטה' },
   { v:'overlay', t:'על התמונה', d:'תמונה מלאה עם טקסט מעליה' },
   { v:'frame',   t:'מסגרת',     d:'תמונה ממוסגרת במרכז' },
-  { v:'type',    t:'סולידי',    d:'לוגו וכותרת גדולה על צבע, בלי תמונה' }
+  { v:'type',    t:'סולידי',    d:'לוגו וכותרת גדולה על צבע, בלי תמונה' },
+  { v:'layer',   t:'שכבות',     d:'כרטיס תמונה מוטה שיוצא מהשוליים' }
 ];
 
 /* מגבלות התווים מהחוקים של המעצב. h = כותרת, hl = שורות כותרת, s = שורת משנה, c = כפתור */
@@ -22,7 +23,8 @@ const LIMITS = {
   split:   { h:28, hl:2, s:60, sl:2, c:16 },
   overlay: { h:32, hl:3, s:70, sl:2, c:16 },
   frame:   { h:26, hl:2, s:60, sl:2, c:16 },
-  type:    { h:24, hl:3, s:60, sl:2, c:16 }
+  type:    { h:24, hl:3, s:60, sl:2, c:16 },
+  layer:   { h:28, hl:2, s:60, sl:2, c:16 }
 };
 
 /* פונטים עבריים חופשיים לשימוש מסחרי. ברירת המחדל Rubik, כמו בעיצוב */
@@ -313,10 +315,23 @@ function blendEnd(sf,edge){
   if(dh<14){ h2=(h1+28)%360; s2=Math.max(s2,Math.min(0.42,s1)) }
   return hsl2hex(h2,s2,l2);
 }
+/* גרעיניות עדינה מאוד על הפאנלים (high-end-visual-design): נותנת תחושה של חומר מודפס ולא של צבע דיגיטלי שטוח */
+let NOISE=null;
+function noise(){
+  if(NOISE)return NOISE;
+  const c=document.createElement('canvas'); c.width=c.height=160; const x=c.getContext('2d'), d=x.createImageData(160,160);
+  for(let i=0;i<d.data.length;i+=4){ const v=Math.random()*255; d.data[i]=d.data[i+1]=d.data[i+2]=v; d.data[i+3]=255 }
+  x.putImageData(d,0,0); NOISE=c; return c;
+}
+function grain(ctx,x,y,w,h){
+  try{ ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip(); ctx.globalAlpha=0.06; ctx.globalCompositeOperation='overlay';
+       ctx.fillStyle=ctx.createPattern(noise(),'repeat'); ctx.fillRect(x,y,w,h); ctx.restore() }catch(e){ ctx.restore() }
+}
 function gradPanel(ctx,sf,end,x,y,w,h,fx,fy,tx,ty){
   const g=ctx.createLinearGradient(fx,fy,tx,ty);
   g.addColorStop(0,sf); g.addColorStop(1,end);
   ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+  grain(ctx,x,y,w,h);
 }
 /* הצבע הממוצע של תמונה (לרקע של מסגרת ושל סולידי) */
 const AVG=new WeakMap();
@@ -379,6 +394,16 @@ function pill(ctx,o,F,x1,y,w,S,col){
   ctx.fillStyle=col.fg;
   if(o.schematic){ rr(ctx,x0+w*0.24,y+S.bh*0.4,w*0.52,S.bh*0.2,S.bh*0.1); ctx.fill(); return }
   ctx.font=css(ctaSpec(F),S.bs); ctx.direction='rtl'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  const tw=ctx.measureText(o.cta).width, d=S.bh-12;
+  /* עיגול קטן עם חץ בקצה הכפתור (כפתור בתוך כפתור), רק כשיש מקום. בעברית החץ מצביע שמאלה, לכיוון ההמשך */
+  if(w>=tw+d+S.bh*0.9){
+    const cx=x0+6+d/2, cy=y+S.bh/2;
+    ctx.fillStyle=rgba(col.fg,0.12); ctx.beginPath(); ctx.arc(cx,cy,d/2,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle=col.fg; ctx.lineWidth=Math.max(1.6,d*0.06); ctx.lineCap='round'; ctx.lineJoin='round';
+    const a=d*0.2; ctx.beginPath(); ctx.moveTo(cx+a,cy); ctx.lineTo(cx-a,cy); ctx.moveTo(cx-a*0.1,cy-a*0.8); ctx.lineTo(cx-a,cy); ctx.lineTo(cx-a*0.1,cy+a*0.8); ctx.stroke();
+    ctx.fillStyle=col.fg; ctx.fillText(o.cta,x0+6+d+(w-6-d)/2,y+S.bh/2+1,w-d-40);
+    return;
+  }
   ctx.fillText(o.cta,x0+w/2,y+S.bh/2+1,w-40);
 }
 function pillWidth(ctx,o,F,S){ ctx.font=css(ctaSpec(F),S.bs); return o.cta?ctx.measureText(o.cta).width+S.bh*1.3:0 }
@@ -396,8 +421,10 @@ function ctaRow(ctx,o,F,S,x0,x1,y,col,ink,full,sf){
 
 /* בלוק הטקסט: כותרת ומשנה. מחזיר את הגובה, ובלי y רק מודד */
 function textBlock(ctx,o,F,S,lim,w){
-  const hd=layout(ctx,o.headline,F.head,S.hs,w,lim.hl,1.12), sb=layout(ctx,o.sub,F.body,S.ss,w,lim.sl,1.3);
-  return { hd, sb, h:hd.h+(sb.lines.length?12+sb.h:0) };
+  /* טיפוגרפיה כחלק מהעיצוב (frontend-design): כותרת צפופה (1.06) וניגוד ברור מול שורת המשנה, שקטנה ורגועה ממנה */
+  const hd=layout(ctx,o.headline,F.head,S.hs,w,lim.hl,1.06), sb=layout(ctx,o.sub,F.body,S.ss,w,lim.sl,1.34);
+  const gap=Math.round(S.hs*0.32);
+  return { hd, sb, gap, h:hd.h+(sb.lines.length?gap+sb.h:0) };
 }
 /* כותרת שמתאימה את עצמה לשטח: הגודל הכי גדול שנכנס ברוחב, במספר השורות המותר ובגובה שנשאר,
    כדי שהטקסט ימלא את הפאנל כמו אצל מעצב ולא ישאיר חלל. min/max ביחס לגודל הבסיס */
@@ -406,15 +433,17 @@ function fitText(ctx,o,F,S,lim,w,maxH,maxK,minK){
   for(let hs=hi;hs>=lo;hs-=1){
     ctx.font=css(F.head,hs);
     if(wrap(ctx,o.headline,w).length>lim.hl)continue;
-    const T=Object.assign({},S,{hs,ss:Math.max(S.ss,Math.min(Math.round(S.ss*1.3),Math.round(hs*0.48)))});
+    const T=Object.assign({},S,{hs,ss:Math.max(S.ss,Math.min(Math.round(S.ss*1.22),Math.round(hs*0.44)))});
     const tb=textBlock(ctx,o,F,T,lim,w); tb.S=T;
     if(tb.h<=maxH)return tb;
   }
-  const tb=textBlock(ctx,o,F,S,lim,w); tb.S=S; return tb;
+  /* שום גודל לא נכנס: לוקחים את הקטן ביותר שנבדק, לא את גודל הבסיס, כדי שהכפתור לא ייצא מהמודעה */
+  const T=Object.assign({},S,{hs:lo,ss:Math.max(Math.round(S.ss*0.9),Math.round(lo*0.44))});
+  const tb=textBlock(ctx,o,F,T,lim,w); tb.S=T; return tb;
 }
 function drawText(ctx,tb,x,y,ink,align,schematic){
   y+=drawLines(ctx,tb.hd,x,y,ink,align,schematic);
-  if(tb.sb.lines.length) drawLines(ctx,tb.sb,x,y+12,ink===WHITE?'rgba(255,255,255,.9)':rgba(ink,.86),align,schematic);
+  if(tb.sb.lines.length) drawLines(ctx,tb.sb,x,y+(tb.gap||12),rgba(ink,.82),align,schematic);
 }
 
 /* =================== התבניות =================== */
@@ -569,10 +598,13 @@ function frame(ctx,W,H,o,p,F,lim){
   /* הרקע בצבע שנלקח מהתמונה (לא גוון כמעט לבן), כדי שהכרטיס והרקע ישתלבו */
   const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
   gradPanel(ctx,sf,blendEnd(sf,avgColor(o.img)),0,0,W,H,W,0,0,H);
+  /* מסגרת בתוך מסגרת: מעטפת שקופה למחצה ובתוכה התמונה, עם רדיוסים קונצנטריים וצל רך ומפוזר מאוד */
   const card=(x,y,w,h)=>{
-    ctx.save(); ctx.shadowColor='rgba(0,0,0,.10)'; ctx.shadowBlur=40; ctx.shadowOffsetY=6;
-    ctx.fillStyle=WHITE; rr(ctx,x,y,w,h,18); ctx.fill(); ctx.restore();
-    ctx.save(); rr(ctx,x+8,y+8,w-16,h-16,12); ctx.clip(); cover(ctx,o.img,x+8,y+8,w-16,h-16); ctx.restore();
+    const R=26, P=7;
+    ctx.save(); ctx.shadowColor='rgba(0,0,0,.16)'; ctx.shadowBlur=60; ctx.shadowOffsetY=22;
+    ctx.fillStyle=rgba(WHITE,0.55); rr(ctx,x,y,w,h,R); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.strokeStyle=rgba(WHITE,0.7); ctx.lineWidth=1; rr(ctx,x+0.5,y+0.5,w-1,h-1,R); ctx.stroke(); ctx.restore();
+    ctx.save(); rr(ctx,x+P,y+P,w-P*2,h-P*2,R-P); ctx.clip(); cover(ctx,o.img,x+P,y+P,w-P*2,h-P*2); ctx.restore();
   };
   if(S.land){
     const cw=Math.round(W*0.44); card(S.M,S.M,cw,H-S.M*2);
@@ -614,7 +646,50 @@ function type(ctx,W,H,o,p,F,lim){
   pill(ctx,o,F,xc+pw/2,y,pw,tb.S,col);
 }
 
-const DRAW={ split, overlay, frame, type };
+/* שכבות: אסימטריה מכוונת (high-end-visual-design, "Z-axis cascade"). כרטיס התמונה גדול, מוטה מעט,
+   יוצא מאחד השוליים ונח מעל הפאנל עם צל רך. מסביב הכל שקט: לוגו, כותרת, משנה וכפתור. האלמנט הנועז היחיד הוא הכרטיס */
+function layer(ctx,W,H,o,p,F,lim){
+  const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
+  gradPanel(ctx,sf,blendEnd(sf,avgColor(o.img)),0,0,W,H,0,0,W,H);
+  const card=(x,y,w,h,deg)=>{
+    ctx.save(); ctx.translate(x+w/2,y+h/2); ctx.rotate(deg*Math.PI/180); ctx.translate(-w/2,-h/2);
+    ctx.save(); ctx.shadowColor='rgba(0,0,0,.22)'; ctx.shadowBlur=70; ctx.shadowOffsetY=26;
+    ctx.fillStyle=WHITE; rr(ctx,0,0,w,h,24); ctx.fill(); ctx.restore();
+    ctx.save(); rr(ctx,8,8,w-16,h-16,17); ctx.clip(); cover(ctx,o.img,8,8,w-16,h-16); ctx.restore();
+    ctx.restore();
+  };
+  if(S.land){
+    const cw=Math.round(W*0.5), chh=Math.round(H*0.86);
+    card(-W*0.03,(H-chh)/2,cw,chh,-2.5);
+    const x0=cw+S.M*1.2, x1=W-S.M*1.3, cwid=x1-x0, xc=(x0+x1)/2;
+    const m=mark(ctx,o,F,cwid*0.45,H*0.18), lg=m.h?m.h+S.M*0.6:0;
+    const tb=fitText(ctx,o,F,S,lim,cwid,H-S.M*2.4-lg-32-S.bh,1.4), total=lg+tb.h+32+tb.S.bh;
+    let y=(H-total)/2;
+    if(m.w){ drawMark(ctx,m,xc-m.w/2,y,ink,o.schematic,sf); y+=lg }
+    drawText(ctx,tb,xc,y,ink,'center',o.schematic); y+=tb.h+32;
+    const pw=Math.max(pillWidth(ctx,o,F,tb.S),cwid*0.7); pill(ctx,o,F,xc+pw/2,y,pw,tb.S,col);
+    return;
+  }
+  /* הכרטיס הוא האלמנט הנועז, ולכן הוא מקבל את רוב הגובה. הטקסט מתאים את עצמו למה שנשאר */
+  const top=S.story?Math.min(S.T,100):S.M*0.9, bottom=S.story?(S.B||S.M):S.M;
+  const tall=H>W*1.1;
+  const m=mark(ctx,o,F,W*0.4,S.story?W*0.2:S.bh*(tall?1.3:1.1)), lg=m.h?m.h+(S.story?22:14):0;
+  const C=S.story?Object.assign({},S,{hs:50,ss:26,bh:62,bs:22}):Object.assign({},S,{bh:tall?58:52,bs:tall?21:19,ss:tall?S.ss:21});
+  const cardW=Math.round(W*0.9), cardH=Math.round(H*(S.story?0.42:tall?0.48:0.42));
+  const gapCard=S.story?44:28, textMax=H-top-bottom-lg-cardH-gapCard-24-C.bh;
+  const tb=fitText(ctx,o,F,C,lim,W-S.M*2,textMax,1.25,0.7);
+  const textH=tb.h+24+tb.S.bh;
+  let y=top;
+  if(m.w){ drawMark(ctx,m,(W-m.w)/2,y,ink,o.schematic,sf); y+=lg }
+  /* מה שנשאר מתחלק בין מעל הכרטיס ומתחת לטקסט, כדי שהקומפוזיציה תהיה מאוזנת */
+  const spare=Math.max(0,H-top-bottom-lg-cardH-gapCard-textH); y+=spare*0.35;
+  card(W-cardW+W*0.06,y+6,cardW,cardH,-2.2);
+  y+=cardH+gapCard;
+  drawText(ctx,tb,W/2,y,ink,'center',o.schematic); y+=tb.h+24;
+  const pw=Math.max(pillWidth(ctx,o,F,tb.S),(W-S.M*2)*0.62); pill(ctx,o,F,(W+pw)/2,y,pw,tb.S,col);
+}
+
+const DRAW={ split, overlay, frame, type, layer };
 
 /* o: { tpl, format, img, headline, sub, cta, name, nameEn, logo:{img,info}, color, bg, font, schematic, scale }
    הקנבס האמיתי ברזולוציה מלאה, והתבניות מצוירות ביחידות של קנבס 540 */
@@ -635,6 +710,7 @@ function slotFormat(tpl,format){
   if(tpl==='split') r=z.land?(W*0.5)/H:W/(H*(z.story?0.62:H>W*1.1?0.6:0.56));
   else if(tpl==='frame') r=z.land?(W*0.44)/(H-80):(z.story?0.9:H>W*1.1?1.5:2.2);
   else if(tpl==='type') r=1;
+  else if(tpl==='layer') r=z.land?(W*0.5)/(H*0.86):(W*0.9)/(H*(z.story?0.42:H>W*1.1?0.48:0.42));
   let best='1:1', d=Infinity;
   for(const [k,v] of Object.entries(GEN_FORMATS)){ const x=Math.abs(Math.log(v/r)); if(x<d){d=x;best=k} }
   return best;
