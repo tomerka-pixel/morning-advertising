@@ -299,6 +299,34 @@ function panel(ctx,sf,x,y,w,h){
   g.addColorStop(0,mix(sf,'#FFFFFF',0.06)); g.addColorStop(1,mix(sf,'#000000',0.07));
   ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
 }
+/* מעבר צבע שמחבר את הפאנל לתמונה: מהצבע הבולט שבתמונה (בצד הרחוק מהתמונה) אל הגוון של התמונה עצמה
+   בקו שבו הם נפגשים. שני הקצוות באותה בהירות, כך שהטקסט נשאר קריא לכל האורך */
+function toneLike(c,ref,satMax){ const [h,s]=hexHsl(c), [,,l]=hexHsl(ref); return hsl2hex(h,Math.min(s,satMax==null?0.42:satMax),l) }
+function blendEnd(sf,edge){
+  const [h1,s1,l1]=hexHsl(sf), dark=textOn(sf)===WHITE;
+  /* הקצה שליד התמונה: הגוון של התמונה, מעט בהיר יותר בפאנל כהה ומעט כהה יותר בפסטל, כדי שהמעבר ירגיש */
+  const l2=Math.max(0.1,Math.min(0.94,l1+(dark?0.08:-0.06)));
+  let h2=h1, s2=s1;
+  if(edge){ const [he,se]=hexHsl(edge); h2=he; s2=Math.max(0.16,Math.min(0.42,se)) }
+  const dh=Math.min(Math.abs(h1-h2),360-Math.abs(h1-h2));
+  if(dh<14){ h2=(h1+28)%360; s2=Math.max(s2,Math.min(0.42,s1)) }
+  return hsl2hex(h2,s2,l2);
+}
+function gradPanel(ctx,sf,end,x,y,w,h,fx,fy,tx,ty){
+  const g=ctx.createLinearGradient(fx,fy,tx,ty);
+  g.addColorStop(0,sf); g.addColorStop(1,end);
+  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+}
+/* הצבע הממוצע של תמונה (לרקע של מסגרת ושל סולידי) */
+const AVG=new WeakMap();
+function avgColor(img){
+  if(!img)return null; if(AVG.has(img))return AVG.get(img);
+  let c=null;
+  try{ const k=24, cv=document.createElement('canvas'); cv.width=k; cv.height=k; const x=cv.getContext('2d'); x.drawImage(img,0,0,k,k);
+       const d=x.getImageData(0,0,k,k).data; let r=0,g=0,b=0,n=0;
+       for(let i=0;i<d.length;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2]; n++ } c=hex([r/n,g/n,b/n]) }catch(e){}
+  AVG.set(img,c); return c;
+}
 function ctaSpec(F){ return F.v==='display'?F.body:F.head }
 
 /* הרבה קובצי לוגו מגיעים עם שוליים שקופים רחבים, והלוגו יוצא זעיר. חותכים אותם פעם אחת */
@@ -393,11 +421,13 @@ function drawText(ctx,tb,x,y,ink,align,schematic){
    גובה הפאנל לפי התוכן (מינימום לפי היחסים של הדוגמאות), והתוכן במרכז שלו */
 function split(ctx,W,H,o,p,F,lim){
   const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
-  panel(ctx,sf,0,0,W,H);
+  /* קודם התמונה, ואז הפאנל: כך אפשר לדגום את הגוון של התמונה בקו שבו היא פוגשת את הפאנל */
+  const edge=(x,y,w,h)=>{ const st=o.img&&!o.schematic?regionStats(ctx,x,y,w,h):null; return st?st.hex:null };
   if(S.land){
     /* לרוחב: תמונה משמאל 44%, ובעמודה הימנית הכל ממורכז: לוגו גדול למעלה, כותרת גדולה, משנה וכפתור */
     const iw=Math.round(W*0.44), x0=iw+S.M*1.5, x1=W-S.M*1.5, cw=x1-x0, xc=(x0+x1)/2;
     cover(ctx,o.img,0,0,iw,H,0.35);
+    gradPanel(ctx,sf,blendEnd(sf,edge(iw-W*0.06,0,W*0.06,H)),iw,0,W-iw,H,W,0,iw,0);
     const m=mark(ctx,o,F,cw*0.5,H*0.2), lg=m.h?m.h+S.M*0.7:0;
     const avail=H-S.M*2.4-lg-34-S.bh;
     const tb=fitText(ctx,o,F,S,lim,cw,avail,1.5), total=lg+tb.h+34+S.bh;
@@ -410,27 +440,31 @@ function split(ctx,W,H,o,p,F,lim){
   }
   const x0=S.M, x1=W-S.M, cw=x1-x0;
   if(S.story){
-    /* סטורי: הפאנל למעלה (מתחת לאזור של הממשק), לוגו, כותרת, משנה וכפתור לכל הרוחב, התמונה למטה */
-    const ph=Math.round(H*0.56), m=mark(ctx,o,F,cw*0.5,W*0.26), lg=m.h?m.h+30:0;
-    const avail=ph-S.T-S.M-lg-36-S.bh;
-    const tb=fitText(ctx,o,F,S,lim,cw,avail,1.35), total=lg+tb.h+36+S.bh;
-    let y=S.T+(ph-S.T-total)/2;
+    /* סטורי: הפאנל למעלה והתמונה למטה. התמונה מקבלת יותר מחצי (תומר: הראש נחתך כשהיא קטנה),
+       והפאנל גדל רק אם הטקסט באמת צריך, כך שהכפתור לעולם לא עולה על התמונה */
+    const m=mark(ctx,o,F,cw*0.42,W*0.19), lg=m.h?m.h+20:0, pad=S.M*0.6;
+    const C=Object.assign({},S,{hs:44,ss:25,bh:58,bs:21});
+    const target=Math.round(H*0.5), avail=target-S.T-pad-lg-28-C.bh;
+    const tb=fitText(ctx,o,F,C,lim,cw,avail,1.15), total=lg+tb.h+28+tb.S.bh;
+    const ph=Math.max(target,Math.round(S.T+total+pad*1.2));
     cover(ctx,o.img,0,ph,W,H-ph,0.3);
+    gradPanel(ctx,sf,blendEnd(sf,edge(0,ph,W,H*0.07)),0,0,W,ph,0,0,0,ph);
+    let y=S.T+(ph-S.T-total)/2;
     if(m.w){ drawMark(ctx,m,(W-m.w)/2,y,ink,o.schematic,sf); y+=lg }
-    drawText(ctx,tb,W/2,y,ink,'center',o.schematic); y+=tb.h+36;
+    drawText(ctx,tb,W/2,y,ink,'center',o.schematic); y+=tb.h+28;
     const pw=Math.max(pillWidth(ctx,o,F,tb.S),cw*0.8);
     pill(ctx,o,F,(W+pw)/2,y,pw,tb.S,col);
     return;
   }
-  /* ריבוע ו-4:5: התמונה למעלה, ובפאנל הכל ממורכז כמו בלרוחב: לוגו גדול, כותרת, משנה וכפתור */
-  /* בריבוע אין הרבה גובה, ולכן הכל קצת יותר צפוף כדי שהתמונה לא תהפוך לרצועה */
-  const tall=H>W*1.1, ph=Math.round(H*(tall?0.52:0.56)), pad=S.M*(tall?0.9:0.62), xc=W/2;
-  const B=tall?S:Object.assign({},S,{ss:21,bh:54,bs:20});
-  const m=mark(ctx,o,F,cw*0.45,S.bh*(tall?1.45:1.1)), lg=m.h?m.h+(tall?18:12):0, g2=tall?26:20;
+  /* ריבוע ו-4:5: התמונה למעלה ומקבלת יותר שטח, ובפאנל הכל ממורכז: לוגו, כותרת, משנה וכפתור */
+  const tall=H>W*1.1, ph=Math.round(H*(tall?0.46:0.5)), pad=S.M*(tall?0.8:0.6), xc=W/2;
+  const B=Object.assign({},S,{ss:tall?S.ss:21,bh:tall?56:52,bs:tall?20:19});
+  const m=mark(ctx,o,F,cw*0.42,S.bh*(tall?1.3:1)), lg=m.h?m.h+(tall?16:10):0, g2=tall?24:18;
   const avail=ph-pad*2-lg-g2-B.bh;
-  const tb=fitText(ctx,o,F,B,lim,cw,avail,tall?1.25:1.1), content=lg+tb.h+g2+tb.S.bh;
+  const tb=fitText(ctx,o,F,B,lim,cw,avail,tall?1.15:1.05), content=lg+tb.h+g2+tb.S.bh;
   const realPh=Math.max(ph,content+pad*2), ih=H-realPh;
   cover(ctx,o.img,0,0,W,ih,0.3);
+  gradPanel(ctx,sf,blendEnd(sf,edge(0,ih-H*0.07,W,H*0.07)),0,ih,W,realPh,0,H,0,ih);
   let y=ih+(realPh-content)/2;
   if(m.w){ drawMark(ctx,m,xc-m.w/2,y,ink,o.schematic,sf); y+=lg }
   drawText(ctx,tb,xc,y,ink,'center',o.schematic); y+=tb.h+g2;
@@ -438,7 +472,6 @@ function split(ctx,W,H,o,p,F,lim){
   pill(ctx,o,F,xc+pw/2,y,pw,tb.S,col);
 }
 
-/* על התמונה: תמונה מלאה, הצללה בצבע מלמטה, הלוגו כמו שהוא בפינה העליונה, טקסט לבן וכפתור לכל הרוחב */
 /* מה יש מתחת למלבן על הקנבס, אחרי שהתמונה וההצללות כבר צוירו: צבע ממוצע, בהירות, וכמה "עמוס" (פיזור הבהירות) */
 function regionStats(ctx,x,y,w,h){
   try{
@@ -522,7 +555,7 @@ function overlay(ctx,W,H,o,p,F,lim){
 function frame(ctx,W,H,o,p,F,lim){
   /* הרקע בצבע שנלקח מהתמונה (לא גוון כמעט לבן), כדי שהכרטיס והרקע ישתלבו */
   const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
-  panel(ctx,sf,0,0,W,H);
+  gradPanel(ctx,sf,blendEnd(sf,avgColor(o.img)),0,0,W,H,W,0,0,H);
   const card=(x,y,w,h)=>{
     ctx.save(); ctx.shadowColor='rgba(0,0,0,.10)'; ctx.shadowBlur=40; ctx.shadowOffsetY=6;
     ctx.fillStyle=WHITE; rr(ctx,x,y,w,h,18); ctx.fill(); ctx.restore();
@@ -555,7 +588,7 @@ function frame(ctx,W,H,o,p,F,lim){
    משנה וכפתור. הקבוצה כולה במרכז האזור הבטוח, כדי שלא יישאר חלל ריק בצד אחד */
 function type(ctx,W,H,o,p,F,lim){
   const S=scale(W,H), sf=p.bg||p.primary, ink=inkOn(sf), col=ctaColors(sf,p);
-  panel(ctx,sf,0,0,W,H);
+  gradPanel(ctx,sf,blendEnd(sf,avgColor(o.img)),0,0,W,H,W,0,0,H);
   const big=Object.assign({},S,{hs:Math.round(S.hs*1.4)});
   const x0=S.M*1.2, x1=W-S.M*1.2, cw=x1-x0, xc=W/2, top=S.T||S.M*1.3, bottom=S.B||S.M*1.3;
   const m=mark(ctx,o,F,cw*0.55,S.story?W*0.26:S.land?H*0.2:H*0.16), gl=m.h?(S.story?44:30):0;
@@ -586,7 +619,7 @@ function render(canvas,o){
 function slotFormat(tpl,format){
   const [W,H]=SIZES[format]||SIZES['4:5'], z=scale(W,H);
   let r=W/H;
-  if(tpl==='split') r=z.land?(W*0.44)/H:W/(H*(z.story?0.44:H>W*1.1?0.48:0.44));
+  if(tpl==='split') r=z.land?(W*0.44)/H:W/(H*(z.story?0.5:H>W*1.1?0.54:0.5));
   else if(tpl==='frame') r=z.land?(W*0.44)/(H-80):(z.story?0.9:H>W*1.1?1.5:2.2);
   else if(tpl==='type') r=1;
   let best='1:1', d=Infinity;
