@@ -481,7 +481,7 @@ async function learn(){
       profile:b.profile||[],history:b.history||[],edits:(b.edits||[]).concat(S.edits).slice(-10)})).text);
     if(Array.isArray(j.profile))b.profile=j.profile.map(x=>String(x).trim()).filter(Boolean).slice(0,8);
     const ideas=(Array.isArray(j.ideas)?j.ideas:[]).map(x=>String(x).trim()).filter(Boolean).slice(0,4);
-    if(ideas.length){ b.ideas=ideas; b.ideasFor=[b.name,b.field,b.city].join('|') }
+    if(ideas.length){ b.ideas=ideas; b.ideasFor=[b.name,b.field,b.city,'2'].join('|') }
     b.edits=(b.edits||[]).concat(S.edits).slice(-10); S.edits=[];
     try{ await DB.put('settings',BIZLIST) }catch(e){}
     if(ideas.length&&curBiz()===b)renderIdeas(ideas);
@@ -491,7 +491,8 @@ async function learn(){
 let ideasReq=0;
 async function loadIdeas(){
   const b=curBiz(); if(!b)return renderIdeas(IDEAS_GENERIC);
-  const sig=[b.name,b.field,b.city].join('|');
+  /* |2: רעיונות שנכתבו לפני כלל הניסוח החדש (לשון רבים, עברית מלאה) נכתבים מחדש */
+  const sig=[b.name,b.field,b.city,'2'].join('|');
   if(Array.isArray(b.ideas)&&b.ideas.length>=4&&b.ideasFor===sig)return renderIdeas(b.ideas);
   if(Array.isArray(b.ideas)&&b.ideas.length)renderIdeas(b.ideas);
   else renderIdeas(IDEAS_GENERIC);
