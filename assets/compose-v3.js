@@ -142,7 +142,7 @@ function focus(img){
     if(top>=0){
       let sx=0,cnt=0;
       for(let j=top;j<Math.min(n,top+18);j++)for(let i=0;i<n;i++){ if(skinAt((j*n+i)*4)){ sx+=i; cnt++ } }
-      f={ top:Math.max(0,top/n-0.08), cx:cnt?(sx/cnt+.5)/n:0.5, mask, n };
+      f={ top:Math.max(0,top/n-0.1), cx:cnt?(sx/cnt+.5)/n:0.5, mask, n };
     }
   }catch(e){}
   FOCUS.set(img,f); return f;
@@ -152,7 +152,8 @@ function cover(ctx,img,x,y,w,h,fy){
   const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
   const s=Math.max(w/iw,h/ih), sw=w/s, sh=h/s, f=focus(img);
   /* חיתוך מלמעלה ולמטה: מתחילים מעט מעל הראש. בלי אנשים, קרוב לחלק העליון */
-  const want=f?f.top*ih-sh*0.05:(ih-sh)*(fy==null?0.2:Math.min(fy,0.2));
+  /* מרווח נדיב מעל הראש של האדם הכי גבוה בתמונה (10% מהשיער ועוד 8% מהחלון) */
+  const want=f?f.top*ih-sh*0.08:(ih-sh)*(fy==null?0.2:Math.min(fy,0.2));
   const sy=Math.max(0,Math.min(ih-sh,want));
   const sx=Math.max(0,Math.min(iw-sw,f?f.cx*iw-sw/2:(iw-sw)/2));
   ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
@@ -623,7 +624,7 @@ function render(canvas,o){
 function slotFormat(tpl,format){
   const [W,H]=SIZES[format]||SIZES['4:5'], z=scale(W,H);
   let r=W/H;
-  if(tpl==='split') r=z.land?(W*0.44)/H:W/(H*(z.story?0.45:H>W*1.1?0.54:0.5));
+  if(tpl==='split') r=z.land?(W*0.44)/H:W/(H*(z.story?0.4:H>W*1.1?0.54:0.5));
   else if(tpl==='frame') r=z.land?(W*0.44)/(H-80):(z.story?0.9:H>W*1.1?1.5:2.2);
   else if(tpl==='type') r=1;
   let best='1:1', d=Infinity;
