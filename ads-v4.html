@@ -206,6 +206,8 @@ h1,h2,h3{margin:0}
 .chip{border:1px solid #D5DCE3;background:#fff;border-radius:100px;padding:6px 14px;font-size:14px;cursor:pointer}
 .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
 
+.upd{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;border:0;border-radius:100px;padding:10px 20px;font-size:15px;cursor:pointer;box-shadow:0 8px 24px rgba(3,56,65,.25);z-index:35;animation:rise .3s cubic-bezier(.22,.7,.2,1) both}
+.upd b{text-decoration:underline;margin-inline-start:6px}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:12px;font-size:15px;opacity:0;pointer-events:none;transition:all .25s;z-index:20}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .fade-in{animation:fadein .4s ease both}
@@ -953,6 +955,26 @@ function download(url){ const a=document.createElement('a'); a.href=url; a.downl
 function dlCurrent(){ const cv=$('#sCv'); if(cv&&S.result)download(cv.toDataURL('image/jpeg',0.94)) }
 $('#sDl').onclick=dlCurrent;
 $('#sCopy').onclick=()=>{ try{ navigator.clipboard.writeText((S.result&&S.result.text)||''); toast('הקופי הועתק') }catch(e){ toast('ההעתקה נכשלה') } };
+
+/* =================== עדכון גרסה ===================
+   דף שנפתח לפני עדכון ממשיך להריץ את הקוד הישן עד רענון (וגם GitHub שומר אותו במטמון 10 דקות).
+   בודקים כל כמה דקות ובחזרה ללשונית אם יש גרסה חדשה, ומציעים רענון בלחיצה. לא מרעננים לבד באמצע עבודה */
+const MY_VER=(document.querySelector('script[src*="compose-v3.js"]').getAttribute('src').match(/v=([a-f0-9]+)/)||[])[1]||'';
+async function checkUpdate(){
+  if(!IS_PAGES||!MY_VER||$('#updBtn'))return;
+  try{
+    const html=await fetch(location.pathname+'?t='+Date.now(),{cache:'no-store'}).then(r=>r.text());
+    const v=(html.match(/compose-v3\.js\?v=([a-f0-9]+)/)||[])[1];
+    if(v&&v!==MY_VER){
+      const b=document.createElement('button'); b.className='upd'; b.id='updBtn';
+      b.innerHTML='יש גרסה חדשה של הכלי<b>לרענון</b>';
+      b.onclick=()=>location.reload();
+      document.body.appendChild(b);
+    }
+  }catch(e){}
+}
+setInterval(checkUpdate,180000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden)checkUpdate() });
 
 /* =================== התחלה =================== */
 (async()=>{
