@@ -426,7 +426,7 @@ function split(ctx,W,H,o,p,F,lim){
   const edge=(x,y,w,h)=>{ const st=o.img&&!o.schematic?regionStats(ctx,x,y,w,h):null; return st?st.hex:null };
   if(S.land){
     /* לרוחב: תמונה משמאל 44%, ובעמודה הימנית הכל ממורכז: לוגו גדול למעלה, כותרת גדולה, משנה וכפתור */
-    const iw=Math.round(W*0.44), x0=iw+S.M*1.5, x1=W-S.M*1.5, cw=x1-x0, xc=(x0+x1)/2;
+    const iw=Math.round(W*0.5), x0=iw+S.M*1.4, x1=W-S.M*1.4, cw=x1-x0, xc=(x0+x1)/2;
     cover(ctx,o.img,0,0,iw,H,0.35);
     gradPanel(ctx,sf,blendEnd(sf,edge(iw-W*0.06,0,W*0.06,H)),iw,0,W-iw,H,W,0,iw,0);
     const m=mark(ctx,o,F,cw*0.5,H*0.2), lg=m.h?m.h+S.M*0.7:0;
@@ -440,38 +440,43 @@ function split(ctx,W,H,o,p,F,lim){
     return;
   }
   const x0=S.M, x1=W-S.M, cw=x1-x0;
+  /* לפי banner-design: בפרסום ברשתות התמונה גדולה מהטקסט (בערך 60/40), והיררכיה בשלושה אזורים:
+     לוגו למעלה, מסר ותמונה באמצע, וכפתור למטה */
   if(S.story){
-    /* סטורי: הפאנל למעלה והתמונה למטה. התמונה מקבלת יותר מחצי (תומר: הראש נחתך כשהיא קטנה),
-       והפאנל גדל רק אם הטקסט באמת צריך, כך שהכפתור לעולם לא עולה על התמונה */
-    /* איזון: לוגו וטקסט בגודל נדיב (תומר: כשהפאנל נדחס הכל יצא קטן), והתמונה לפחות 42% מהגובה.
-       הראש נשמר בזכות החיתוך לפי הפנים, לא בזכות פאנל קטן */
-    const T=Math.min(S.T,100);   /* הממשק של הסטורי מכסה כ-10% למעלה */
-    const m=mark(ctx,o,F,cw*0.5,W*0.22), lg=m.h?m.h+22:0, pad=S.M*0.7;
-    const C=Object.assign({},S,{hs:52,ss:27,bh:62,bs:22});
-    const maxPh=Math.round(H*0.62), avail=maxPh-T-pad*1.4-lg-30-C.bh;
-    const tb=fitText(ctx,o,F,C,lim,cw,avail,1.3,0.72), total=lg+tb.h+30+tb.S.bh;
-    /* בלי תקרה: אם הטקסט ארוך במיוחד הפאנל גדל, כי כפתור שעולה על התמונה גרוע יותר */
-    const ph=Math.max(Math.round(H*0.5),Math.round(T+total+pad*1.4));
+    /* סטורי: למעלה פאנל עם לוגו, כותרת ומשנה. מתחתיו התמונה, ובתחתית שלה הכפתור, מעל אזור הממשק של אינסטגרם */
+    const T=Math.min(S.T,100);
+    const m=mark(ctx,o,F,cw*0.44,W*0.18), lg=m.h?m.h+20:0, pad=S.M*0.6;
+    const C=Object.assign({},S,{hs:52,ss:26,bh:64,bs:22});
+    const maxPh=Math.round(H*0.49), avail=maxPh-T-pad*1.3-lg;
+    const tb=fitText(ctx,o,F,C,lim,cw,avail,1.3,0.72), total=lg+tb.h;
+    const ph=Math.max(Math.round(H*0.36),Math.round(T+total+pad*1.3));
     cover(ctx,o.img,0,ph,W,H-ph,0.3);
-    gradPanel(ctx,sf,blendEnd(sf,edge(0,ph,W,H*0.07)),0,0,W,ph,0,0,0,ph);
+    const end=blendEnd(sf,edge(0,ph,W,H*0.07));
+    gradPanel(ctx,sf,end,0,0,W,ph,0,0,0,ph);
     let y=T+(ph-T-total)/2;
     if(m.w){ drawMark(ctx,m,(W-m.w)/2,y,ink,o.schematic,sf); y+=lg }
-    drawText(ctx,tb,W/2,y,ink,'center',o.schematic); y+=tb.h+30;
-    const pw=Math.max(pillWidth(ctx,o,F,tb.S),cw*0.8);
-    pill(ctx,o,F,(W+pw)/2,y,pw,tb.S,col);
+    drawText(ctx,tb,W/2,y,ink,'center',o.schematic);
+    /* הכפתור בתחתית התמונה, על הצללה רכה בצבע הפאנל שעולה מלמטה (לא פס) */
+    const by=H-(S.B||S.M)-C.bh, fh=H-by+C.bh*1.6;
+    const g=ctx.createLinearGradient(0,H-fh,0,H);
+    g.addColorStop(0,rgba(end,0)); g.addColorStop(0.55,rgba(end,0.55)); g.addColorStop(1,rgba(end,0.9));
+    ctx.fillStyle=g; ctx.fillRect(0,H-fh,W,fh);
+    const pw=Math.max(pillWidth(ctx,o,F,C),cw*0.72);
+    pill(ctx,o,F,(W+pw)/2,by,pw,C,ctaColors(end,p));
     return;
   }
-  /* ריבוע ו-4:5: התמונה למעלה ומקבלת יותר שטח, ובפאנל הכל ממורכז: לוגו, כותרת, משנה וכפתור */
-  const tall=H>W*1.1, ph=Math.round(H*(tall?0.46:0.5)), pad=S.M*(tall?0.8:0.6), xc=W/2;
-  const B=Object.assign({},S,{ss:tall?S.ss:21,bh:tall?56:52,bs:tall?20:19});
-  const m=mark(ctx,o,F,cw*0.42,S.bh*(tall?1.3:1)), lg=m.h?m.h+(tall?16:10):0, g2=tall?24:18;
-  const avail=ph-pad*2-lg-g2-B.bh;
-  const tb=fitText(ctx,o,F,B,lim,cw,avail,tall?1.15:1.05), content=lg+tb.h+g2+tb.S.bh;
-  const realPh=Math.max(ph,content+pad*2), ih=H-realPh;
-  cover(ctx,o.img,0,0,W,ih,0.3);
+  /* ריבוע ו-4:5: התמונה למעלה ומקבלת את רוב השטח, והלוגו יושב עליה במקום רגוע (כמו בתבנית על התמונה).
+     בפאנל למטה רק המסר והכפתור, כך שהטקסט גדול גם כשהפאנל קטן */
+  const tall=H>W*1.1, target=Math.round(H*(tall?0.4:0.44)), pad=S.M*(tall?0.75:0.6), xc=W/2;
+  const B=Object.assign({},S,{ss:tall?S.ss:21,bh:tall?58:52,bs:tall?21:19});
+  const g2=tall?24:18, avail=target-pad*2-g2-B.bh;
+  const tb=fitText(ctx,o,F,B,lim,cw,avail,tall?1.25:1.1,0.8), content=tb.h+g2+tb.S.bh;
+  const realPh=Math.max(target,content+pad*2), ih=H-realPh;
+  const cv=cover(ctx,o.img,0,0,W,ih,0.3);
   gradPanel(ctx,sf,blendEnd(sf,edge(0,ih-H*0.07,W,H*0.07)),0,ih,W,realPh,0,H,0,ih);
+  const m=mark(ctx,o,F,W*0.34,S.bh*(tall?1.3:1.1));
+  placeLogo(ctx,cv,o,m,mix(sf,'#000',0.3),S.M,W-S.M,S.M*0.8);
   let y=ih+(realPh-content)/2;
-  if(m.w){ drawMark(ctx,m,xc-m.w/2,y,ink,o.schematic,sf); y+=lg }
   drawText(ctx,tb,xc,y,ink,'center',o.schematic); y+=tb.h+g2;
   const pw=Math.max(pillWidth(ctx,o,F,tb.S),cw*0.62);
   pill(ctx,o,F,xc+pw/2,y,pw,tb.S,col);
@@ -507,6 +512,37 @@ function logoLum(img){
 }
 const lumContrast=(a,b)=>(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
 
+/* לוגו על התמונה: אחרי שהתמונה צוירה בודקים מקומות אפשריים בשורה העליונה של האזור (צד, מרכז, צד, בשני גבהים
+   ובשני גדלים), ובוחרים מקום רגוע, בלי פנים ושיער, שהלוגו בולט עליו. הלוגו מתאים את עצמו לרקע שנבחר,
+   ואם עדיין אין מספיק ניגוד מתחתיו נכנסת הצללה רכה ועגולה (לא מסגרת) */
+function placeLogo(ctx,cv,o,m,shade,x0,x1,ly){
+  if(!m.w)return;
+  const full={w:m.w,h:m.h}, small={w:m.w*0.78,h:m.h*0.78}, spots=[];
+  [[full,0],[small,0.6]].forEach(([sz,pen])=>[0,1].forEach(row=>[x0,(x0+x1-sz.w)/2,x1-sz.w].forEach((x,i)=>
+    spots.push({x,y:ly+row*full.h*0.85,sz,pen:pen+row*0.5+i*0.05}))));
+  let pick={x:x0,y:ly,sz:full,st:null,c:1,score:-Infinity};
+  if(!o.schematic&&m.img){
+    spots.forEach(sp=>{
+      const st=regionStats(ctx,sp.x-6,sp.y-6,sp.sz.w+12,sp.sz.h+12); if(!st)return;
+      const sk=skinUnder(cv,sp.x-8,sp.y-8,sp.sz.w+16,sp.sz.h+16,7);
+      const c=Math.max(lumContrast(logoLum(m.img),st.lum),lumContrast(logoLum(adaptLogo(m.img,st.hex)),st.lum));
+      const score=Math.min(c,6)-st.sd*14-sk*10-sp.pen;
+      if(score>pick.score)pick=Object.assign({},sp,{st,c,score});
+    });
+  }
+  if(pick.sz!==full){ m.w=pick.sz.w; m.h=pick.sz.h }
+  const surf=pick.st?pick.st.hex:shade;
+  if(pick.st&&pick.c<3){
+    const lightLogo=logoLum(adaptLogo(m.img,surf))>pick.st.lum;
+    const cx=pick.x+m.w/2, cy=pick.y+m.h/2, r=Math.max(m.w,m.h)*0.95;
+    const sg=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+    const tint=lightLogo?mix(shade,'#000',0.3):'#FFFFFF';
+    sg.addColorStop(0,rgba(tint,lightLogo?0.5:0.6)); sg.addColorStop(0.6,rgba(tint,lightLogo?0.3:0.38)); sg.addColorStop(1,rgba(tint,0));
+    ctx.fillStyle=sg; ctx.fillRect(cx-r,cy-r,r*2,r*2);
+  }
+  drawMark(ctx,m,pick.x,pick.y,WHITE,o.schematic,surf);
+}
+
 function overlay(ctx,W,H,o,p,F,lim){
   const S=scale(W,H);
   const cv=cover(ctx,o.img,0,0,W,H);
@@ -520,35 +556,7 @@ function overlay(ctx,W,H,o,p,F,lim){
   ctx.fillStyle=g2; ctx.fillRect(0,0,W,top*1.5);
   const x0=S.M, x1=S.land?W*0.62:W-S.M;
   const m=mark(ctx,o,F,(W-S.M*2)*0.4,S.bh*1.4);
-  /* בדיקה אחרי שהתמונה צוירה: לכל מקום אפשרי למעלה (שמאל, מרכז, ימין) בודקים מה יש מתחתיו בפועל.
-     מעדיפים מקום רגוע (לא עמוס), בלי פנים, ושהלוגו בולט עליו. הלוגו מתאים את עצמו לבהירות של המקום שנבחר,
-     ואם עדיין אין מספיק ניגוד, מתחתיו נכנסת הצללה רכה ועגולה (לא מסגרת) */
-  /* מקומות אפשריים: שלוש עמדות לרוחב, בשני גבהים, ובגודל מלא או קטן מעט. עדיפות קלה לגודל המלא ולמעלה */
-  const ly=S.T||S.M, full={w:m.w,h:m.h}, small={w:m.w*0.78,h:m.h*0.78};
-  const spots=[];
-  [[full,0],[small,0.6]].forEach(([sz,pen])=>[0,1].forEach(row=>[S.M,(W-sz.w)/2,W-S.M-sz.w].forEach((x,i)=>
-    spots.push({x,y:ly+row*full.h*0.85,sz,pen:pen+row*0.5+i*0.05}))));
-  let pick={x:S.M,y:ly,sz:full,st:null,c:1,score:-Infinity};
-  if(!o.schematic&&m.img){
-    spots.forEach(sp=>{
-      const st=regionStats(ctx,sp.x-6,sp.y-6,sp.sz.w+12,sp.sz.h+12); if(!st)return;
-      const sk=skinUnder(cv,sp.x-8,sp.y-8,sp.sz.w+16,sp.sz.h+16,7);
-      const c=Math.max(lumContrast(logoLum(m.img),st.lum),lumContrast(logoLum(adaptLogo(m.img,st.hex)),st.lum));
-      const score=Math.min(c,6)-st.sd*14-sk*10-sp.pen;
-      if(score>pick.score)pick=Object.assign({},sp,{st,c,score});
-    });
-  }
-  if(pick.sz!==full){ m.w=pick.sz.w; m.h=pick.sz.h }
-  const surf=pick.st?pick.st.hex:mix(p.primary,'#000',0.4);
-  if(pick.st&&pick.c<3){
-    const lightLogo=logoLum(adaptLogo(m.img,surf))>pick.st.lum;
-    const cx=pick.x+m.w/2, cy=pick.y+m.h/2, r=Math.max(m.w,m.h)*0.95;
-    const sg=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
-    const tint=lightLogo?mix(shade,'#000',0.3):'#FFFFFF';
-    sg.addColorStop(0,rgba(tint,lightLogo?0.5:0.6)); sg.addColorStop(0.6,rgba(tint,lightLogo?0.3:0.38)); sg.addColorStop(1,rgba(tint,0));
-    ctx.fillStyle=sg; ctx.fillRect(cx-r,cy-r,r*2,r*2);
-  }
-  drawMark(ctx,m,pick.x,pick.y,WHITE,o.schematic,surf);
+  placeLogo(ctx,cv,o,m,shade,S.M,W-S.M,S.T||S.M);
   const tb=textBlock(ctx,o,F,S,lim,(S.land?W*0.62:W)-S.M*2);
   const by=H-(S.B||S.M)-S.bh;
   drawText(ctx,tb,W-S.M,by-30-tb.h,WARM_WHITE,'right',o.schematic);
@@ -624,7 +632,7 @@ function render(canvas,o){
 function slotFormat(tpl,format){
   const [W,H]=SIZES[format]||SIZES['4:5'], z=scale(W,H);
   let r=W/H;
-  if(tpl==='split') r=z.land?(W*0.44)/H:W/(H*(z.story?0.4:H>W*1.1?0.54:0.5));
+  if(tpl==='split') r=z.land?(W*0.5)/H:W/(H*(z.story?0.62:H>W*1.1?0.6:0.56));
   else if(tpl==='frame') r=z.land?(W*0.44)/(H-80):(z.story?0.9:H>W*1.1?1.5:2.2);
   else if(tpl==='type') r=1;
   let best='1:1', d=Infinity;
