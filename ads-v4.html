@@ -426,9 +426,9 @@ const FORMAT=[
   {v:'4:5',t:'אינסטגרם לאורך',px:'1080×1350',plat:'אינסטגרם'},
   {v:'1:1',t:'פוסט בפיד',px:'1080×1080',plat:'אינסטגרם'},
   {v:'9:16',t:'סטורי',px:'1080×1920',plat:'אינסטגרם',story:true},
-  {v:'reels',t:'Reels / TikTok',px:'1080×1920',plat:'טיקטוק',story:true},
+  {v:'reels',t:'Reels / TikTok',px:'1080×1920',plat:'טיקטוק',story:true,hide:true},
   {v:'fb',t:'מודעת פייסבוק',px:'1920×1080',plat:'פייסבוק'},
-  {v:'li',t:'פוסט בלינקדאין',px:'1920×1080',plat:'לינקדאין'}
+  {v:'li',t:'פוסט בלינקדאין',px:'1920×1080',plat:'לינקדאין',hide:true}
 ];
 const GOALS=['לידים ופניות','מכירות','הרשמות','חשיפה ומודעות'];
 const TONE=['ידידותי וחם','מקצועי ומהוקצע','אנרגטי ומניע','יוקרתי ורגוע'];
@@ -567,6 +567,14 @@ async function answer(v,label){
 }
 async function next(){
   if(QUEUE.length){ await ask(QUEUE.shift()); return }
+  /* לפני האישור מחכים להבנה של הבקשה. שאלה נוספת רק אם חסר פרט שאי אפשר לנחש */
+  if(S.planP){
+    const stop=typing(), p=await S.planP; stop(); S.planP=null;
+    if(p&&p._err){ await aiSay('לא הצלחתי להתחבר לשרת היצירה כרגע ('+esc(p._err.message)+'). אפשר לנסות שוב בעוד רגע.',0);
+                   options([{t:'לנסות שוב',primary:true}],()=>start(S.prompt)); return }
+    const xq=p&&p.extra_question;
+    if(xq&&xq.q){ QUEUE.push(Q.extra(xq)); return next() }
+  }
   await confirmStep();
 }
 
@@ -578,7 +586,7 @@ const Q={
   audience:()=>({qk:'audience',q:'למי המודעה מיועדת?',free:true,
                  options:S.audOpts||['קהל רחב','נשים','גברים','הורים צעירים','צעירים 20 פלוס'],set:v=>{S.audience=v==='קהל רחב'?'':v}}),
   extra:xq=>({qk:'extra',q:xq.q,free:true,options:(xq.options||[]).slice(0,4),set:v=>{S.extraQ=xq.q;S.extraA=v; if(xq['key']==='offer')S.offer=v}}),
-  format:()=>({qk:'format',q:'איפה המודעה תתפרסם?',free:true,match:matchFormat,options:lastFirst(FORMAT.map(f=>({t:f.t,d:f.px,v:f.v})),'fmtV'),set:v=>{S.format=v;renderStage()}}),
+  format:()=>({qk:'format',q:'איפה המודעה תתפרסם?',free:true,match:matchFormat,options:lastFirst(FORMAT.filter(f=>!f.hide).map(f=>({t:f.t,d:f.px,v:f.v})),'fmtV'),set:v=>{S.format=v;renderStage()}}),
   template:()=>({qk:'template',q:'איזה עיצוב? הסקיצה מתעדכנת משמאל',free:true,match:matchTemplate,
                  options:lastFirst(TEMPLATES.map(t=>({t:t.t,d:t.d,v:t.v})),'tplV'),set:v=>{S.template=v;renderStage()}}),
   /* ישיר או רעיון יצירתי: במודעה ישירה מצלמים את השירות עצמו, ברעיון יצירתי מטאפורה חזותית שעוצרת גלילה */
@@ -684,26 +692,10 @@ async function start(prompt){
   chatBody().innerHTML=`<div class="c-day">היום · ${new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</div>`;
   renderStage();
   say('me',esc(prompt));
-  let stop=typing(), bub=null, stop2=null, plan={};
-  try{
-    plan=await sofiaPlan(prompt,(rep,done)=>{
-      if(!bub){ stop(); stop=()=>{}; bub=say('ai','').querySelector('.bub') }
-      bub.innerHTML='<span class="nm">Sofia</span>'+esc(rep);
-      if(done&&!stop2)stop2=typing();
-      scrollChat();
-    });
-  }catch(e){ stop(); stop2&&stop2(); await aiSay('לא הצלחתי להתחבר לשרת היצירה כרגע ('+esc(e.message)+'). אפשר לנסות שוב בעוד רגע.',0);
-              options([{t:'לנסות שוב',primary:true}],()=>start(prompt)); return }
-  stop(); stop2&&stop2();
-  applyPlan(plan);
-  const html='<span class="nm">Sofia</span>'+esc(plan.reply||'הבנתי, בואו ניצור את המודעה')+assumeHtml();
-  if(!bub)bub=say('ai','').querySelector('.bub');
-  bub.innerHTML=html; wireAssume(bub); scrollChat();
-  QUEUE=[];
-  const xq=plan.extra_question;
-  if(xq&&xq.q)QUEUE.push(Q.extra(xq));
-  QUEUE.push(Q.format());
-  await wait(250); next();
+  /* תומר: לא מציגים מה סופיה הסיקה, רק שואלים איפה מפרסמים. ההבנה של הבקשה רצה ברקע בזמן שעונים */
+  S.planP=sofiaPlan(prompt).then(p=>{ applyPlan(p); return p }).catch(e=>({_err:e}));
+  QUEUE=[Q.format()];
+  await wait(200); next();
 }
 /* תיקון של בעל העסק להנחות: סופיה מעדכנת את הבריף ושומרת את מה שכבר נבחר */
 async function correctPlan(text){
@@ -713,7 +705,7 @@ async function correctPlan(text){
   stop();
   S.prompt+='\n'+text;
   applyPlan(plan);
-  const m=say('ai',esc(plan.reply||'עדכנתי')+assumeHtml()); wireAssume(m);
+  say('ai',esc(plan.reply||'עדכנתי'));
   if(S.format)await confirmStep(); else { QUEUE=[Q.format()]; next() }
 }
 
@@ -747,12 +739,11 @@ function shrink(file,max){
 /* סיכום ואישור לפני יצירה בתשלום */
 function summaryHtml(){
   const f=FORMAT.find(x=>x.v===S.format);
-  const rows=[['מקדמים',S.detail||S.promote],['ההצעה',S.offer],['קהל',S.audience],['אווירה',S.tone],['סגנון',S.visual],
-              ['פורמט',f&&f.t],['תמונה',S.own?'התמונה שלכם':'']];
+  const rows=[['מקדמים',S.detail||S.promote],['פורמט',f&&f.t],['תמונה',S.own?'התמונה שלכם':'']];
   return '<ul class="sumlist">'+rows.filter(r=>r[1]).map(r=>`<li><b>${esc(r[0])}</b>${esc(r[1])}</li>`).join('')+'</ul>';
 }
 async function confirmStep(){
-  await aiSay('יש לי את כל מה שצריך:'+summaryHtml());
+  await aiSay('מעולה, אפשר ליצור:'+summaryHtml());
   options([{t:'צרו את המודעה',d:'2 קרדיטים, ועוד 2 אם צריך תיקון',primary:true,v:'go'},{t:'לשנות משהו',v:'change'}],o=>{
     say('me',esc(o.t));
     if(o.v==='go')generate(); else changeMenu();
