@@ -895,7 +895,7 @@ async function logoPng(){
   catch(e){ return null }
 }
 async function toDataUrl(url){
-  const im=await AdCompose.loadImage(await fetchImage(url)), c=document.createElement('canvas');
+  const im=await AdCompose.loadImage(/^https?:/.test(url)?await fetchImage(url):url), c=document.createElement('canvas');
   c.width=im.naturalWidth||im.width; c.height=im.naturalHeight||im.height; c.getContext('2d').drawImage(im,0,0);
   return c.toDataURL('image/jpeg',0.92);
 }
@@ -947,7 +947,7 @@ async function runEdit(copy,imageNote){
   S.busy=true; S.draft=R.url; S.step='מעדכנת את המודעה'; renderStage();
   const step=progBubble('מעדכנת. זה לוקח כמה דקות, כי אני בודקת שוב כל אות');
   try{
-    const out=await adStream({mode:'edit',business:{name:BIZ.name},logo:await logoPng(),image:R.url,format:R.format,
+    const out=await adStream({mode:'edit',business:{name:BIZ.name},logo:await logoPng(),image:/^data:/.test(R.url)?R.url:await toDataUrl(R.url),format:R.format,
       prompt:R.plan&&R.plan.prompt||'',oldCopy:R.copy,copy,imageNote:imageNote||''},(type,d)=>{ if(type==='step'){ S.step=d.t; step(d.t); const bd=$('.s-badge'); if(bd)bd.textContent=d.t+'...' } });
     R.url=await toDataUrl(out.url); R.src=out.url; R.copy=out.copy; R.qa=out.qa;
     S.busy=false; S.draft=null;
@@ -1208,7 +1208,39 @@ const EXAMPLES=[
   {id:'ad1792300000004',format:'4:5',file:'assets/examples/nb-D.jpg',headline:'הגוף שלך יודה לך מחר',promote:'שיעור היכרות למי שעוד לא ניסו פילאטיס',
    text:'שיעור היכרות ראשון לכל מי שעוד לא ניסו פילאטיס\n\nבקבוצה קטנה, בקצב שלכם ועם מדריכה שמלווה כל תנועה'}
 ];
+/* מודעות מהמנוע החדש (19.10.2026): שישה עסקים שונים, כל אחד בסוג חזותי אחר, אחרי בדיקה ותיקון.
+   נכנסות פעם אחת ל"המודעות שלי" (seedExamples2) ונפתחות כמו מודעה שנוצרה בכלי */
+const EXAMPLES_V5=[
+  {id:'ad1792400000007',format:'4:5',file:'assets/examples/v5-pilates.jpg',biz:'סטודיו מוב',promote:'קבוצת פילאטיס חדשה לנשים בהריון',
+   copy:{headline:'פילאטיס מכשירים לנשים בהריון',subline:'קבוצה חדשה בתל אביב, ימי ראשון בערב',cta:'לפרטים והרשמה'}},
+  {id:'ad1792400000006',format:'1:1',file:'assets/examples/v5-ac.jpg',biz:'קריר',promote:'ניקוי וחיטוי מזגן ב-199 ש״ח במקום 280',
+   copy:{headline:'ניקוי וחיטוי מזגן',subline:'במקום 280 ₪, עד סוף החודש',cta:'הזמינו עכשיו'}},
+  {id:'ad1792400000005',format:'4:5',file:'assets/examples/v5-cabins.jpg',biz:'בקתות הגפן',promote:'סופי שבוע בחורף בבקתות עם ג׳קוזי ונוף לכנרת',
+   copy:{headline:"ג'קוזי פרטי מול הכנרת",subline:'בקתות זוגיות עם אח דולקת, גליל עליון',cta:'להזמנת סופ״ש'}},
+  {id:'ad1792400000004',format:'9:16',file:'assets/examples/v5-barber.jpg',biz:'הספר של עומר',promote:'שעות ערב חדשות עד 22:00 ותור בוואטסאפ',
+   copy:{headline:'סיימתם לעבוד בשמונה בערב?',subline:'פתוח לתספורת וזקן עד 22:00',cta:'לקביעת תור בוואטסאפ'}},
+  {id:'ad1792400000003',format:'1:1',file:'assets/examples/v5-kids.jpg',biz:'קופצים',promote:'קבוצה חדשה לגילאי 4 עד 8 בימי שלישי',
+   copy:{headline:'סוף סוף יש איפה לקפוץ',subline:'קבוצה חדשה בימי שלישי, לגילאי 4-8',cta:'שריינו מקום'}},
+  {id:'ad1792400000002',format:'9:16',file:'assets/examples/v5-bakery.jpg',biz:'מאפיית השכונה',promote:'מבצע לשישי: 2 חלות ב-25 ש״ח',
+   copy:{headline:'2 חלות ב-25 ש״ח',subline:'כל יום שישי, ישר מהתנור',cta:'הזמינו לשישי'}},
+  {id:'ad1792400000001',format:'4:5',file:'assets/examples/v5-accountant.jpg',biz:'דנה לוי, ראיית חשבון',promote:'בדיקת החזר מס לפני סוף שנת המס',
+   copy:{headline:'אולי מגיע לכם החזר מס',subline:'נבדוק עבורכם לפני סוף שנת המס',cta:'קבעו בדיקה'}}
+];
 async function seedExamples(){
+  try{
+    if(!(await DB.get('settings','seedExamples2'))){
+      for(const e of EXAMPLES_V5){
+        if(ADS.some(a=>a.id===e.id))continue;
+        const rec={id:e.id,url:e.file,text:[e.copy.headline,e.copy.subline].filter(Boolean).join('\n'),biz:e.biz,format:e.format,promote:e.promote,
+                   date:'19.10.2026',example:true,engine:'v5',copy:e.copy,plan:{},qa:{ok:true},compose:{headline:e.copy.headline}};
+        await DB.put('ads',rec); ADS.push(rec);
+      }
+      await DB.put('settings',{id:'seedExamples2',v:1});
+    }
+  }catch(e){}
+  return seedExamples1();
+}
+async function seedExamples1(){
   try{
     if(await DB.get('settings','seedExamples'))return;
     for(const e of EXAMPLES){
