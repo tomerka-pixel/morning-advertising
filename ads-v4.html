@@ -1035,9 +1035,35 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden)checkUpda
       BIZLIST.list.push({bid:'b'+(Date.now()+1),name:'סטודיו מוב',nameEn:'STUDIO MOVE',field:'סטודיו לפילאטיס מכשירים',city:'תל אביב',site:'studiomove.co.il',logoId:'seed-logo'});
     try{ await DB.put('settings',BIZLIST) }catch(e){}
   }
+  await seedExamples();
   applyBiz();
   showLanding();
 })();
+
+/* מודעות לדוגמה של סטודיו מוב, מהניסוי שבו ננו בננה פרו צייר את כל המודעה (סבב 2).
+   נכנסות פעם אחת ל"המודעות שלי" כאילו נוצרו בכלי. בלי compose, ולכן נפתחות לצפייה והורדה בלבד */
+const EXAMPLES=[
+  {id:'ad1792300000001',format:'4:5',file:'assets/examples/nb-A.jpg',headline:'שיעור ניסיון ראשון במתנה',promote:'שיעור ניסיון ראשון במתנה',
+   text:'פילאטיס מכשירים בקבוצות קטנות, עם ליווי צמוד לאורך כל השיעור\n\nהשיעור הראשון עלינו. קבעו עכשיו ובואו להכיר את הסטודיו'},
+  {id:'ad1792300000002',format:'9:16',file:'assets/examples/nb-B.jpg',headline:'חידוש מנוי בהנחה לוותיקות',promote:'חידוש מנוי בהנחה ללקוחות ותיקות',
+   text:'אתן כבר בפנים, אז ממשיכות יחד במחיר מיוחד\n\nחידוש מנוי בהנחה ללקוחות הוותיקות של הסטודיו'},
+  {id:'ad1792300000003',format:'1:1',file:'assets/examples/nb-C.jpg',headline:'מביאים חברה, השיעור עלינו',promote:'מבצע 1+1 על שיעורי ניסיון',
+   text:'מבצע 1+1 על שיעורי ניסיון עד סוף החודש\n\nמביאים חברה, והשיעור שלה עלינו. נרשמים יחד ומתחילים יחד'},
+  {id:'ad1792300000004',format:'4:5',file:'assets/examples/nb-D.jpg',headline:'הגוף שלך יודה לך מחר',promote:'שיעור היכרות למי שעוד לא ניסו פילאטיס',
+   text:'שיעור היכרות ראשון לכל מי שעוד לא ניסו פילאטיס\n\nבקבוצה קטנה, בקצב שלכם ועם מדריכה שמלווה כל תנועה'}
+];
+async function seedExamples(){
+  try{
+    if(await DB.get('settings','seedExamples'))return;
+    for(const e of EXAMPLES){
+      if(ADS.some(a=>a.id===e.id))continue;
+      const rec={id:e.id,url:e.file,text:e.text,biz:'סטודיו מוב',format:e.format,promote:e.promote,
+                 date:'18.10.2026',example:true,compose:{headline:e.headline}};
+      await DB.put('ads',rec); ADS.push(rec);
+    }
+    await DB.put('settings',{id:'seedExamples',v:1});
+  }catch(e){}
+}
 
 /* =================== בורר העסק =================== */
 function applyBiz(){
