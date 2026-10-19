@@ -159,6 +159,20 @@ h1,h2,h3{margin:0}
 .opts.used .opt.picked{opacity:1;border-color:var(--ink);background:#F3F7F8;color:var(--ink)}
 .opts.used .opt.picked small{color:var(--muted)}
 .sumlist{margin:6px 0 0;padding:0;list-style:none}
+/* המנוע החדש: ההנחות של סופיה, התקדמות היצירה, והמודעה המצוירת */
+.assume{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.assume button{border:1px solid #BFE8DA;background:#E9F7F2;color:var(--ink);border-radius:100px;padding:4px 12px;font:inherit;font-size:13.5px;cursor:pointer}
+.assume button:hover{border-color:var(--green)}
+.assume-hint{display:block;margin-top:6px;color:#607684;font-size:13.5px}
+.prog{margin:6px 0 0;padding:0;list-style:none;font-size:14px;color:#607684}
+.prog li{padding:2px 0}.prog li.done{color:var(--ink)}.prog li.done:before{content:'✓ ';color:var(--green)}
+.prog li.now:before{content:'• ';color:var(--green)}
+.v5img{display:block;max-width:min(720px,100%);max-height:calc(100vh - 260px);border-radius:6px}
+.qa-warn{width:min(620px,96%);margin-top:14px;padding:10px 14px;border-radius:12px;background:#FFF4E5;border:1px solid #F5D5A8;font-size:13.5px}
+.qa-warn ul{margin:4px 0 0;padding-inline-start:18px}
+.ed-upd{grid-column:1/-1;justify-self:start;border:0;border-radius:100px;background:var(--green);color:#fff;font:inherit;font-size:14.5px;padding:9px 18px;cursor:pointer}
+.ed-upd:disabled{background:#C9D3DA;cursor:default}
+.frame{display:flex;align-items:center;justify-content:center;border:1.5px dashed #C9D3DA;border-radius:8px;color:#8296A3;font-size:14px;max-width:100%}
 .sumlist li{padding:3px 0;font-size:15px}
 .sumlist b{color:var(--muted);font-weight:500;margin-inline-end:6px}
 .c-foot{padding:14px 20px 10px;border-top:1px solid #EFF1F6;background:#FCFCFD}
@@ -413,8 +427,8 @@ const FORMAT=[
   {v:'1:1',t:'פוסט בפיד',px:'1080×1080',plat:'אינסטגרם'},
   {v:'9:16',t:'סטורי',px:'1080×1920',plat:'אינסטגרם',story:true},
   {v:'reels',t:'Reels / TikTok',px:'1080×1920',plat:'טיקטוק',story:true},
-  {v:'fb',t:'מודעת פייסבוק',px:'1200×628',plat:'פייסבוק'},
-  {v:'li',t:'פוסט בלינקדאין',px:'1200×627',plat:'לינקדאין'}
+  {v:'fb',t:'מודעת פייסבוק',px:'1920×1080',plat:'פייסבוק'},
+  {v:'li',t:'פוסט בלינקדאין',px:'1920×1080',plat:'לינקדאין'}
 ];
 const GOALS=['לידים ופניות','מכירות','הרשמות','חשיפה ומודעות'];
 const TONE=['ידידותי וחם','מקצועי ומהוקצע','אנרגטי ומניע','יוקרתי ורגוע'];
@@ -431,7 +445,7 @@ const PHOTO_COMPOSITION={
 const IDEAS_GENERIC=['מבצע לזמן מוגבל','הטבה ללקוחות חדשים','השקה של שירות חדש','מבצע לקראת החגים'];
 
 /* =================== המצב =================== */
-const fresh=()=>({edits:[],concept:null,conceptsSeen:[],prompt:'',promote:'',detail:'',goal:'',audience:'',tone:'',format:'',template:'',font:'',
+const fresh=()=>({edits:[],concept:null,conceptsSeen:[],prompt:'',promote:'',detail:'',offer:'',visual:'',visualWhy:'',assumptions:[],extraQ:'',extraA:'',fixes:[],draft:null,step:'',goal:'',audience:'',tone:'',format:'',template:'',font:'',
                   own:null,useOwn:false,audOpts:null,result:null,busy:false});
 let S=fresh();
 let PENDING=null;   /* השאלה שמחכה לתשובה */
@@ -466,6 +480,9 @@ const profileOf=()=>{ const b=curBiz(); return b&&Array.isArray(b.profile)?b.pro
 function recordAd(){
   const b=curBiz(), R=S.result; if(!b||!R)return;
   b.history=(Array.isArray(b.history)?b.history:[]).filter(h=>h.id!==R.id);
+  if(R.v5){ b.history.push({id:R.id,date:new Date().toISOString().slice(0,10),detail:S.detail||S.promote,goal:S.goal,audience:S.audience,tone:S.tone,
+    format:(FORMAT.find(f=>f.v===R.format)||{}).t||R.format,template:(R.plan&&R.plan.visual||'')+' / '+(R.plan&&R.plan.layout||''),headline:(R.copy||{}).headline,fmtV:R.format,tplV:R.plan&&R.plan.layout});
+    b.history=b.history.slice(-12); return }
   b.history.push({id:R.id,date:new Date().toISOString().slice(0,10),detail:S.detail||S.promote,goal:S.goal,audience:S.audience,tone:S.tone,
     format:(FORMAT.find(f=>f.v===R.D.format)||{}).t||R.D.format,template:(TEMPLATES.find(t=>t.v===R.D.tpl)||{}).t||'',headline:R.D.headline,
     fmtV:R.D.format,tplV:R.D.tpl});
@@ -522,7 +539,7 @@ async function aiSay(html,ms){ const stop=typing(); await wait(ms==null?550:ms);
 /* אפשרויות לחיצה מתחת להודעה. בחירה אחת נועלת אותן ומסמנת מה נבחר */
 function options(list,onPick){
   const w=document.createElement('div'); w.className='opts';
-  w.innerHTML=list.map((o,i)=>`<button class="opt${o.primary?' primary':''}" data-i="${i}">${esc(o.t)}${o.d?`<small>${esc(o.d)}</small>`:''}</button>`).join('');
+  w.innerHTML=list.map((o,i)=>`<button class="opt${o.primary?' primary':''}" data-i="${i}">${esc(o.t)}${o.d?`<small><bdi>${esc(o.d)}</bdi></small>`:''}</button>`).join('');
   w.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
     if(w.classList.contains('used'))return;
     w.classList.add('used'); b.classList.add('picked');
@@ -546,7 +563,7 @@ async function answer(v,label){
   say('me',esc(label||v));
   $('#cIn').placeholder='הקלידו הודעה...';
   await q.set(v);
-  next();
+  if(q.qk!=='change')next();
 }
 async function next(){
   if(QUEUE.length){ await ask(QUEUE.shift()); return }
@@ -560,6 +577,7 @@ const Q={
   tone:()=>({qk:'tone',q:'איזו אווירה תתאים למודעה?',free:true,options:TONE,set:v=>{S.tone=v;S.font=fontFor(v)}}),
   audience:()=>({qk:'audience',q:'למי המודעה מיועדת?',free:true,
                  options:S.audOpts||['קהל רחב','נשים','גברים','הורים צעירים','צעירים 20 פלוס'],set:v=>{S.audience=v==='קהל רחב'?'':v}}),
+  extra:xq=>({qk:'extra',q:xq.q,free:true,options:(xq.options||[]).slice(0,4),set:v=>{S.extraQ=xq.q;S.extraA=v; if(xq['key']==='offer')S.offer=v}}),
   format:()=>({qk:'format',q:'איפה המודעה תתפרסם?',free:true,match:matchFormat,options:lastFirst(FORMAT.map(f=>({t:f.t,d:f.px,v:f.v})),'fmtV'),set:v=>{S.format=v;renderStage()}}),
   template:()=>({qk:'template',q:'איזה עיצוב? הסקיצה מתעדכנת משמאל',free:true,match:matchTemplate,
                  options:lastFirst(TEMPLATES.map(t=>({t:t.t,d:t.d,v:t.v})),'tplV'),set:v=>{S.template=v;renderStage()}}),
@@ -638,7 +656,27 @@ function extraQuestion(pq){
   return Object.assign(base,{q:pq.q||base.q,options:opts,free:true,set});
 }
 
-/* התחלה: ההודעה הראשונה של בעל העסק, ואז סופיה מבינה ושואלת */
+/* התחלה: ההודעה הראשונה של בעל העסק. סופיה מסיקה לבד קהל, אווירה, מטרה וסוג חזותי ומציגה אותם כהנחות,
+   ושואלת רק איפה המודעה תתפרסם. שאלה נוספת רק כשחסר פרט שאי אפשר לנחש (למשל מבצע בלי פרטים) */
+async function sofiaPlan(prompt,onReply){
+  const payload={business:BIZ,prompt,profile:profileOf()};
+  try{ return jsonOf(await planStream(payload,onReply||(()=>{}))) }
+  catch(e){ return jsonOf((await api('/api/plan',payload)).text) }
+}
+function applyPlan(plan){
+  S.promote=plan.promote||''; S.detail=plan.detail||S.prompt; S.offer=plan.offer||'';
+  S.goal=plan.goal||''; S.audience=plan.audience||''; S.tone=plan.tone||'';
+  S.visual=plan.visual||''; S.visualWhy=plan.visual_why||'';
+  S.assumptions=(Array.isArray(plan.assumptions)?plan.assumptions:[]).map(String).slice(0,5);
+}
+function assumeHtml(){
+  if(!S.assumptions.length)return '';
+  return '<div class="assume">'+S.assumptions.map(a=>`<button data-a="${attr(a)}">${esc(a)}</button>`).join('')+'</div>'+
+         '<span class="assume-hint">הנחתי את זה לבד. לחיצה על הנחה, או פשוט לכתוב לי, ואני אשנה</span>';
+}
+function wireAssume(el){
+  el.querySelectorAll('.assume button').forEach(b=>b.onclick=()=>{ $('#cIn').value='במקום "'+b.dataset.a+'": '; $('#cIn').focus(); $('#cIn').oninput() });
+}
 async function start(prompt){
   if(!prompt)return;
   S=fresh(); S.prompt=prompt; PENDING=null; QUEUE=[];
@@ -646,59 +684,52 @@ async function start(prompt){
   chatBody().innerHTML=`<div class="c-day">היום · ${new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</div>`;
   renderStage();
   say('me',esc(prompt));
-  let stop=typing(), bub=null, stop2=null;
-  let plan={};
+  let stop=typing(), bub=null, stop2=null, plan={};
   try{
-    let text;
-    try{
-      text=await planStream({business:BIZ,prompt,profile:profileOf()},(rep,done)=>{
-        if(!bub){ stop(); stop=()=>{}; bub=say('ai','').querySelector('.bub') }
-        bub.innerHTML='<span class="nm">Sofia</span>'+esc(rep);
-        if(done&&!stop2)stop2=typing();
-        scrollChat();
-      });
-    }catch(e){
-      /* בלי הזרמה (למשל שרת ישן): בקשה רגילה */
-      if(bub)throw e;
-      text=(await api('/api/plan',{business:BIZ,prompt,profile:profileOf()})).text;
-    }
-    plan=jsonOf(text);
-  }
-  catch(e){ stop(); stop2&&stop2(); await aiSay('לא הצלחתי להתחבר לשרת היצירה כרגע ('+esc(e.message)+'). אפשר לנסות שוב בעוד רגע.',0);
-            options([{t:'לנסות שוב',primary:true}],()=>start(prompt)); return }
+    plan=await sofiaPlan(prompt,(rep,done)=>{
+      if(!bub){ stop(); stop=()=>{}; bub=say('ai','').querySelector('.bub') }
+      bub.innerHTML='<span class="nm">Sofia</span>'+esc(rep);
+      if(done&&!stop2)stop2=typing();
+      scrollChat();
+    });
+  }catch(e){ stop(); stop2&&stop2(); await aiSay('לא הצלחתי להתחבר לשרת היצירה כרגע ('+esc(e.message)+'). אפשר לנסות שוב בעוד רגע.',0);
+              options([{t:'לנסות שוב',primary:true}],()=>start(prompt)); return }
   stop(); stop2&&stop2();
-  S.promote=plan.promote||''; S.detail=plan.detail||prompt; S.goal=GOALS.includes(plan.goal)?plan.goal:'';
-  S.audience=plan.audience||''; S.tone=TONE.includes(plan.tone)?plan.tone:''; if(S.tone)S.font=AdCompose.fontForTone(S.tone);
-  if(!bub)say('ai',esc(plan.reply||'הבנתי, בואו ניצור את המודעה'));
-  else if(plan.reply)bub.innerHTML='<span class="nm">Sofia</span>'+esc(plan.reply);
-  QUEUE=(Array.isArray(plan.questions)?plan.questions:[]).slice(0,3).map(extraQuestion);
-  const has=k=>QUEUE.some(q=>q.qk===k);
-  if(!S.goal&&!has('goal'))QUEUE.push(Q.goal());
-  if(!S.tone&&!has('tone'))QUEUE.push(Q.tone());
-  QUEUE.push(Q.approach(),Q.format(),Q.template(),Q.image());
+  applyPlan(plan);
+  const html='<span class="nm">Sofia</span>'+esc(plan.reply||'הבנתי, בואו ניצור את המודעה')+assumeHtml();
+  if(!bub)bub=say('ai','').querySelector('.bub');
+  bub.innerHTML=html; wireAssume(bub); scrollChat();
+  QUEUE=[];
+  const xq=plan.extra_question;
+  if(xq&&xq.q)QUEUE.push(Q.extra(xq));
+  QUEUE.push(Q.format());
   await wait(250); next();
 }
+/* תיקון של בעל העסק להנחות: סופיה מעדכנת את הבריף ושומרת את מה שכבר נבחר */
+async function correctPlan(text){
+  const stop=typing(); let plan;
+  try{ plan=await sofiaPlan(S.prompt+'\n\nמה שהנחת קודם: '+S.assumptions.join('; ')+(S.extraA?'\nתשובה קודמת: '+S.extraA:'')+'\nתיקון של בעל העסק: '+text) }
+  catch(e){ stop(); await aiSay('לא הצלחתי לעדכן כרגע ('+esc(e.message)+')',0); return }
+  stop();
+  S.prompt+='\n'+text;
+  applyPlan(plan);
+  const m=say('ai',esc(plan.reply||'עדכנתי')+assumeHtml()); wireAssume(m);
+  if(S.format)await confirmStep(); else { QUEUE=[Q.format()]; next() }
+}
 
-/* תמונה משלכם: מעלים, ואז בוחרים אם להשתמש בה כמו שהיא או כהשראה */
+/* תמונה משלכם (כפתור הפלוס, לפני היצירה): מנהל הקריאייטיב בונה את המודעה עליה או על המקום שבה */
 function pickOwn(){
   return new Promise(res=>{
-    const f=$('#cFile'); let done=false;
-    const finish=()=>{ if(!done){ done=true; res() } };
+    const f=$('#cFile');
     f.onchange=async()=>{
       const file=f.files[0]; f.value='';
-      if(!file){ S.useOwn=false; finish(); return }
-      S.own=await shrink(file,1600);
+      if(!file){ res(); return }
+      S.own=await shrink(file,1600); S.useOwn=false;
       say('me',`<img src="${S.own}" alt="" style="max-width:220px;border-radius:10px;display:block">`);
-      await aiSay('תמונה יפה. איך להשתמש בה?');
-      options([{t:'כמו שהיא',d:'הטקסט והלוגו יונחו עליה',v:true},{t:'כהשראה',d:'המערכת תיצור צילום חדש בהשראתה',v:false}],o=>{
-        S.useOwn=o.v; say('me',esc(o.t)); renderStage(); finish();
-      });
+      await aiSay('מעולה, אבנה את המודעה על התמונה הזאת');
+      res();
     };
     f.click();
-    /* אם סגרו את חלון הבחירה בלי קובץ, ממשיכים עם תמונה שהמערכת תיצור */
-    const back=()=>{ window.removeEventListener('focus',back);
-      setTimeout(()=>{ if(!S.own&&S.useOwn===null){ S.useOwn=false; say('ai','לא נבחרה תמונה, אז המערכת תיצור אחת'); finish() } },900) };
-    window.addEventListener('focus',back);
   });
 }
 function shrink(file,max){
@@ -715,23 +746,28 @@ function shrink(file,max){
 
 /* סיכום ואישור לפני יצירה בתשלום */
 function summaryHtml(){
-  const f=FORMAT.find(x=>x.v===S.format), t=TEMPLATES.find(x=>x.v===S.template);
-  const rows=[['מקדמים',S.detail||S.promote],['מטרה',S.goal],['קהל',S.audience||'קהל רחב'],['אווירה',S.tone],
-              ['רעיון',S.concept?S.concept.idea:'ישיר'],['פורמט',f&&f.t],['עיצוב',t&&t.t],['תמונה',S.own?(S.useOwn?'התמונה שלכם':'בהשראת התמונה שלכם'):'המערכת תיצור']];
+  const f=FORMAT.find(x=>x.v===S.format);
+  const rows=[['מקדמים',S.detail||S.promote],['ההצעה',S.offer],['קהל',S.audience],['אווירה',S.tone],['סגנון',S.visual],
+              ['פורמט',f&&f.t],['תמונה',S.own?'התמונה שלכם':'']];
   return '<ul class="sumlist">'+rows.filter(r=>r[1]).map(r=>`<li><b>${esc(r[0])}</b>${esc(r[1])}</li>`).join('')+'</ul>';
 }
 async function confirmStep(){
-  const cost=S.own&&S.useOwn?'בלי עלות':'קרדיט אחד';
-  await aiSay('מעולה, יש לי את כל מה שצריך:'+summaryHtml());
-  options([{t:'צרו את המודעה',d:cost,primary:true,v:'go'},{t:'לשנות משהו',v:'change'}],o=>{
+  await aiSay('יש לי את כל מה שצריך:'+summaryHtml());
+  options([{t:'צרו את המודעה',d:'2 קרדיטים, ועוד 2 אם צריך תיקון',primary:true,v:'go'},{t:'לשנות משהו',v:'change'}],o=>{
     say('me',esc(o.t));
     if(o.v==='go')generate(); else changeMenu();
   });
 }
 async function changeMenu(){
   await aiSay('מה לשנות?',350);
-  const items=[['detail','מה מקדמים'],['goal','מטרה'],['audience','קהל'],['tone','אווירה'],['approach','רעיון לתמונה'],['format','פורמט'],['template','עיצוב'],['image','תמונה']];
-  options(items.map(([v,t])=>({t,v})),o=>{ say('me',esc(o.t)); QUEUE=[Q[o.v]()]; next() });
+  options([{t:'פורמט',v:'format'},{t:'להוסיף תמונה שלי',v:'own'},{t:'משהו אחר, אכתוב',v:'free'}],async o=>{
+    say('me',esc(o.t));
+    if(o.v==='format'){ QUEUE=[Q.format()]; return next() }
+    if(o.v==='own'){ await pickOwn(); return confirmStep() }
+    PENDING={qk:'change',q:'',free:true,options:[],set:async v=>{ PENDING=null; await correctPlan(v) }};
+    await aiSay('כתבו לי מה לשנות, למשל "הקהל הוא סטודנטים" או "בלי תמונות של אנשים"',300);
+    $('#cIn').focus();
+  });
 }
 
 /* =================== התצוגה משמאל =================== */
@@ -747,10 +783,18 @@ const baseDraw=()=>({name:BIZ.name,nameEn:BIZ.nameEn,site:BIZ.site,font:S.font||
 async function renderStage(){
   const m=$('#sMain');
   $('#sDl').disabled=$('#sCopy').disabled=!S.result;
+  if(S.result&&S.result.v5){ drawV5(); return }
   if(S.result){ drawResult(); return }
+  if(S.busy||!S.template){
+    /* המנוע החדש: לפני היצירה מסגרת בפורמט שנבחר, בזמן היצירה הטיוטה הראשונה (בבדיקה) */
+    const f=FORMAT.find(x=>x.v===S.format);
+    if(S.busy&&S.draft){ m.innerHTML=`<div class="s-canvas fade-in"><span class="s-badge">${esc(S.step||'בודקת')}...</span><img class="v5img" src="${attr(S.draft)}" alt=""><div class="s-work"></div></div>`; return }
+    if(f){ const [w,h]=f.px.split('×').map(Number), H=Math.min(420,$('#sMain').clientHeight-120||420), W=Math.round(H*w/h);
+      m.innerHTML=`<div class="s-canvas fade-in">${S.busy?`<span class="s-badge">${esc(S.step||'יוצרת את המודעה')}...</span>`:''}<div class="frame" style="width:${W}px;height:${H}px">${esc(f.t)} · <bdi dir="ltr">${esc(f.px)}</bdi></div>${S.busy?'<div class="s-work"></div>':''}</div>`; return }
+  }
   if(!S.format||!S.template){
     m.innerHTML=`<div class="s-empty fade-in"><div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div>`+
-      `<h3>המודעה תופיע כאן</h3><p>עונים לסופיה על כמה שאלות קצרות, ואחרי שבוחרים פורמט ועיצוב רואים כאן את המודעה מתגבשת</p></div>`;
+      `<h3>המודעה תופיע כאן</h3><p>כותבים לסופיה מה רוצים לפרסם, בוחרים איפה המודעה תתפרסם, והיא מופיעה כאן</p></div>`;
     return;
   }
   /* סקיצה של העיצוב בפורמט שנבחר, עד שהמודעה האמיתית נוצרת */
@@ -824,53 +868,132 @@ async function fetchImage(url){
   if(!r.ok)throw new Error('download '+r.status);
   return URL.createObjectURL(await r.blob());
 }
-async function generate(note){
+/* המנוע החדש: /api/ad מזרים את ההתקדמות (קופי, תכנון, ציור, בדיקה, תיקון) ומחזיר מודעה מוכנה */
+async function adStream(payload,onEv){
+  const r=await apiFetch('/api/ad',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  if(!r.ok||!r.body)throw new Error('שגיאה '+r.status);
+  const rd=r.body.getReader(), dec=new TextDecoder(); let buf='', out=null;
+  for(;;){
+    const {value,done}=await rd.read(); if(done)break;
+    buf+=dec.decode(value,{stream:true}); let i;
+    while((i=buf.indexOf('\n\n'))>=0){
+      const ev=buf.slice(0,i); buf=buf.slice(i+2);
+      const line=ev.split('\n').find(l=>l.startsWith('data: ')); if(!line)continue;
+      let j; try{ j=JSON.parse(line.slice(6)) }catch(e){ continue }
+      if(j.type==='error')throw new Error(j.data&&j.data.message||'היצירה נכשלה');
+      if(j.type==='done')out=j.data; else onEv(j.type,j.data||{});
+    }
+  }
+  if(!out)throw new Error('החיבור לשרת נקטע לפני שהמודעה הסתיימה');
+  return out;
+}
+/* הלוגו נשלח כ-PNG (גם אם הועלה כ-SVG), כי מודל התמונה והבדיקה צריכים תמונה רגילה */
+async function logoPng(){
+  const a=logoAsset(curBiz()); if(!a)return null;
+  try{ const im=await AdCompose.loadImage(a.url), k=Math.min(1,900/Math.max(im.width,im.height)), c=document.createElement('canvas');
+    c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext('2d').drawImage(im,0,0,c.width,c.height); return c.toDataURL('image/png') }
+  catch(e){ return null }
+}
+async function toDataUrl(url){
+  const im=await AdCompose.loadImage(await fetchImage(url)), c=document.createElement('canvas');
+  c.width=im.naturalWidth||im.width; c.height=im.naturalHeight||im.height; c.getContext('2d').drawImage(im,0,0);
+  return c.toDataURL('image/jpeg',0.92);
+}
+function progBubble(intro){
+  const msg=say('ai',esc(intro||'מתחילה ליצור. זה לוקח כמה דקות, כי אני גם בודקת כל אות')+'<ul class="prog"></ul>');
+  const ul=msg.querySelector('.prog');
+  return t=>{ ul.querySelectorAll('li.now').forEach(li=>{li.className='done'}); const li=document.createElement('li'); li.className='now'; li.textContent=t; ul.appendChild(li); scrollChat() };
+}
+function qaNote(qa,fixes){
+  if(qa&&qa.ok)return fixes?'בדקתי כל אות, תיקנתי את מה שמצאתי, ועכשיו הכל תקין.':'בדקתי כל אות, הכל תקין.';
+  return 'שימו לב: גם אחרי תיקון נשארו דברים שלא הצלחתי לתקן לגמרי, הם רשומים מתחת למודעה. אפשר לבקש ממני גרסה נוספת.';
+}
+async function generate(){
   if(S.busy)return;
-  const prev=S.result;
-  S.busy=true; if(!note)S.result=null; renderStage();
-  const steps=['כותבת את הקופי','מצלמת את התמונה','מעצבת את המודעה'];
-  const msg=await aiSay('מתחילה ליצור. זה לוקח בערך דקה',300);
-  const prog=document.createElement('div'); prog.style.cssText='margin-top:6px;color:#607684;font-size:14px';
-  msg.querySelector('.bub').appendChild(prog);
-  let si=0; prog.textContent=steps[0]+'...';
-  const tick=setInterval(()=>{ si=Math.min(si+1,steps.length-1); prog.textContent=steps[si]+'...' },15000);
+  S.busy=true; S.result=null; S.draft=null; S.step='כותבת את הקופי'; renderStage();
+  const step=progBubble();
   try{
-    const keepText=note&&prev;
-    const [copy,fields,img]=await Promise.all([
-      keepText?Promise.resolve({text:prev.text}):api('/api/post',brief('post')).catch(e=>({_err:e.message})),
-      keepText?Promise.resolve({headline:prev.D.headline,subline:prev.D.sub,cta:prev.D.cta}):askFields().catch(e=>({_err:e.message})),
-      askImage(note)
+    const b=curBiz();
+    const used=((b&&b.history)||[]).map(h=>h.tplV).filter(Boolean).slice(-3);
+    const [out,post]=await Promise.all([
+      adStream({business:{name:BIZ.name,field:BIZ.field,city:BIZ.city},logo:await logoPng(),own:S.own||null,prompt:S.prompt||S.detail,format:S.format,
+                profile:profileOf(),usedLayouts:used,
+                sofia:{detail:S.detail,offer:S.offer,goal:S.goal,audience:S.audience,tone:S.tone,visual:S.visual,visualWhy:S.visualWhy,extraQ:S.extraQ,extraA:S.extraA}},
+        (type,d)=>{
+          if(type==='step'){ S.step=d.t; step(d.t); if(!S.draft)renderStage(); else { const bd=$('.s-badge'); if(bd)bd.textContent=d.t+'...' } }
+          if(type==='copy')say('ai','הקופי: <b>'+esc(d.headline)+'</b>'+(d.subline?'<br>'+esc(d.subline):'')+'<br><span style="color:#607684">כפתור: '+esc(d.cta)+'</span>');
+          if(type==='draft'){ S.draft=d.url; renderStage() }
+        }),
+      api('/api/post',brief('post')).catch(()=>({text:''}))
     ]);
-    clearInterval(tick); prog.textContent=steps[2]+'...';
-    const photo=await AdCompose.loadImage(await fetchImage(img.url));
-    const f=fields&&!fields._err?fields:{};
-    const D=Object.assign(baseDraw(),{tpl:S.template,format:S.format,color:AdCompose.photoColor(photo)||'#3F5D75',bg:'',
-      headline:(f.headline||'').trim()||S.detail,sub:(f.subline||'').trim(),cta:(f.cta||'').trim()||CTA_BY_GOAL[S.goal]||'לפרטים'});
-    if(keepText)D.font=prev.D.font;
-    S.result={D,photo,photoSrc:img.url,text:(copy&&copy.text||'').trim(),id:'ad'+Date.now()};
-    S.busy=false;
-    await saveResult();
-    recordAd(); learnSoon();
+    step('שומרת');
+    const url=await toDataUrl(out.url);
+    S.result={v5:true,id:'ad'+Date.now(),url,src:out.url,copy:out.copy,plan:out.plan,qa:out.qa,fixes:out.fixes,credits:out.credits,format:S.format,text:(post&&post.text||'').trim()};
+    S.busy=false; S.draft=null;
+    await saveResult(); recordAd(); learnSoon();
     renderStage();
-    prog.remove();
-    await aiSay('המודעה מוכנה. אפשר לערוך את הטקסט מתחת למודעה, או פשוט לכתוב לי מה לשנות');
+    $$('.prog li.now').forEach(li=>{li.className='done'});
+    await aiSay('המודעה מוכנה. '+qaNote(out.qa,out.fixes)+' אפשר לשנות את הטקסט מתחת למודעה, או פשוט לכתוב לי מה לשנות');
     afterOptions();
   }catch(e){
-    clearInterval(tick); S.busy=false; if(prev&&!S.result)S.result=prev; renderStage();
-    prog.remove();
+    S.busy=false; S.draft=null; renderStage();
     await aiSay('היצירה נכשלה: '+esc(e.message));
-    options([{t:'לנסות שוב',primary:true,v:'retry'},{t:'לשנות משהו',v:'change'}],o=>{ say('me',esc(o.t)); o.v==='retry'?generate(note):changeMenu() });
+    options([{t:'לנסות שוב',primary:true,v:'retry'},{t:'לשנות משהו',v:'change'}],o=>{ say('me',esc(o.t)); o.v==='retry'?generate():changeMenu() });
+  }
+}
+/* עדכון של מודעה קיימת: טקסט חדש ו/או שינוי בתמונה, בעריכה של המודעה עצמה ובדיקה מחדש */
+async function runEdit(copy,imageNote){
+  const R=S.result; if(!R||S.busy)return;
+  S.busy=true; S.draft=R.url; S.step='מעדכנת את המודעה'; renderStage();
+  const step=progBubble('מעדכנת. זה לוקח כמה דקות, כי אני בודקת שוב כל אות');
+  try{
+    const out=await adStream({mode:'edit',business:{name:BIZ.name},logo:await logoPng(),image:R.url,format:R.format,
+      prompt:R.plan&&R.plan.prompt||'',oldCopy:R.copy,copy,imageNote:imageNote||''},(type,d)=>{ if(type==='step'){ S.step=d.t; step(d.t); const bd=$('.s-badge'); if(bd)bd.textContent=d.t+'...' } });
+    R.url=await toDataUrl(out.url); R.src=out.url; R.copy=out.copy; R.qa=out.qa;
+    S.busy=false; S.draft=null;
+    await saveResult(); renderStage();
+    $$('.prog li.now').forEach(li=>{li.className='done'});
+    await aiSay('עדכנתי. '+qaNote(out.qa,out.fixes));
+    afterOptions();
+  }catch(e){
+    S.busy=false; S.draft=null; renderStage();
+    await aiSay('העדכון נכשל: '+esc(e.message));
   }
 }
 function afterOptions(){
-  options([{t:'כותרת אחרת',v:'h'},{t:'גרסה נוספת',d:S.own&&S.useOwn?'בלי עלות':'קרדיט אחד',v:'again'},{t:'מודעה חדשה',v:'new'}],async o=>{
+  const v5=S.result&&S.result.v5;
+  options([{t:'כותרת אחרת',d:v5?'2 קרדיטים':'',v:'h'},{t:'גרסה נוספת',d:v5?'2 קרדיטים':(S.own&&S.useOwn?'בלי עלות':'קרדיט אחד'),v:'again'},{t:'מודעה חדשה',v:'new'}],async o=>{
     say('me',esc(o.t));
     if(o.v==='h')return editRequest('כותרת אחרת, באותה רוח');
-    if(o.v==='again')return generate();
+    if(o.v==='again')return v5?generate():generateLegacy();
     showLanding();
   });
 }
-
+/* המודעה המצוירת. הטקסט חלק מהציור, ולכן שינוי בשדות מעדכן את המודעה בעריכה (ולא מיד כמו בתבניות) */
+function drawV5(){
+  const R=S.result, m=$('#sMain'), c=R.copy||{};
+  $('#sDl').disabled=$('#sCopy').disabled=false; $('#sDl').onclick=dlCurrent;
+  const qi=R.qa&&!R.qa.ok?((R.qa.issues_he&&R.qa.issues_he.length)?R.qa.issues_he:(R.qa.issues||[])):[];
+  const issues=qi.length?`<div class="qa-warn fade-in"><b>מה שהבדיקה עוד מצאה:</b><ul>${qi.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'';
+  m.innerHTML=`<div class="s-canvas fade-in"><img class="v5img" src="${attr(R.url)}" alt="המודעה"></div>${issues}
+    <div class="edit fade-in">
+      <div class="ed-head"><b>✏️ אפשר לשנות את הטקסט במודעה</b><span>הטקסט מצויר בתוך המודעה, אז שינוי מעדכן אותה ובודק אותה מחדש (2 קרדיטים). אפשר גם לכתוב לסופיה מה לשנות</span></div>
+      <div class="ed-grid">
+        <label class="wide">כותרת<input id="eH"></label>
+        <label>שורה משנית<input id="eS"></label>
+        <label>כפתור<input id="eC"></label>
+        <button class="ed-upd" id="eUpd" disabled>לעדכן במודעה</button>
+        <label class="wide">הקופי שמתפרסם עם המודעה<textarea id="eT" rows="4"></textarea></label>
+      </div>
+    </div>`;
+  $('#eH').value=c.headline||''; $('#eS').value=c.subline||''; $('#eC').value=c.cta||''; $('#eT').value=R.text||'';
+  const cur=()=>({headline:$('#eH').value.trim(),subline:$('#eS').value.trim(),cta:$('#eC').value.trim()});
+  const dirty=()=>{ const n=cur(); $('#eUpd').disabled=S.busy||!n.headline||!n.cta||(n.headline===(c.headline||'')&&n.subline===(c.subline||'')&&n.cta===(c.cta||'')) };
+  ['#eH','#eS','#eC'].forEach(s=>$(s).oninput=dirty);
+  $('#eUpd').onclick=()=>{ say('me','לעדכן את הטקסט במודעה'); runEdit(cur()) };
+  $('#eT').oninput=e=>{R.text=e.target.value;saveSoon()};
+}
+function generateLegacy(){ toast('לגרסה נוספת צרו מודעה חדשה'); showLanding() }
 /* המודעה האמיתית. מתחתיה אפשר לערוך את הטקסט ולהחליף פונט (התבנית נקבעת לפני היצירה) */
 async function drawResult(){
   const R=S.result, logo=await logoForAd(), m=$('#sMain');
@@ -907,6 +1030,12 @@ let saveT=null;
 function saveSoon(){ clearTimeout(saveT); saveT=setTimeout(saveResult,500) }
 async function saveResult(){
   const R=S.result; if(!R)return;
+  if(R.v5){
+    const rec={id:R.id,url:R.url,text:R.text,biz:BIZ.name,format:R.format,promote:S.detail||S.promote,date:new Date().toLocaleString('he-IL'),
+               engine:'v5',copy:R.copy,plan:R.plan,qa:R.qa,compose:{headline:(R.copy||{}).headline}};
+    try{ await DB.put('ads',rec); ADS=await DB.all('ads') }catch(e){}
+    return;
+  }
   const logo=await logoForAd(), c=document.createElement('canvas');
   AdCompose.render(c,Object.assign({},R.D,{img:R.photo,logo}));
   const rec={id:R.id,url:c.toDataURL('image/jpeg',0.92),text:R.text,biz:BIZ.name,format:R.D.format,promote:S.detail||S.promote,
@@ -918,6 +1047,14 @@ async function saveResult(){
 /* מודעה שמורה: נפתחת בתצוגה עם העריכה, וסופיה מציעה מה אפשר לעשות */
 async function openSaved(a){
   if(!a)return;
+  if(a.engine==='v5'){
+    S=fresh(); S.format=a.format; S.detail=a.promote||'';
+    $('#landing').classList.add('hidden'); $('#builder').classList.remove('hidden'); chatBody().innerHTML='';
+    S.result={v5:true,id:a.id,url:a.url,copy:a.copy||{},plan:a.plan||{},qa:a.qa||{ok:true},format:a.format,text:a.text||''};
+    $('#sDl').onclick=dlCurrent; renderStage();
+    await aiSay('פתחתי את המודעה ששמרתם. אפשר לשנות את הטקסט, או לכתוב לי מה לשנות',300);
+    afterOptions(); return;
+  }
   S=fresh(); S.format=a.format; S.template=(a.compose&&a.compose.tpl)||'split'; S.detail=a.promote||'';
   $('#landing').classList.add('hidden'); $('#builder').classList.remove('hidden');
   chatBody().innerHTML='';
@@ -937,6 +1074,7 @@ async function openSaved(a){
 
 /* בקשה חופשית אחרי שהמודעה מוכנה: סופיה משנה את הטקסטים, ואם צריך מציעה תמונה חדשה */
 async function editRequest(text){
+  if(S.result&&S.result.v5)return editRequestV5(text);
   const R=S.result, lim=AdCompose.LIMITS[R.D.tpl];
   const stop=typing();
   let j={};
@@ -954,11 +1092,28 @@ async function editRequest(text){
   }
 }
 
+/* בקשה חופשית על מודעה מצוירת: סופיה מנסחת את הטקסט החדש, ומאשרים לפני העדכון בתשלום */
+async function editRequestV5(text){
+  const R=S.result, c=R.copy||{};
+  const stop=typing(); let j={};
+  S.edits.push(text);
+  try{ j=jsonOf((await api('/api/plan',{mode:'edit',business:BIZ,profile:profileOf(),request:text,headline:c.headline,subline:c.subline,cta:c.cta,limits:{h:40,s:60,c:22}})).text) }
+  catch(e){ stop(); await aiSay('לא הצלחתי לבצע את זה כרגע ('+esc(e.message)+')',0); return }
+  stop(); learnSoon();
+  const n={headline:j.headline||c.headline,subline:j.subline!=null?j.subline:(c.subline||''),cta:j.cta||c.cta};
+  const changed=n.headline!==c.headline||n.subline!==(c.subline||'')||n.cta!==c.cta;
+  if(!changed&&!j.newImage){ say('ai',esc(j.reply||'לא מצאתי מה לשנות')); return }
+  const rows=[n.headline!==c.headline&&['כותרת',n.headline],n.subline!==(c.subline||'')&&['שורה משנית',n.subline||'(בלי)'],n.cta!==c.cta&&['כפתור',n.cta],j.newImage&&['בתמונה',j.imageNote||text]].filter(Boolean);
+  await aiSay(esc(j.reply||'זה השינוי:')+'<ul class="sumlist">'+rows.map(r=>`<li><b>${esc(r[0])}</b>${esc(r[1])}</li>`).join('')+'</ul>',200);
+  options([{t:'לעדכן במודעה',d:'2 קרדיטים',primary:true,v:1},{t:'לא, תודה',v:0}],o=>{ say('me',esc(o.t)); if(o.v)runEdit(n,j.newImage?(j.imageNote||text):'') });
+}
+
 /* =================== הקלדה בשיחה =================== */
 $('#cIn').oninput=()=>{ $('#cSend').disabled=!$('#cIn').value.trim() };
 $('#cIn').onkeydown=e=>{ if(keyOf(e)==='Enter'&&!e.shiftKey){ e.preventDefault(); send() } };
 $('#cSend').onclick=send;
-$('#cAdd').onclick=()=>{ if(PENDING&&PENDING.qk==='image'){ answer('own','להעלות תמונה משלי') } else toast('אפשר להוסיף תמונה כשסופיה שואלת על התמונה') };
+$('#cAdd').onclick=async()=>{ if(S.result||S.busy||!S.prompt){ toast('אפשר להוסיף תמונה של העסק לפני שיוצרים מודעה'); return }
+  await pickOwn(); if(!PENDING&&S.format)confirmStep() };
 async function send(){
   const t=$('#cIn').value.trim(); if(!t)return;
   $('#cIn').value=''; $('#cSend').disabled=true;
@@ -977,12 +1132,13 @@ async function send(){
     return answer(t);
   }
   if(S.result&&!S.busy){ say('me',esc(t)); return editRequest(t) }
+  if(!S.result&&!S.busy&&S.prompt){ say('me',esc(t)); lockOpen(); return correctPlan(t) }
   say('me',esc(t)); aiSay('רגע, אני באמצע. נמשיך מיד');
 }
 
 /* =================== הורדה והעתקה =================== */
 function download(url){ const a=document.createElement('a'); a.href=url; a.download=(BIZ.nameEn||'ad').replace(/\s+/g,'-').toLowerCase()+'-'+(S.format||'').replace(':','x')+'.jpg'; a.click() }
-function dlCurrent(){ const cv=$('#sCv'); if(cv&&S.result)download(cv.toDataURL('image/jpeg',0.94)) }
+function dlCurrent(){ if(S.result&&S.result.v5)return download(S.result.url); const cv=$('#sCv'); if(cv&&S.result)download(cv.toDataURL('image/jpeg',0.94)) }
 $('#sDl').onclick=dlCurrent;
 $('#sCopy').onclick=()=>{ try{ navigator.clipboard.writeText((S.result&&S.result.text)||''); toast('הקופי הועתק') }catch(e){ toast('ההעתקה נכשלה') } };
 
