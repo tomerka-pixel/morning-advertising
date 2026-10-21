@@ -907,7 +907,7 @@ async function generate(){
     const b=curBiz();
     const used=((b&&b.history)||[]).map(h=>h.tplV).filter(Boolean).slice(-3);
     const [out,post]=await Promise.all([
-      adStream({business:{name:BIZ.name,field:BIZ.field,city:BIZ.city},logo:await logoPng(),own:S.own||null,prompt:S.prompt||S.detail,format:S.format,
+      adStream({business:{name:BIZ.name,field:BIZ.field,city:BIZ.city,site:BIZ.site},logo:await logoPng(),own:S.own||null,prompt:S.prompt||S.detail,format:S.format,
                 profile:profileOf(),usedLayouts:used,
                 sofia:{detail:S.detail,offer:S.offer,goal:S.goal,audience:S.audience,tone:S.tone,visual:S.visual,visualWhy:S.visualWhy,extraQ:S.extraQ,extraA:S.extraA}},
         (type,d)=>{
