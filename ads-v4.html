@@ -124,8 +124,8 @@ h1,h2,h3{margin:0}
 .chat{order:1;width:min(760px,46%);flex:0 0 auto;background:#fff;display:flex;flex-direction:column;border-inline-start:1px solid #EFF1F6;box-shadow:-2px 0 18px rgba(3,56,65,.04);z-index:1}
 .c-head{height:104px;flex:0 0 104px;display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:1px solid #EFF1F6}
 .avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(140deg,#E9FBF4,#C8F0E1);display:grid;place-items:center;position:relative;flex:0 0 auto}
-.avatar img{width:26px;height:26px}
-.avatar.sm{width:38px;height:38px}.avatar.sm img{width:19px;height:19px}
+.avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.avatar.sm{width:38px;height:38px}
 .avatar .on{position:absolute;bottom:2px;left:2px;width:11px;height:11px;border-radius:50%;background:var(--green);border:2px solid #fff}
 .c-who b{font-size:22px}
 .c-who .ai{display:inline-block;margin-inline-start:8px;background:#EEF0FB;color:#4a5bb8;font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px;vertical-align:3px}
@@ -287,8 +287,8 @@ h1,h2,h3{margin:0}
       <section class="builder hidden" id="builder">
         <aside class="chat">
           <div class="c-head">
-            <div class="avatar"><img src="assets/morning-mark.svg" alt=""><i class="on"></i></div>
-            <div class="c-who"><b>Sofia</b><span class="ai">AI</span><small>עונה מיד · מבוסס AI</small></div>
+            <div class="avatar"><img src="assets/leo-avatar.jpg" alt="ליאו"><i class="on"></i></div>
+            <div class="c-who"><b>ליאו</b><span class="ai">AI</span><small>עונה מיד · מבוסס AI</small></div>
             <button class="c-close" id="cBack" title="חזרה למודעות שלי" aria-label="חזרה"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
           </div>
           <div class="c-body" id="cBody"></div>
@@ -530,8 +530,8 @@ function chatBody(){ return $('#cBody') }
 function scrollChat(){ const b=chatBody(); setTimeout(()=>{ b.scrollTop=b.scrollHeight },30) }
 function say(who,html){
   const m=document.createElement('div'); m.className='msg '+who;
-  m.innerHTML=(who==='ai'?'<div class="avatar sm"><img src="assets/morning-mark.svg" alt=""></div>':'')+
-              `<div class="bub">${who==='ai'?'<span class="nm">Sofia</span>':''}${html}</div>`;
+  m.innerHTML=(who==='ai'?'<div class="avatar sm"><img src="assets/leo-avatar.jpg" alt=""></div>':'')+
+              `<div class="bub">${who==='ai'?'<span class="nm">ליאו</span>':''}${html}</div>`;
   chatBody().appendChild(m); scrollChat(); return m;
 }
 function typing(){ const m=say('ai','<span class="dots"><i></i><i></i><i></i></span>'); return ()=>m.remove() }
@@ -779,20 +779,20 @@ async function renderStage(){
   if(S.busy||!S.template){
     /* המנוע החדש: לפני היצירה מסגרת בפורמט שנבחר, בזמן היצירה הטיוטה הראשונה (בבדיקה) */
     const f=FORMAT.find(x=>x.v===S.format);
-    if(S.busy&&S.draft){ m.innerHTML=`<div class="s-canvas fade-in"><span class="s-badge">${esc(S.step||'בודקת')}...</span><img class="v5img" src="${attr(S.draft)}" alt=""><div class="s-work"></div></div>`; return }
+    if(S.busy&&S.draft){ m.innerHTML=`<div class="s-canvas fade-in"><span class="s-badge">${esc(S.step||'בודק')}...</span><img class="v5img" src="${attr(S.draft)}" alt=""><div class="s-work"></div></div>`; return }
     if(f){ const [w,h]=f.px.split('×').map(Number), H=Math.min(420,$('#sMain').clientHeight-120||420), W=Math.round(H*w/h);
-      m.innerHTML=`<div class="s-canvas fade-in">${S.busy?`<span class="s-badge">${esc(S.step||'יוצרת את המודעה')}...</span>`:''}<div class="frame" style="width:${W}px;height:${H}px">${esc(f.t)} · <bdi dir="ltr">${esc(f.px)}</bdi></div>${S.busy?'<div class="s-work"></div>':''}</div>`; return }
+      m.innerHTML=`<div class="s-canvas fade-in">${S.busy?`<span class="s-badge">${esc(S.step||'יוצר את המודעה')}...</span>`:''}<div class="frame" style="width:${W}px;height:${H}px">${esc(f.t)} · <bdi dir="ltr">${esc(f.px)}</bdi></div>${S.busy?'<div class="s-work"></div>':''}</div>`; return }
   }
   if(!S.format||!S.template){
     m.innerHTML=`<div class="s-empty fade-in"><div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div>`+
-      `<h3>המודעה תופיע כאן</h3><p>כותבים לסופיה מה רוצים לפרסם, בוחרים איפה המודעה תתפרסם, והיא מופיעה כאן</p></div>`;
+      `<h3>המודעה תופיע כאן</h3><p>כותבים לליאו מה רוצים לפרסם, בוחרים איפה המודעה תתפרסם, והיא מופיעה כאן</p></div>`;
     return;
   }
   /* סקיצה של העיצוב בפורמט שנבחר, עד שהמודעה האמיתית נוצרת */
   const logo=await logoForAd();
   let img=null; if(S.own){ try{ img=await AdCompose.loadImage(S.own) }catch(e){} }
   const font=baseDraw().font; await AdCompose.ensureFonts(font);
-  m.innerHTML=`<div class="s-canvas fade-in"><span class="s-badge">${S.busy?'יוצרת את המודעה...':'סקיצה'}</span><canvas id="sCv"></canvas>${S.busy?'<div class="s-work"></div>':''}</div>`;
+  m.innerHTML=`<div class="s-canvas fade-in"><span class="s-badge">${S.busy?'יוצר את המודעה...':'סקיצה'}</span><canvas id="sCv"></canvas>${S.busy?'<div class="s-work"></div>':''}</div>`;
   const cv=$('#sCv');
   AdCompose.render(cv,Object.assign(baseDraw(),{tpl:S.template,format:S.format,img,logo,color:(img&&AdCompose.photoColor(img))||'#3F5D75',bg:'',
     headline:'הכותרת של המודעה תופיע כאן',sub:'ושורה קצרה שמשלימה אותה',cta:CTA_BY_GOAL[S.goal]||'לפרטים',scale:0.5}));
@@ -891,7 +891,7 @@ async function toDataUrl(url){
   return c.toDataURL('image/jpeg',0.92);
 }
 function progBubble(intro){
-  const msg=say('ai',esc(intro||'מתחילה ליצור. זה לוקח כמה דקות, כי אני גם בודקת כל אות')+'<ul class="prog"></ul>');
+  const msg=say('ai',esc(intro||'מתחיל ליצור. זה לוקח כמה דקות, כי אני גם בודק כל אות')+'<ul class="prog"></ul>');
   const ul=msg.querySelector('.prog');
   return t=>{ ul.querySelectorAll('li.now').forEach(li=>{li.className='done'}); const li=document.createElement('li'); li.className='now'; li.textContent=t; ul.appendChild(li); scrollChat() };
 }
@@ -901,7 +901,7 @@ function qaNote(qa,fixes){
 }
 async function generate(){
   if(S.busy)return;
-  S.busy=true; S.result=null; S.draft=null; S.step='כותבת את הקופי'; renderStage();
+  S.busy=true; S.result=null; S.draft=null; S.step='כותב את הקופי'; renderStage();
   const step=progBubble();
   try{
     const b=curBiz();
@@ -935,8 +935,8 @@ async function generate(){
 /* עדכון של מודעה קיימת: טקסט חדש ו/או שינוי בתמונה, בעריכה של המודעה עצמה ובדיקה מחדש */
 async function runEdit(copy,imageNote){
   const R=S.result; if(!R||S.busy)return;
-  S.busy=true; S.draft=R.url; S.step='מעדכנת את המודעה'; renderStage();
-  const step=progBubble('מעדכנת. זה לוקח כמה דקות, כי אני בודקת שוב כל אות');
+  S.busy=true; S.draft=R.url; S.step='מעדכן את המודעה'; renderStage();
+  const step=progBubble('מעדכן. זה לוקח כמה דקות, כי אני בודק שוב כל אות');
   try{
     const out=await adStream({mode:'edit',business:{name:BIZ.name},logo:await logoPng(),image:/^data:/.test(R.url)?R.url:await toDataUrl(R.url),format:R.format,
       prompt:R.plan&&R.plan.prompt||'',oldCopy:R.copy,copy,imageNote:imageNote||''},(type,d)=>{ if(type==='step'){ S.step=d.t; step(d.t); const bd=$('.s-badge'); if(bd)bd.textContent=d.t+'...' } });
@@ -1296,8 +1296,8 @@ function openBizForm(b){
 /* שקיפות ושליטה: רואים מה סופיה למדה, ואפשר למחוק משפט שלא נכון */
 function renderLearn(){
   const box=$('#bfLearn'); const list=FORM.profile||[];
-  box.innerHTML=list.length?'מה סופיה למדה על העסק'+'<ul>'+list.map((x,i)=>`<li><span>${esc(x)}</span><button data-i="${i}" title="מחיקה" aria-label="מחיקה">×</button></li>`).join('')+'</ul>'
-                          :'סופיה עוד לא למדה כלום על העסק. אחרי כמה מודעות יופיעו כאן הדברים שהיא זוכרת';
+  box.innerHTML=list.length?'מה ליאו למד על העסק'+'<ul>'+list.map((x,i)=>`<li><span>${esc(x)}</span><button data-i="${i}" title="מחיקה" aria-label="מחיקה">×</button></li>`).join('')+'</ul>'
+                          :'ליאו עוד לא למד כלום על העסק. אחרי כמה מודעות יופיעו כאן הדברים שהוא זוכר';
   box.querySelectorAll('button[data-i]').forEach(x=>x.onclick=()=>{ FORM.profile.splice(+x.dataset.i,1); renderLearn() });
 }
 $('#bfLogoBtn').onclick=()=>$('#bfLogo').click();
